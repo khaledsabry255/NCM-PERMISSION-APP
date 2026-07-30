@@ -212,7 +212,7 @@ let debounceTimer = null;
 qInput.addEventListener('input', () => {
   clearTimeout(debounceTimer);
   const term = qInput.value.trim();
-  if (term.length < 2) {
+  if (term.length < 1) {
     resultsEl.innerHTML = '';
     hintEl.style.display = 'block';
     return;
