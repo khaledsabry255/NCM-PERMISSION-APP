@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="theme-color" content="#0b1e2d">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -30,7 +30,9 @@
   html,body{margin:0;padding:0;}
   body{
     background:
-      radial-gradient(1200px 600px at 50% -10%, #16324a 0%, transparent 60%),
+      radial-gradient(1000px 500px at 15% -10%, rgba(31,174,122,0.18) 0%, transparent 55%),
+      radial-gradient(900px 500px at 90% 0%, rgba(94,146,196,0.18) 0%, transparent 55%),
+      radial-gradient(1200px 600px at 50% 100%, #123049 0%, transparent 60%),
       var(--bg);
     color:var(--ink);
     font-family:'Tajawal',sans-serif;
@@ -43,14 +45,28 @@
   }
   .logo{
     display:inline-block;
-    font-family:'Tajawal',sans-serif;
-    font-weight:900;
-    font-size:44px;
-    letter-spacing:2px;
-    color:var(--brand);
-    line-height:1;
-    padding-bottom:4px;
-    border-bottom:3px solid var(--brand);
+    font-family:'Poppins',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:0.5px;
+    padding:12px 26px;
+    border-radius:20px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.02));
+    backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    border:1px solid rgba(255,255,255,0.28);
+    box-shadow:
+      0 8px 28px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -12px 20px -10px rgba(0,0,0,0.25);
+    max-width:90vw;
+  }
+  .logo span{
+    background:linear-gradient(180deg, #ffffff 0%, #cfe6ee 45%, #7fa8bb 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    text-shadow:0 1px 0 rgba(255,255,255,0.35);
   }
   header h1{
     margin:14px 0 0;
@@ -67,10 +83,13 @@
     display:flex;
     align-items:center;
     gap:10px;
-    background:var(--bg-elev);
-    border:1px solid var(--line);
+    background:linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border:1px solid rgba(255,255,255,0.16);
     border-radius:16px;
     padding:14px 16px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
   }
   .search-box svg{flex:none;opacity:.7;}
   .search-box input{
@@ -99,8 +118,10 @@
     line-height:1.9;
   }
   .card{
-    background:var(--bg-elev);
-    border:1px solid var(--line);
+    background:linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border:1px solid rgba(255,255,255,0.14);
     border-radius:18px;
     padding:18px;
     margin-top:14px;
@@ -108,6 +129,7 @@
     flex-direction:column;
     align-items:stretch;
     gap:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
   }
   .photos-row{
     display:flex;
@@ -124,14 +146,14 @@
     object-fit:contain;
     border:1px solid var(--line);
   }
-  .info{flex:1;min-width:0;}
+  .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
   .info .name{font-size:17px;font-weight:700;margin:0 0 2px;}
   .info .job{color:var(--ink-dim);font-size:13.5px;margin:0 0 10px;}
   .badge{
     display:inline-flex;align-items:center;gap:6px;
     padding:5px 12px;border-radius:999px;
     font-size:13px;font-weight:700;
-    margin-bottom:10px;
+    align-self:flex-start;
   }
   .badge.ok{background:var(--brand-dim);color:var(--brand);}
   .badge.warn{background:var(--amber-dim);color:var(--amber);}
@@ -142,7 +164,6 @@
     display:flex;
     flex-direction:column;
     gap:2px;
-    margin:8px 0 10px;
     padding:10px 14px;
     border-radius:12px;
     background:var(--gray-dim);
@@ -165,6 +186,32 @@
   .expiry-block.warn .expiry-date{color:var(--amber);}
   .expiry-block.bad .expiry-date{color:var(--red);}
   .expiry-block.mute .expiry-date{color:var(--gray);}
+  .field{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:rgba(255,255,255,0.045);
+    border:1px solid rgba(255,255,255,0.09);
+    border-radius:12px;
+    padding:11px 14px;
+  }
+  .field .row-label{
+    font-size:12.5px;
+    color:var(--ink-dim);
+    white-space:nowrap;
+    font-weight:500;
+  }
+  .field b{
+    font-size:14.5px;
+    font-weight:700;
+    color:var(--ink);
+    text-align:left;
+  }
+  .field.field-name b{
+    font-size:18px;
+    font-weight:800;
+  }
   .rows{display:grid;gap:6px;font-size:13.5px;color:var(--ink-dim);}
   .rows b{color:var(--ink);font-weight:500;}
   .row-label{color:var(--ink-dim);}
@@ -177,7 +224,7 @@
 <body>
 
 <header>
-  <div class="logo">NCM</div>
+  <div class="logo"><span>NCM Permission</span></div>
   <h1>بحث</h1>
 </header>
 
@@ -223,11 +270,19 @@ qInput.addEventListener('input', () => {
 
 async function runSearch(term) {
   resultsEl.innerHTML = `<div class="msg">جارِ البحث...</div>`;
-  const { data, error } = await sb
-    .from('employees')
-    .select('*')
-    .or(`emp_code.eq.${escapeVal(term)},national_id.ilike.%${term}%,full_name.ilike.%${term}%`)
-    .limit(25);
+
+  const isNumeric = /^[0-9]+$/.test(term);
+  let query = sb.from('employees').select('*');
+
+  if (isNumeric) {
+    // Numbers must match the code or national ID EXACTLY — no partial/substring hits.
+    query = query.or(`emp_code.eq.${escapeVal(term)},national_id.eq.${escapeVal(term)}`);
+  } else {
+    // Text search still matches within the name, since typing a full name isn't practical.
+    query = query.ilike('full_name', `%${escapeVal(term)}%`);
+  }
+
+  const { data, error } = await query.limit(25);
 
   if (error) {
     resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
@@ -295,13 +350,6 @@ function renderCard(emp) {
   return `
     <div class="card">
       <div class="info">
-        <div class="rows">
-          <div><span class="row-label">الكود:</span> <b>${escHtml(emp.emp_code ?? '-')}</b></div>
-        </div>
-        <p class="name">${escHtml(emp.full_name || '-')}</p>
-        <div class="rows">
-          <div><span class="row-label">الرقم القومي:</span> <b>${escHtml(emp.national_id ?? '-')}</b></div>
-        </div>
         ${emp.permit_date ? `
         <div class="expiry-block ${cls}">
           <span class="expiry-label">تاريخ انتهاء التصريح</span>
@@ -311,15 +359,37 @@ function renderCard(emp) {
           <span class="expiry-label">حالة التصريح</span>
           <span class="expiry-date">${label}</span>
         </div>`}
-        <div class="rows">
-          <div><span class="row-label">العنوان:</span> <b>${escHtml(emp.address ?? '-')}</b></div>
+        <div class="field field-name">
+          <span class="row-label">الاسم</span>
+          <b>${escHtml(emp.full_name || '-')}</b>
         </div>
-        <p class="job">${escHtml(emp.job_title || '-')} · ${catLabel}</p>
+        <div class="field">
+          <span class="row-label">الكود</span>
+          <b>${escHtml(emp.emp_code ?? '-')}</b>
+        </div>
+        <div class="field">
+          <span class="row-label">الرقم القومي</span>
+          <b>${escHtml(emp.national_id ?? '-')}</b>
+        </div>
+        <div class="field">
+          <span class="row-label">الوظيفة</span>
+          <b>${escHtml(emp.job_title || '-')} · ${catLabel}</b>
+        </div>
+        ${emp.department ? `
+        <div class="field">
+          <span class="row-label">القسم</span>
+          <b>${escHtml(emp.department)}</b>
+        </div>` : ''}
+        <div class="field">
+          <span class="row-label">العنوان</span>
+          <b>${escHtml(emp.address ?? '-')}</b>
+        </div>
         <span class="badge ${cls}"><span class="dot"></span>${label}</span>
-        <div class="rows">
-          ${emp.department ? `<div><span class="row-label">القسم:</span> <b>${escHtml(emp.department)}</b></div>` : ''}
-          ${emp.notes ? `<div><span class="row-label">ملاحظات:</span> <b>${escHtml(emp.notes)}</b></div>` : ''}
-        </div>
+        ${emp.notes ? `
+        <div class="field">
+          <span class="row-label">ملاحظات</span>
+          <b>${escHtml(emp.notes)}</b>
+        </div>` : ''}
       </div>
       <div class="photos-row">
         <img class="photo" src="${photoUrl1}" onerror="this.src='data:image/svg+xml;utf8,${placeholderSvg()}'">
