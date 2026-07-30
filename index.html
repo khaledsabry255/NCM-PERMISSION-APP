@@ -1,1 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>بحث التصاريح</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="theme-color" content="#0b1e2d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0b1e2d;
+    --bg-elev:#122a3d;
+    --line:#1e3a52;
+    --ink:#eaf2f6;
+    --ink-dim:#9fb7c8;
+    --brand:#1fae7a;
+    --brand-dim:#153a2c;
+    --amber:#e2a12b;
+    --amber-dim:#3a2e12;
+    --red:#e0554a;
+    --red-dim:#3a1a17;
+    --gray:#7c8b96;
+    --gray-dim:#22303a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #16324a 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Tajawal',sans-serif;
+    min-height:100vh;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  header{
+    padding:28px 20px 18px;
+    text-align:center;
+  }
+  header .eyebrow{
+    color:var(--brand);
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.5px;
+  }
+  header h1{
+    margin:6px 0 0;
+    font-size:22px;
+    font-weight:900;
+  }
+  .search-wrap{
+    padding:0 20px 14px;
+    max-width:520px;
+    margin:0 auto;
+  }
+  .search-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px 16px;
+  }
+  .search-box svg{flex:none;opacity:.7;}
+  .search-box input{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--ink);
+    font-family:'Tajawal',sans-serif;
+    font-size:17px;
+    font-weight:500;
+  }
+  .search-box input::placeholder{color:var(--ink-dim);}
+  .hint{
+    color:var(--ink-dim);
+    font-size:12.5px;
+    padding:10px 4px 0;
+    text-align:center;
+  }
+  main{max-width:520px;margin:0 auto;padding:6px 20px 60px;}
+  .msg{
+    text-align:center;
+    color:var(--ink-dim);
+    padding:40px 10px;
+    font-size:14.5px;
+    line-height:1.9;
+  }
+  .card{
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px;
+    margin-top:14px;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:14px;
+  }
+  .photos-row{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+  }
+  .photo{
+    width:100%;
+    max-width:160px;
+    aspect-ratio:3/4;
+    border-radius:14px;
+    background:var(--gray-dim);
+    object-fit:cover;
+    border:1px solid var(--line);
+  }
+  .info{flex:1;min-width:0;}
+  .info .name{font-size:17px;font-weight:700;margin:0 0 2px;}
+  .info .job{color:var(--ink-dim);font-size:13.5px;margin:0 0 10px;}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 12px;border-radius:999px;
+    font-size:13px;font-weight:700;
+    margin-bottom:10px;
+  }
+  .badge.ok{background:var(--brand-dim);color:var(--brand);}
+  .badge.warn{background:var(--amber-dim);color:var(--amber);}
+  .badge.bad{background:var(--red-dim);color:var(--red);}
+  .badge.mute{background:var(--gray-dim);color:var(--gray);}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .rows{display:grid;gap:6px;font-size:13.5px;color:var(--ink-dim);}
+  .rows b{color:var(--ink);font-weight:500;}
+  .row-label{color:var(--ink-dim);}
+  footer{
+    text-align:center;color:var(--ink-dim);font-size:11.5px;
+    padding:20px;opacity:.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">NCM</div>
+  <h1>بحث حالة التصريح</h1>
+</header>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9fb7c8" stroke-width="2"/><path d="M20 20L16.5 16.5" stroke="#9fb7c8" stroke-width="2" stroke-linecap="round"/></svg>
+    <input id="q" type="text" placeholder="اكتب الكود، الرقم القومي، أو الاسم..." autocomplete="off" inputmode="search">
+  </div>
+  <div class="hint" id="hint">ابحث بأي من الثلاثة: كود الموظف، الرقم القومي، أو الاسم</div>
+</div>
+
+<main>
+  <div id="results"></div>
+</main>
+
+<footer>نظام بحث التصاريح · للاستخدام الداخلي</footer>
+
+<script>
+// ---- إعدادات الاتصال بـ Supabase ----
+const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqY2FsZ3VtbG9kZWhvdWxid3RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDU4OTgsImV4cCI6MjEwMDkyMTg5OH0.RD3ZfSdrAEIYyhJqeQazAQ6JHhk9ji_ZfUrSHXE-RuE";
+const PHOTO_BUCKET = "employee-photos";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const qInput = document.getElementById('q');
+const resultsEl = document.getElementById('results');
+const hintEl = document.getElementById('hint');
+
+let debounceTimer = null;
+
+qInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  const term = qInput.value.trim();
+  if (term.length < 2) {
+    resultsEl.innerHTML = '';
+    hintEl.style.display = 'block';
+    return;
+  }
+  hintEl.style.display = 'none';
+  debounceTimer = setTimeout(() => runSearch(term), 300);
+});
+
+async function runSearch(term) {
+  resultsEl.innerHTML = `<div class="msg">جارِ البحث...</div>`;
+  const { data, error } = await sb
+    .from('employees')
+    .select('*')
+    .or(`emp_code.eq.${escapeVal(term)},national_id.ilike.%${term}%,full_name.ilike.%${term}%`)
+    .limit(25);
+
+  if (error) {
+    resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    resultsEl.innerHTML = `<div class="msg">لا يوجد موظف مطابق لهذا البحث.</div>`;
+    return;
+  }
+  resultsEl.innerHTML = data.map(renderCard).join('');
+}
+
+function escapeVal(v) {
+  return v.replace(/[,()]/g, '');
+}
+
+function formatDate(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function statusInfo(emp) {
+  const today = new Date();
+  let cls = 'mute', label = emp.permit_status || 'غير محدد';
+  const dateStr = formatDate(emp.permit_date);
+
+  if (emp.permit_status === 'ساري' && emp.permit_date) {
+    const d = new Date(emp.permit_date);
+    const daysLeft = Math.ceil((d - today) / 86400000);
+    if (daysLeft <= 30) {
+      cls = 'warn'; label = `قرب الانتهاء (${daysLeft} يوم)`;
+    } else {
+      cls = 'ok'; label = 'ساري';
+    }
+  } else if (emp.permit_status === 'منتهي الصلاحية') {
+    cls = 'bad'; label = 'منتهي الصلاحية';
+  } else if (emp.permit_status === 'ممنوع') {
+    cls = 'bad'; label = 'ممنوع';
+  } else if (emp.permit_status === 'بدون تصريح') {
+    cls = 'mute'; label = 'بدون تصريح';
+  }
+  return { cls, label };
+}
+
+function renderCard(emp) {
+  const { cls, label } = statusInfo(emp);
+  const photoUrl1 = emp.emp_code
+    ? `${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${emp.emp_code}.jpg`
+    : '';
+  const photoUrl2 = emp.emp_code
+    ? `${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${emp.emp_code}-2.jpg`
+    : '';
+  const catLabel = emp.category === 'blue' ? 'عامل (Blue Collar)' : 'موظف (White Collar)';
+
+  return `
+    <div class="card">
+      <div class="info">
+        <p class="name">${escHtml(emp.full_name || '-')}</p>
+        <p class="job">${escHtml(emp.job_title || '-')} · ${catLabel}</p>
+        <span class="badge ${cls}"><span class="dot"></span>${label}</span>
+        <div class="rows">
+          <div><span class="row-label">الكود:</span> <b>${escHtml(emp.emp_code ?? '-')}</b></div>
+          <div><span class="row-label">الرقم القومي:</span> <b>${escHtml(emp.national_id ?? '-')}</b></div>
+          ${emp.permit_date ? `<div><span class="row-label">تاريخ التصريح:</span> <b>${formatDate(emp.permit_date)}</b></div>` : ''}
+          <div><span class="row-label">العنوان:</span> <b>${escHtml(emp.address ?? '-')}</b></div>
+          ${emp.department ? `<div><span class="row-label">القسم:</span> <b>${escHtml(emp.department)}</b></div>` : ''}
+          ${emp.notes ? `<div><span class="row-label">ملاحظات:</span> <b>${escHtml(emp.notes)}</b></div>` : ''}
+        </div>
+      </div>
+      <div class="photos-row">
+        <img class="photo" src="${photoUrl1}" onerror="this.src='data:image/svg+xml;utf8,${placeholderSvg()}'">
+        <img class="photo" src="${photoUrl2}" onerror="this.src='data:image/svg+xml;utf8,${placeholderSvg()}'">
+      </div>
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function placeholderSvg() {
+  return encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 74 74'><rect width='74' height='74' rx='14' fill='%2322303a'/><circle cx='37' cy='29' r='12' fill='%237c8b96'/><path d='M15 62c3-13 14-20 22-20s19 7 22 20' fill='%237c8b96'/></svg>`);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
 
