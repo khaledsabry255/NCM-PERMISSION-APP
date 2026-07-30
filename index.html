@@ -41,16 +41,22 @@
     padding:28px 20px 18px;
     text-align:center;
   }
-  header .eyebrow{
+  .logo{
+    display:inline-block;
+    font-family:'Tajawal',sans-serif;
+    font-weight:900;
+    font-size:44px;
+    letter-spacing:2px;
     color:var(--brand);
-    font-weight:700;
-    font-size:13px;
-    letter-spacing:.5px;
+    line-height:1;
+    padding-bottom:4px;
+    border-bottom:3px solid var(--brand);
   }
   header h1{
-    margin:6px 0 0;
-    font-size:22px;
-    font-weight:900;
+    margin:14px 0 0;
+    font-size:20px;
+    font-weight:700;
+    color:var(--ink-dim);
   }
   .search-wrap{
     padding:0 20px 14px;
@@ -132,6 +138,33 @@
   .badge.bad{background:var(--red-dim);color:var(--red);}
   .badge.mute{background:var(--gray-dim);color:var(--gray);}
   .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .expiry-block{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    margin:8px 0 10px;
+    padding:10px 14px;
+    border-radius:12px;
+    background:var(--gray-dim);
+  }
+  .expiry-block.ok{background:var(--brand-dim);}
+  .expiry-block.warn{background:var(--amber-dim);}
+  .expiry-block.bad{background:var(--red-dim);}
+  .expiry-label{
+    font-size:12px;
+    color:var(--ink-dim);
+    font-weight:500;
+  }
+  .expiry-date{
+    font-size:26px;
+    font-weight:900;
+    letter-spacing:.5px;
+    color:var(--brand);
+  }
+  .expiry-block.ok .expiry-date{color:var(--brand);}
+  .expiry-block.warn .expiry-date{color:var(--amber);}
+  .expiry-block.bad .expiry-date{color:var(--red);}
+  .expiry-block.mute .expiry-date{color:var(--gray);}
   .rows{display:grid;gap:6px;font-size:13.5px;color:var(--ink-dim);}
   .rows b{color:var(--ink);font-weight:500;}
   .row-label{color:var(--ink-dim);}
@@ -144,8 +177,8 @@
 <body>
 
 <header>
-  <div class="eyebrow">NCM</div>
-  <h1>بحث حالة التصريح</h1>
+  <div class="logo">NCM</div>
+  <h1>بحث</h1>
 </header>
 
 <div class="search-wrap">
@@ -240,6 +273,15 @@ function statusInfo(emp) {
   return { cls, label };
 }
 
+function formatDateNumeric(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 function renderCard(emp) {
   const { cls, label } = statusInfo(emp);
   const photoUrl1 = emp.emp_code
@@ -253,14 +295,28 @@ function renderCard(emp) {
   return `
     <div class="card">
       <div class="info">
+        <div class="rows">
+          <div><span class="row-label">الكود:</span> <b>${escHtml(emp.emp_code ?? '-')}</b></div>
+        </div>
         <p class="name">${escHtml(emp.full_name || '-')}</p>
+        <div class="rows">
+          <div><span class="row-label">الرقم القومي:</span> <b>${escHtml(emp.national_id ?? '-')}</b></div>
+        </div>
+        ${emp.permit_date ? `
+        <div class="expiry-block ${cls}">
+          <span class="expiry-label">تاريخ انتهاء التصريح</span>
+          <span class="expiry-date">${formatDateNumeric(emp.permit_date)}</span>
+        </div>` : `
+        <div class="expiry-block ${cls}">
+          <span class="expiry-label">حالة التصريح</span>
+          <span class="expiry-date">${label}</span>
+        </div>`}
+        <div class="rows">
+          <div><span class="row-label">العنوان:</span> <b>${escHtml(emp.address ?? '-')}</b></div>
+        </div>
         <p class="job">${escHtml(emp.job_title || '-')} · ${catLabel}</p>
         <span class="badge ${cls}"><span class="dot"></span>${label}</span>
         <div class="rows">
-          <div><span class="row-label">الكود:</span> <b>${escHtml(emp.emp_code ?? '-')}</b></div>
-          <div><span class="row-label">الرقم القومي:</span> <b>${escHtml(emp.national_id ?? '-')}</b></div>
-          ${emp.permit_date ? `<div><span class="row-label">تاريخ التصريح:</span> <b>${formatDate(emp.permit_date)}</b></div>` : ''}
-          <div><span class="row-label">العنوان:</span> <b>${escHtml(emp.address ?? '-')}</b></div>
           ${emp.department ? `<div><span class="row-label">القسم:</span> <b>${escHtml(emp.department)}</b></div>` : ''}
           ${emp.notes ? `<div><span class="row-label">ملاحظات:</span> <b>${escHtml(emp.notes)}</b></div>` : ''}
         </div>
