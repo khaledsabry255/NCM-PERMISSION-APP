@@ -1,4 +1,4 @@
-const CACHE = 'ncm-permits-v1';
+const CACHE = 'ncm-permits-v2';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -15,12 +15,19 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// App shell cached; live search data always goes to the network (Supabase).
+// Network-first: always try to get the latest version when online.
+// Only fall back to the cached copy when there's no internet connection.
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin === self.location.origin) {
     e.respondWith(
-      caches.match(e.request).then((cached) => cached || fetch(e.request))
+      fetch(e.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(e.request))
     );
   }
 });
