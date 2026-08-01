@@ -109,7 +109,37 @@
     padding:10px 4px 0;
     text-align:center;
   }
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+    overflow-x:auto;
+  }
+  .tab-btn{
+    flex:1;
+    white-space:nowrap;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    color:var(--ink-dim);
+    font-family:'Tajawal',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding:11px 10px;
+    border-radius:12px;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    background:var(--brand-dim);
+    color:var(--brand);
+    border-color:rgba(31,174,122,0.4);
+  }
   main{max-width:520px;margin:0 auto;padding:6px 20px 60px;}
+  .list-summary{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:13px;
+    padding:4px 0 4px;
+  }
   .msg{
     text-align:center;
     color:var(--ink-dim);
@@ -229,11 +259,18 @@
 </header>
 
 <div class="search-wrap">
-  <div class="search-box">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9fb7c8" stroke-width="2"/><path d="M20 20L16.5 16.5" stroke="#9fb7c8" stroke-width="2" stroke-linecap="round"/></svg>
-    <input id="q" type="text" placeholder="اكتب الكود، الرقم القومي، أو الاسم..." autocomplete="off" inputmode="search">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="search">بحث</button>
+    <button class="tab-btn" data-tab="banned">الممنوعين</button>
+    <button class="tab-btn" data-tab="expiring">قرب الانتهاء</button>
   </div>
-  <div class="hint" id="hint">ابحث بأي من الثلاثة: كود الموظف، الرقم القومي، أو الاسم</div>
+  <div id="search-tab">
+    <div class="search-box">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9fb7c8" stroke-width="2"/><path d="M20 20L16.5 16.5" stroke="#9fb7c8" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="q" type="text" placeholder="اكتب الكود، الرقم القومي، أو الاسم..." autocomplete="off" inputmode="search">
+    </div>
+    <div class="hint" id="hint">ابحث بأي من الثلاثة: كود الموظف، الرقم القومي، أو الاسم</div>
+  </div>
 </div>
 
 <main>
@@ -253,8 +290,32 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const qInput = document.getElementById('q');
 const resultsEl = document.getElementById('results');
 const hintEl = document.getElementById('hint');
+const searchTabEl = document.getElementById('search-tab');
+const tabButtons = document.querySelectorAll('.tab-btn');
 
 let debounceTimer = null;
+let currentTab = 'search';
+
+tabButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    tabButtons.forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    resultsEl.innerHTML = '';
+
+    if (currentTab === 'search') {
+      searchTabEl.style.display = 'block';
+      hintEl.style.display = qInput.value.trim() ? 'none' : 'block';
+      if (qInput.value.trim()) runSearch(qInput.value.trim());
+    } else if (currentTab === 'banned') {
+      searchTabEl.style.display = 'none';
+      loadBannedList();
+    } else if (currentTab === 'expiring') {
+      searchTabEl.style.display = 'none';
+      loadExpiringList();
+    }
+  });
+});
 
 qInput.addEventListener('input', () => {
   clearTimeout(debounceTimer);
@@ -267,6 +328,55 @@ qInput.addEventListener('input', () => {
   hintEl.style.display = 'none';
   debounceTimer = setTimeout(() => runSearch(term), 300);
 });
+
+async function loadBannedList() {
+  resultsEl.innerHTML = `<div class="msg">جارِ التحميل...</div>`;
+  const { data, error } = await sb
+    .from('employees')
+    .select('*')
+    .eq('permit_status', 'ممنوع')
+    .order('emp_code', { ascending: true });
+
+  if (error) {
+    resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    resultsEl.innerHTML = `<div class="msg">لا يوجد أشخاص ممنوعين حاليًا.</div>`;
+    return;
+  }
+  resultsEl.innerHTML =
+    `<div class="list-summary">عدد الممنوعين: ${data.length}</div>` +
+    data.map(renderCard).join('');
+}
+
+async function loadExpiringList() {
+  resultsEl.innerHTML = `<div class="msg">جارِ التحميل...</div>`;
+  const today = new Date();
+  const in30 = new Date(today.getTime() + 30 * 86400000);
+  const todayIso = today.toISOString().slice(0, 10);
+  const in30Iso = in30.toISOString().slice(0, 10);
+
+  const { data, error } = await sb
+    .from('employees')
+    .select('*')
+    .eq('permit_status', 'ساري')
+    .gte('permit_date', todayIso)
+    .lte('permit_date', in30Iso)
+    .order('permit_date', { ascending: true });
+
+  if (error) {
+    resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    resultsEl.innerHTML = `<div class="msg">لا يوجد تصاريح قربت تنتهي خلال الشهر القادم.</div>`;
+    return;
+  }
+  resultsEl.innerHTML =
+    `<div class="list-summary">عدد التصاريح القريبة من الانتهاء: ${data.length}</div>` +
+    data.map(renderCard).join('');
+}
 
 async function runSearch(term) {
   resultsEl.innerHTML = `<div class="msg">جارِ البحث...</div>`;
@@ -389,6 +499,11 @@ function renderCard(emp) {
           <b>${escHtml(emp.address ?? '-')}</b>
         </div>
         <span class="badge ${cls}"><span class="dot"></span>${label}</span>
+        ${emp.ban_reason ? `
+        <div class="field">
+          <span class="row-label">سبب المنع</span>
+          <b>${escHtml(emp.ban_reason)}</b>
+        </div>` : ''}
         ${emp.notes ? `
         <div class="field">
           <span class="row-label">ملاحظات</span>
