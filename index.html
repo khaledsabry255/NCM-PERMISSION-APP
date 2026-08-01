@@ -319,7 +319,7 @@ function statusInfo(emp) {
       cls = 'ok'; label = 'ساري';
     }
   } else if (emp.permit_status === 'منتهي الصلاحية') {
-    cls = 'bad'; label = 'منتهي الصلاحية';
+    cls = 'bad'; label = 'تصريح منتهي';
   } else if (emp.permit_status === 'ممنوع') {
     cls = 'bad'; label = 'ممنوع';
   } else if (emp.permit_status === 'بدون تصريح') {
@@ -345,7 +345,7 @@ function renderCard(emp) {
   const photoUrl2 = emp.emp_code
     ? `${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${emp.emp_code}_2.jpg`
     : '';
-  const catLabel = emp.category === 'blue' ? 'عامل (Blue Collar)' : 'موظف (White Collar)';
+  const catLabel = emp.category === 'blue' ? 'BLUE' : 'WHITE';
 
   return `
     <div class="card">
@@ -373,7 +373,11 @@ function renderCard(emp) {
         </div>
         <div class="field">
           <span class="row-label">الوظيفة</span>
-          <b>${escHtml(emp.job_title || '-')} · ${catLabel}</b>
+          <b>${escHtml(emp.job_title || '-')}</b>
+        </div>
+        <div class="field">
+          <span class="row-label">النوع</span>
+          <b>${catLabel}</b>
         </div>
         ${emp.department ? `
         <div class="field">
