@@ -345,7 +345,7 @@ function renderCard(emp) {
   const photoUrl2 = emp.emp_code
     ? `${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${emp.emp_code}_2.jpg`
     : '';
-  const catLabel = emp.category === 'blue' ? 'BLUE' : 'WHITE';
+  const catLabel = emp.category === 'blue' ? 'BLUE COLLAR' : 'WHITE COLLAR';
 
   return `
     <div class="card">
