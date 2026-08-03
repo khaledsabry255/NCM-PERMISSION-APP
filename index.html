@@ -363,7 +363,6 @@
     <button class="tab-btn active" data-tab="search">بحث</button>
     <button class="tab-btn" data-tab="banned">الممنوعين</button>
     <button class="tab-btn" data-tab="expiring">قرب الانتهاء</button>
-    <button class="tab-btn" data-tab="resigned">استقالة</button>
     <button id="refresh-btn" class="refresh-btn" title="تحديث البيانات" aria-label="تحديث البيانات">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
@@ -454,8 +453,6 @@ function refreshCurrentView() {
     Promise.resolve(loadBannedList()).finally(done);
   } else if (currentTab === 'expiring') {
     Promise.resolve(loadExpiringList()).finally(done);
-  } else if (currentTab === 'resigned') {
-    Promise.resolve(loadResignedList()).finally(done);
   } else {
     done();
   }
@@ -481,9 +478,6 @@ tabButtons.forEach((btn) => {
     } else if (currentTab === 'expiring') {
       searchTabEl.style.display = 'none';
       loadExpiringList();
-    } else if (currentTab === 'resigned') {
-      searchTabEl.style.display = 'none';
-      loadResignedList();
     }
   });
 });
@@ -546,27 +540,6 @@ async function loadExpiringList() {
   }
   resultsEl.innerHTML =
     `<div class="list-summary">عدد التصاريح القريبة من الانتهاء: ${data.length}</div>` +
-    data.map(renderCard).join('');
-}
-
-async function loadResignedList() {
-  resultsEl.innerHTML = `<div class="msg">جارِ التحميل...</div>`;
-  const { data, error } = await sb
-    .from('employees')
-    .select('*')
-    .ilike('notes', '%استقالة%')
-    .order('emp_code', { ascending: true });
-
-  if (error) {
-    resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
-    return;
-  }
-  if (!data || data.length === 0) {
-    resultsEl.innerHTML = `<div class="msg">لا يوجد أشخاص مكتوب في ملاحظاتهم استقالة حاليًا.</div>`;
-    return;
-  }
-  resultsEl.innerHTML =
-    `<div class="list-summary">عدد حالات الاستقالة: ${data.length}</div>` +
     data.map(renderCard).join('');
 }
 
