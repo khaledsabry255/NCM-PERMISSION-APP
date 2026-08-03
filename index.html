@@ -6,34 +6,36 @@
 <title>بحث التصاريح</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
-<meta name="theme-color" content="#123a5e">
+<meta name="theme-color" content="#0e0c08">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg:#123a5e;
-    --bg-elev:#1b4a72;
-    --line:#2f6690;
-    --ink:#f3f9fd;
-    --ink-dim:#bcdcf2;
-    --brand:#1fae7a;
-    --brand-dim:#153a2c;
+    --bg:#0e0c08;
+    --bg-elev:#1c170f;
+    --line:#3a2f1c;
+    --ink:#f7f1e3;
+    --ink-dim:#c9b98f;
+    --brand:#e0a63a;
+    --brand-dim:#3a2c10;
+    --success:#3fae6f;
+    --success-dim:#173b26;
     --amber:#e2a12b;
     --amber-dim:#3a2e12;
     --red:#e0554a;
     --red-dim:#3a1a17;
-    --gray:#9fc2da;
-    --gray-dim:#274a68;
+    --gray:#a89a78;
+    --gray-dim:#2a2417;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:
-      radial-gradient(1000px 550px at 15% -10%, rgba(255,255,255,0.10) 0%, transparent 55%),
-      radial-gradient(900px 500px at 95% 5%, rgba(120,200,235,0.22) 0%, transparent 55%),
-      radial-gradient(1300px 700px at 50% 105%, #0d2c48 0%, transparent 65%),
-      linear-gradient(160deg, #1a4a72 0%, #123a5e 55%, #0d2c48 100%);
+      radial-gradient(1000px 550px at 15% -10%, rgba(224,166,58,0.16) 0%, transparent 55%),
+      radial-gradient(900px 500px at 95% 5%, rgba(224,120,40,0.14) 0%, transparent 55%),
+      radial-gradient(1300px 700px at 50% 105%, #000000 0%, transparent 65%),
+      linear-gradient(160deg, #1c170f 0%, #120f0a 55%, #060504 100%);
     color:var(--ink);
     font-family:'Tajawal',sans-serif;
     min-height:100vh;
@@ -62,11 +64,11 @@
     max-width:90vw;
   }
   .logo span{
-    background:linear-gradient(180deg, #ffffff 0%, #cfe6ee 45%, #7fa8bb 100%);
+    background:linear-gradient(180deg, #f7e3ad 0%, #e0a63a 45%, #a8721f 100%);
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
-    text-shadow:0 1px 0 rgba(255,255,255,0.35);
+    text-shadow:0 1px 0 rgba(255,255,255,0.15);
   }
   header h1{
     margin:14px 0 0;
@@ -133,6 +135,26 @@
     color:var(--brand);
     border-color:rgba(31,174,122,0.4);
   }
+  .refresh-btn{
+    flex:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    color:var(--brand);
+    cursor:pointer;
+  }
+  .refresh-btn.spinning svg{
+    animation:spin 0.7s linear infinite;
+  }
+  @keyframes spin{
+    from{transform:rotate(0deg);}
+    to{transform:rotate(360deg);}
+  }
   main{max-width:520px;margin:0 auto;padding:6px 20px 60px;}
   .list-summary{
     text-align:center;
@@ -185,7 +207,7 @@
     font-size:13px;font-weight:700;
     align-self:flex-start;
   }
-  .badge.ok{background:var(--brand-dim);color:var(--brand);}
+  .badge.ok{background:var(--success-dim);color:var(--success);}
   .badge.warn{background:var(--amber-dim);color:var(--amber);}
   .badge.bad{background:var(--red-dim);color:var(--red);}
   .badge.mute{background:var(--gray-dim);color:var(--gray);}
@@ -198,7 +220,7 @@
     border-radius:12px;
     background:var(--gray-dim);
   }
-  .expiry-block.ok{background:var(--brand-dim);}
+  .expiry-block.ok{background:var(--success-dim);}
   .expiry-block.warn{background:var(--amber-dim);}
   .expiry-block.bad{background:var(--red-dim);}
   .expiry-label{
@@ -212,7 +234,7 @@
     letter-spacing:.5px;
     color:var(--brand);
   }
-  .expiry-block.ok .expiry-date{color:var(--brand);}
+  .expiry-block.ok .expiry-date{color:var(--success);}
   .expiry-block.warn .expiry-date{color:var(--amber);}
   .expiry-block.bad .expiry-date{color:var(--red);}
   .expiry-block.mute .expiry-date{color:var(--gray);}
@@ -263,6 +285,9 @@
     <button class="tab-btn active" data-tab="search">بحث</button>
     <button class="tab-btn" data-tab="banned">الممنوعين</button>
     <button class="tab-btn" data-tab="expiring">قرب الانتهاء</button>
+    <button id="refresh-btn" class="refresh-btn" title="تحديث البيانات" aria-label="تحديث البيانات">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
   </div>
   <div id="search-tab">
     <div class="search-box">
@@ -292,9 +317,33 @@ const resultsEl = document.getElementById('results');
 const hintEl = document.getElementById('hint');
 const searchTabEl = document.getElementById('search-tab');
 const tabButtons = document.querySelectorAll('.tab-btn');
+const refreshBtn = document.getElementById('refresh-btn');
 
 let debounceTimer = null;
 let currentTab = 'search';
+
+function refreshCurrentView() {
+  refreshBtn.classList.add('spinning');
+  const done = () => refreshBtn.classList.remove('spinning');
+
+  if (currentTab === 'search') {
+    const term = qInput.value.trim();
+    if (term) {
+      Promise.resolve(runSearch(term)).finally(done);
+    } else {
+      done();
+    }
+  } else if (currentTab === 'banned') {
+    Promise.resolve(loadBannedList()).finally(done);
+  } else if (currentTab === 'expiring') {
+    Promise.resolve(loadExpiringList()).finally(done);
+  } else {
+    done();
+  }
+}
+
+refreshBtn.addEventListener('click', refreshCurrentView);
+
 
 tabButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
