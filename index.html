@@ -29,6 +29,72 @@
     --gray-dim:#2a2417;
   }
   *{box-sizing:border-box;}
+  #lock-screen{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(1000px 550px at 15% -10%, rgba(224,166,58,0.16) 0%, transparent 55%),
+      radial-gradient(900px 500px at 95% 5%, rgba(224,120,40,0.14) 0%, transparent 55%),
+      linear-gradient(160deg, #1c170f 0%, #120f0a 55%, #060504 100%);
+    padding:20px;
+    z-index:1000;
+  }
+  .lock-box{
+    width:100%;
+    max-width:340px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+    background:linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:20px;
+    padding:32px 24px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  }
+  .lock-title{
+    color:var(--ink-dim);
+    font-size:14px;
+    font-weight:500;
+    margin:0;
+  }
+  .pin-input{
+    width:100%;
+    text-align:center;
+    letter-spacing:10px;
+    font-size:24px;
+    font-weight:700;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.16);
+    background:rgba(255,255,255,0.05);
+    color:var(--ink);
+    font-family:'Tajawal',sans-serif;
+  }
+  .pin-input:focus{outline:none;border-color:var(--brand);}
+  .pin-submit{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    background:var(--brand);
+    color:#1a1204;
+    font-weight:800;
+    font-size:15px;
+    font-family:'Tajawal',sans-serif;
+    cursor:pointer;
+  }
+  .pin-error{
+    color:var(--red);
+    font-size:13px;
+    min-height:16px;
+    margin:0;
+  }
   html,body{margin:0;padding:0;}
   body{
     background:
@@ -275,6 +341,18 @@
 </head>
 <body>
 
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="logo"><span>NCM Permission</span></div>
+    <p class="lock-title">أدخل الرقم السري للدخول</p>
+    <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••">
+    <button id="pin-submit" class="pin-submit">دخول</button>
+    <p id="pin-error" class="pin-error"></p>
+  </div>
+</div>
+
+<div id="app-root" style="display:none;">
+
 <header>
   <div class="logo"><span>NCM Permission</span></div>
   <h1>بحث</h1>
@@ -305,6 +383,44 @@
 <footer>نظام بحث التصاريح · للاستخدام الداخلي</footer>
 
 <script>
+// ---- قفل الدخول بالرقم السري ----
+// غيّر الرقم ده لأي رقم تاني تحبه، وشاركه بس مع اللي مصرح لهم يدخلوا (شخصين)
+const APP_PIN = "1804";
+const AUTH_KEY = "ncm_authorized";
+
+const lockScreen = document.getElementById('lock-screen');
+const appRoot = document.getElementById('app-root');
+const pinInput = document.getElementById('pin-input');
+const pinSubmit = document.getElementById('pin-submit');
+const pinError = document.getElementById('pin-error');
+
+function unlockApp() {
+  lockScreen.style.display = 'none';
+  appRoot.style.display = 'block';
+}
+
+function tryUnlock() {
+  if (pinInput.value === APP_PIN) {
+    localStorage.setItem(AUTH_KEY, '1');
+    unlockApp();
+  } else {
+    pinError.textContent = 'الرقم غير صحيح';
+    pinInput.value = '';
+    pinInput.focus();
+  }
+}
+
+if (localStorage.getItem(AUTH_KEY) === '1') {
+  unlockApp();
+} else {
+  pinInput.focus();
+}
+
+pinSubmit.addEventListener('click', tryUnlock);
+pinInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') tryUnlock();
+});
+
 // ---- إعدادات الاتصال بـ Supabase ----
 const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqY2FsZ3VtbG9kZWhvdWxid3RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDU4OTgsImV4cCI6MjEwMDkyMTg5OH0.RD3ZfSdrAEIYyhJqeQazAQ6JHhk9ji_ZfUrSHXE-RuE";
@@ -576,5 +692,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+</div>
+
 </body>
 </html>
