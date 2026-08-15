@@ -60,11 +60,18 @@ button{font-family:inherit;cursor:pointer;}
 /* wordmark */
 .mark{font-family:var(--cond);font-weight:600;letter-spacing:.2em;text-indent:.2em;line-height:1;}
 .mark b{
-  display:block;font-weight:700;font-size:26px;letter-spacing:.12em;text-indent:.12em;
+  display:block;font-weight:700;font-size:27px;letter-spacing:.13em;text-indent:.13em;
   background:linear-gradient(180deg,#fdf6e6 0%,var(--gold) 62%,#9c7223 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-.mark i{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:7px;}
+.mark i{
+  display:block;font-style:normal;font-size:10px;color:var(--muted);
+  letter-spacing:.26em;text-indent:.26em;margin-top:9px;
+}
+.mark .hr{
+  display:block;width:46px;height:1px;margin:10px auto 0;
+  background:linear-gradient(90deg,transparent,rgba(221,166,63,.5),transparent);
+}
 
 /* ============================================================
    LOGIN
@@ -74,12 +81,12 @@ button{font-family:inherit;cursor:pointer;}
   background:radial-gradient(560px 380px at 50% 30%, rgba(221,166,63,.07) 0%, transparent 70%), #0b0a08;
 }
 .gate-card{
-  width:100%;max-width:320px;text-align:center;
-  border:1px solid var(--line);border-radius:var(--r-lg);
-  background:var(--panel);padding:34px 26px 26px;
-  box-shadow:0 20px 50px rgba(0,0,0,.5);
+  width:100%;max-width:328px;text-align:center;
+  border:1px solid var(--line);border-radius:20px;
+  background:var(--panel);padding:38px 28px 30px;
+  box-shadow:0 24px 56px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.055);
 }
-.gate-label{font-size:13px;color:var(--muted);margin:24px 0 14px;}
+.gate-label{font-size:12.5px;color:var(--muted);letter-spacing:.02em;margin:26px 0 15px;}
 .dots{display:flex;justify-content:center;gap:10px;margin-bottom:14px;}
 .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.11);transition:.16s;}
 .dots i.on{background:var(--gold);}
@@ -115,10 +122,11 @@ button{font-family:inherit;cursor:pointer;}
   color:var(--text-2);background:var(--panel-2);border:1px solid var(--line);
   transition:background .16s,color .16s;
 }
-.nav-btn:hover{background:var(--panel);}
+.nav-btn:hover{background:var(--panel);color:var(--text);}
 .nav-btn[aria-selected="true"]{
-  color:#1a1305;border-color:transparent;
+  color:#1a1305;border-color:transparent;font-weight:800;
   background:linear-gradient(180deg,var(--gold-soft),var(--gold));
+  box-shadow:0 4px 12px rgba(221,166,63,.16);
 }
 .nav-btn .tag{display:none;}
 .iconbtn{
@@ -139,10 +147,15 @@ button{font-family:inherit;cursor:pointer;}
 
 /* search */
 .searchbar{
-  display:flex;align-items:center;gap:11px;padding:14px 16px;border-radius:var(--r-lg);
-  background:rgba(0,0,0,.26);border:1px solid var(--line-2);transition:border-color .16s;
+  display:flex;align-items:center;gap:12px;padding:15px 17px;border-radius:var(--r-lg);
+  background:rgba(0,0,0,.28);border:1px solid var(--line-2);
+  transition:border-color .18s, box-shadow .18s;
 }
-.searchbar:focus-within{border-color:rgba(221,166,63,.42);}
+.searchbar:focus-within{
+  border-color:rgba(221,166,63,.45);
+  box-shadow:0 0 0 3px rgba(221,166,63,.07);
+}
+.searchbar:focus-within svg{color:var(--gold);}
 .searchbar svg{flex:none;color:var(--muted);}
 #q{
   flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);
@@ -210,7 +223,7 @@ button{font-family:inherit;cursor:pointer;}
 .rec[data-s="mute"]{--tone:var(--neutral);}
 
 /* identity */
-.head{padding:20px 18px 17px;text-align:center;border-bottom:1px solid var(--line);}
+.head{padding:22px 18px 18px;text-align:center;border-bottom:1px solid var(--line);}
 .code{
   display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;
   font-size:11px;font-weight:700;color:var(--gold);
@@ -219,7 +232,7 @@ button{font-family:inherit;cursor:pointer;}
 }
 .code em{font-style:normal;color:var(--muted);font-size:10.5px;}
 .code .num{font-size:12.5px;}
-.nm{font-size:19px;font-weight:800;line-height:1.4;margin:0;color:#fff;}
+.nm{font-size:20px;font-weight:800;line-height:1.42;margin:0;color:#fff;letter-spacing:-.01em;}
 .nm-en{
   font-family:var(--cond);font-weight:700;letter-spacing:.04em;font-size:19px;
   color:#fff;text-transform:uppercase;direction:ltr;margin:4px 0 0;line-height:1.3;
@@ -234,7 +247,7 @@ button{font-family:inherit;cursor:pointer;}
 .pill.warn{background:rgba(223,162,53,.13);color:var(--warning);border-color:transparent;}
 .pill.bad {background:rgba(221,90,78,.14);color:var(--danger);border-color:transparent;}
 .pill.mute{background:rgba(139,132,113,.13);color:var(--neutral);border-color:transparent;}
-.dot{flex:none;width:7px;height:7px;border-radius:50%;background:currentColor;}
+.ic{flex:none;width:13px;height:13px;}
 
 /* permit strip */
 .permit{
@@ -244,14 +257,20 @@ button{font-family:inherit;cursor:pointer;}
 }
 .permit-k{font-size:11.5px;color:var(--muted);}
 .permit-s{font-size:14.5px;font-weight:800;color:var(--tone);margin-top:3px;}
-.permit-c{font-size:12px;color:var(--text-2);margin-top:4px;}
-.permit-d{font-family:var(--mono);font-size:23px;font-weight:600;color:var(--tone);line-height:1;}
+.permit-c{font-size:12.5px;color:var(--text-2);margin-top:5px;font-weight:600;}
+.permit-d{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--tone);line-height:1;letter-spacing:-.02em;}
 .permit-d.na{font-family:var(--sans);font-size:17px;font-weight:800;color:var(--neutral);}
 .track{position:relative;height:4px;border-radius:999px;margin-top:9px;overflow:hidden;background:rgba(255,255,255,.08);}
 .track span{position:absolute;inset-block:0;inset-inline-start:0;border-radius:999px;background:var(--tone);opacity:.85;}
 
-/* info list — plain rows inside the same card */
-.rows{margin:0;padding:4px 18px;}
+/* info list — grouped rows, no extra cards */
+.grp{padding:0 18px;border-bottom:1px solid var(--line);}
+.grp:last-of-type{border-bottom:none;}
+.grp-t{
+  display:block;font-size:10.5px;letter-spacing:.14em;color:var(--muted);
+  padding:14px 0 2px;
+}
+.rows{margin:0;padding:0 0 6px;}
 .row{
   display:flex;align-items:baseline;justify-content:space-between;gap:14px;
   padding:12px 0;border-bottom:1px solid var(--line);
@@ -264,8 +283,8 @@ button{font-family:inherit;cursor:pointer;}
 .row dd.bad{color:var(--danger);}
 
 /* photos */
-.shots{padding:14px 18px 18px;display:flex;flex-direction:column;gap:10px;}
-.shot{position:relative;margin:0;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--panel-2);}
+.shots{padding:0;margin-top:12px;display:flex;flex-direction:column;gap:0;}
+.shot{position:relative;margin:0;overflow:hidden;background:var(--panel-2);border-top:1px solid var(--line);}
 .shot img{display:block;width:100%;height:auto;cursor:zoom-in;}
 .noshot{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
@@ -307,7 +326,7 @@ button{font-family:inherit;cursor:pointer;}
 <!-- ================= APP ================= -->
 <div id="app" hidden>
   <div class="topbar">
-    <div class="mark">NCM<b>PERMISSION</b></div>
+    <div class="mark">NCM<b>PERMISSION</b><span class="hr"></span><i>SECURITY ACCESS CONTROL</i></div>
   </div>
 
   <div class="shell">
@@ -500,7 +519,7 @@ function countdownText(dl){
   if(dl === null) return null;
   if(dl === 0)  return 'ينتهي اليوم';
   if(dl < 0)    return 'منتهي منذ ' + arDays(dl);
-  return 'باقي ' + arDays(dl) + ' على الانتهاء';
+  return 'متبقي ' + arDays(dl);
 }
 
 /* ============================================================
@@ -552,10 +571,25 @@ function shotHTML(code, second){
   return '<figure class="shot"><img src="' + photoURL(code, second) +
          '" alt="صورة الموظف" loading="lazy" decoding="async" data-zoom></figure>';
 }
+// Renders a labelled block only when it actually has rows, so an employee
+// with no security notes never shows an empty "بيانات أمنية" heading.
+function group(title, rows){
+  if(!rows) return '';
+  return '<div class="grp"><span class="grp-t">' + title + '</span>' +
+         '<dl class="rows">' + rows + '</dl></div>';
+}
+
 function rowHTML(label, value, cls){
   if(value === null || value === undefined || value === '') return '';
   return '<div class="row"><dt>' + label + '</dt>' +
          '<dd class="' + (cls || '') + '">' + esc(value) + '</dd></div>';
+}
+
+function statusIcon(k){
+  if(k === 'ok')   return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M5 12.6l4.4 4.4L19 7.4" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  if(k === 'warn') return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M12 7.6V13" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17" r="1.4" fill="currentColor"/></svg>';
+  if(k === 'bad')  return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
+  return '<svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2.4"/></svg>';
 }
 
 function recordHTML(emp){
@@ -577,7 +611,7 @@ function recordHTML(emp){
       '<h2 class="nm">' + esc(emp.full_name || 'اسم غير مسجل') + '</h2>' +
       (emp.full_name_en ? '<p class="nm-en">' + esc(emp.full_name_en) + '</p>' : '') +
       '<div class="pills">' +
-        '<span class="pill ' + s.k + '"><span class="dot"></span>' + esc(s.label) + '</span>' +
+        '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
         (resigned ? '<span class="pill bad">استقالة</span>'
                   : (tab === 'banned' ? '<span class="pill ok">موجود</span>' : '')) +
         (cat ? '<span class="pill">' + cat + '</span>' : '') +
@@ -593,16 +627,20 @@ function recordHTML(emp){
       (pdate ? '<div class="permit-d num">' + pdate + '</div>' : '<div class="permit-d na">—</div>') +
     '</div>' +
 
-    '<dl class="rows">' +
+    group('البيانات الشخصية',
       rowHTML('الرقم القومي', emp.national_id, 'num') +
+      rowHTML('رقم الهاتف', fmtPhone(emp.phone), 'num') +
+      rowHTML('العنوان', emp.address)
+    ) +
+    group('بيانات التوظيف',
       rowHTML('الوظيفة', emp.job_title) +
       rowHTML('القسم', emp.department) +
-      rowHTML('العنوان', emp.address) +
-      rowHTML('تاريخ التعيين', fmtDate(emp.hire_date), 'num') +
-      rowHTML('رقم الهاتف', fmtPhone(emp.phone), 'num') +
-      rowHTML('انتهاء الاستقالة', fmtDate(emp.resignation_end_date), 'num warn') +
+      rowHTML('تاريخ التعيين', fmtDate(emp.hire_date), 'num')
+    ) +
+    group('بيانات أمنية',
       rowHTML('سبب المنع', emp.ban_reason, 'bad') +
-    '</dl>' +
+      rowHTML('انتهاء الاستقالة', fmtDate(emp.resignation_end_date), 'num warn')
+    ) +
 
     '<div class="shots">' + shotHTML(code, false) + shotHTML(code, true) + '</div>' +
   '</article>';
@@ -622,13 +660,7 @@ function renderSkeleton(n){
 }
 function renderIdle(){
   setBusy(false);
-  out.innerHTML =
-    '<div class="state">' +
-      '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-      '<h3>ابدأ البحث عن موظف</h3>' +
-      '<p>يمكنك البحث بأي من التالي</p>' +
-      '<div class="keys"><span>الكود</span><span>الرقم القومي</span><span>الاسم</span></div>' +
-    '</div>';
+  out.innerHTML = '';
 }
 function renderEmpty(msg, hint){
   setBusy(false);
