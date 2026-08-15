@@ -3,696 +3,471 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>بحث التصاريح</title>
+<title>NCM Permission</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
-<meta name="theme-color" content="#0e0c08">
+<meta name="theme-color" content="#0b0a07">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg:#0e0c08;
-    --bg-elev:#1c170f;
-    --line:#3a2f1c;
-    --ink:#f7f1e3;
-    --ink-dim:#c9b98f;
-    --brand:#e0a63a;
-    --brand-dim:#3a2c10;
-    --success:#3fae6f;
-    --success-dim:#173b26;
-    --amber:#e2a12b;
-    --amber-dim:#3a2e12;
-    --red:#e0554a;
-    --red-dim:#3a1a17;
-    --gray:#a89a78;
-    --gray-dim:#2a2417;
+    --ink:#f6f0e2;
+    --ink-2:#c3b491;
+    --ink-3:#8b7d5e;
+    --gold:#e0a63a;
+    --gold-soft:#f2d79a;
+    --edge:rgba(224,166,58,.22);
+    --edge-2:rgba(255,255,255,.07);
+    --ok:#3fae6f;
+    --warn:#e2a12b;
+    --bad:#e0554a;
+    --mute:#8d8570;
+    --r:14px;
   }
-  *{box-sizing:border-box;}
-  #lock-screen{
-    position:fixed;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-      radial-gradient(1000px 550px at 15% -10%, rgba(224,166,58,0.16) 0%, transparent 55%),
-      radial-gradient(900px 500px at 95% 5%, rgba(224,120,40,0.14) 0%, transparent 55%),
-      linear-gradient(160deg, #1c170f 0%, #120f0a 55%, #060504 100%);
-    padding:20px;
-    z-index:1000;
-  }
-  .lock-box{
-    width:100%;
-    max-width:340px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:16px;
-    background:linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
-    backdrop-filter:blur(14px) saturate(140%);
-    -webkit-backdrop-filter:blur(14px) saturate(140%);
-    border:1px solid rgba(255,255,255,0.14);
-    border-radius:20px;
-    padding:32px 24px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4);
-  }
-  .lock-title{
-    color:var(--ink-dim);
-    font-size:14px;
-    font-weight:500;
-    margin:0;
-  }
-  .pin-input{
-    width:100%;
-    text-align:center;
-    letter-spacing:10px;
-    font-size:24px;
-    font-weight:700;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.16);
-    background:rgba(255,255,255,0.05);
-    color:var(--ink);
-    font-family:'Tajawal',sans-serif;
-  }
-  .pin-input:focus{outline:none;border-color:var(--brand);}
-  .pin-submit{
-    width:100%;
-    padding:12px;
-    border-radius:12px;
-    border:none;
-    background:var(--brand);
-    color:#1a1204;
-    font-weight:800;
-    font-size:15px;
-    font-family:'Tajawal',sans-serif;
-    cursor:pointer;
-  }
-  .pin-error{
-    color:var(--red);
-    font-size:13px;
-    min-height:16px;
-    margin:0;
-  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
+  html{
+    background-color:#0a0906;
+    background-image:
+      radial-gradient(900px 460px at 78% -6%, rgba(224,120,40,.13) 0%, transparent 58%),
+      radial-gradient(760px 420px at 10% 2%, rgba(224,166,58,.10) 0%, transparent 55%);
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+  }
   body{
-    background:
-      radial-gradient(1000px 550px at 15% -10%, rgba(224,166,58,0.16) 0%, transparent 55%),
-      radial-gradient(900px 500px at 95% 5%, rgba(224,120,40,0.14) 0%, transparent 55%),
-      radial-gradient(1300px 700px at 50% 105%, #000000 0%, transparent 65%),
-      linear-gradient(160deg, #1c170f 0%, #120f0a 55%, #060504 100%);
-    color:var(--ink);
-    font-family:'Tajawal',sans-serif;
-    min-height:100vh;
-    padding-bottom:env(safe-area-inset-bottom);
-  }
-  header{
-    padding:28px 20px 18px;
-    text-align:center;
-  }
-  .logo{
-    display:inline-block;
-    font-family:'Poppins',sans-serif;
-    font-weight:700;
-    font-size:22px;
-    letter-spacing:0.5px;
-    padding:12px 26px;
-    border-radius:20px;
-    background:linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.02));
-    backdrop-filter:blur(16px) saturate(140%);
-    -webkit-backdrop-filter:blur(16px) saturate(140%);
-    border:1px solid rgba(255,255,255,0.28);
-    box-shadow:
-      0 8px 28px rgba(0,0,0,0.35),
-      inset 0 1px 0 rgba(255,255,255,0.45),
-      inset 0 -12px 20px -10px rgba(0,0,0,0.25);
-    max-width:90vw;
-  }
-  .logo span{
-    background:linear-gradient(180deg, #f7e3ad 0%, #e0a63a 45%, #a8721f 100%);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-    text-shadow:0 1px 0 rgba(255,255,255,0.15);
-  }
-  header h1{
-    margin:14px 0 0;
-    font-size:20px;
-    font-weight:700;
-    color:var(--ink-dim);
-  }
-  .search-wrap{
-    padding:0 20px 14px;
-    max-width:520px;
-    margin:0 auto;
-  }
-  .search-box{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
-    backdrop-filter:blur(14px) saturate(140%);
-    -webkit-backdrop-filter:blur(14px) saturate(140%);
-    border:1px solid rgba(255,255,255,0.16);
-    border-radius:16px;
-    padding:14px 16px;
-    box-shadow:0 6px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
-  }
-  .search-box svg{flex:none;opacity:.7;}
-  .search-box input{
-    flex:1;
     background:transparent;
-    border:none;
-    outline:none;
     color:var(--ink);
     font-family:'Tajawal',sans-serif;
-    font-size:17px;
-    font-weight:500;
+    min-height:100dvh;
+    padding-bottom:calc(28px + env(safe-area-inset-bottom));
   }
-  .search-box input::placeholder{color:var(--ink-dim);}
-  .hint{
-    color:var(--ink-dim);
-    font-size:12.5px;
-    padding:10px 4px 0;
-    text-align:center;
+  .num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed;}
+
+  /* lock */
+  #lock{
+    position:fixed;inset:0;z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    background:linear-gradient(178deg,#14110a 0%,#0b0906 60%,#050403 100%);
   }
-  .tabs{
-    display:flex;
-    gap:8px;
-    margin-bottom:12px;
-    overflow-x:auto;
+  .lock-card{
+    width:100%;max-width:330px;text-align:center;
+    border:1px solid var(--edge);border-radius:20px;
+    background:linear-gradient(165deg,rgba(255,255,255,.055),rgba(255,255,255,.012));
+    padding:34px 24px 26px;
+    box-shadow:0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.09);
   }
-  .tab-btn{
-    flex:1;
-    white-space:nowrap;
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.1);
-    color:var(--ink-dim);
-    font-family:'Tajawal',sans-serif;
-    font-weight:700;
-    font-size:14px;
-    padding:11px 10px;
-    border-radius:12px;
-    cursor:pointer;
+  .brand{
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    font-size:26px;line-height:1;
+    background:linear-gradient(180deg,#fff8e6 0%,var(--gold) 58%,#9a6d18 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
   }
-  .tab-btn.active{
-    background:var(--brand-dim);
-    color:var(--brand);
-    border-color:rgba(31,174,122,0.4);
+  .brand-rule{width:52px;height:2px;margin:12px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+  .lock-sub{color:var(--ink-3);font-size:12.5px;letter-spacing:.03em;margin:14px 0 20px;}
+  #pin{
+    width:100%;text-align:center;letter-spacing:.7em;text-indent:.7em;
+    font-family:'IBM Plex Mono',monospace;font-size:22px;
+    padding:13px 10px;border-radius:12px;color:var(--ink);
+    border:1px solid var(--edge-2);background:rgba(0,0,0,.35);transition:border-color .15s;
   }
-  .refresh-btn{
-    flex:none;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:42px;
-    height:42px;
-    border-radius:12px;
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.1);
-    color:var(--brand);
-    cursor:pointer;
+  #pin:focus{outline:none;border-color:var(--gold);}
+  #pin-go{
+    width:100%;margin-top:12px;padding:13px;border:none;border-radius:12px;
+    font-family:'Tajawal',sans-serif;font-weight:800;font-size:15px;color:#1a1204;
+    background:linear-gradient(180deg,var(--gold-soft),var(--gold));cursor:pointer;
   }
-  .refresh-btn.spinning svg{
-    animation:spin 0.7s linear infinite;
+  #pin-go:active{transform:translateY(1px);}
+  #pin-err{color:var(--bad);font-size:12.5px;min-height:18px;margin:12px 0 0;}
+
+  header{padding:26px 20px 6px;text-align:center;}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px;}
+
+  /* tabs */
+  .bar{display:flex;gap:7px;margin:18px 0 12px;}
+  .tab{
+    flex:1;padding:11px 6px;border-radius:11px;cursor:pointer;
+    font-family:'Tajawal',sans-serif;font-weight:700;font-size:13.5px;
+    color:var(--ink-3);background:rgba(255,255,255,.035);
+    border:1px solid var(--edge-2);transition:.16s;
   }
-  @keyframes spin{
-    from{transform:rotate(0deg);}
-    to{transform:rotate(360deg);}
+  .tab[aria-selected="true"]{color:#1a1204;border-color:transparent;background:linear-gradient(180deg,var(--gold-soft),var(--gold));}
+  .icon-btn{
+    flex:none;width:42px;border-radius:11px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gold);background:rgba(255,255,255,.035);border:1px solid var(--edge-2);
   }
-  main{max-width:520px;margin:0 auto;padding:6px 20px 60px;}
-  .list-summary{
-    text-align:center;
-    color:var(--ink-dim);
-    font-size:13px;
-    padding:4px 0 4px;
+  .icon-btn.busy svg{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* search */
+  .field-search{
+    display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:13px;
+    background:rgba(0,0,0,.3);border:1px solid var(--edge-2);transition:border-color .15s;
   }
-  .msg{
-    text-align:center;
-    color:var(--ink-dim);
-    padding:40px 10px;
-    font-size:14.5px;
-    line-height:1.9;
+  .field-search:focus-within{border-color:var(--edge);}
+  .field-search svg{flex:none;color:var(--ink-3);}
+  #q{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--ink);font-family:'Tajawal',sans-serif;font-size:16px;font-weight:500;}
+  #q::placeholder{color:var(--ink-3);}
+
+  .state{text-align:center;color:var(--ink-3);font-size:13.5px;padding:46px 12px;}
+  .count{display:flex;align-items:center;gap:9px;margin:16px 2px 2px;color:var(--ink-3);font-size:11.5px;letter-spacing:.08em;}
+  .count::after{content:"";flex:1;height:1px;background:var(--edge-2);}
+  .count b{color:var(--gold);font-family:'IBM Plex Mono',monospace;font-weight:600;}
+
+  /* record */
+  .rec{
+    position:relative;margin-top:16px;border-radius:20px;
+    border:1px solid rgba(255,255,255,.10);
+    background:linear-gradient(168deg,rgba(255,255,255,.075),rgba(255,255,255,.02));
+    backdrop-filter:blur(18px) saturate(135%);
+    -webkit-backdrop-filter:blur(18px) saturate(135%);
+    box-shadow:0 18px 42px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.13);
+    padding:18px 14px 16px;
+    overflow:hidden;
   }
-  .card{
-    background:linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
-    backdrop-filter:blur(14px) saturate(140%);
-    -webkit-backdrop-filter:blur(14px) saturate(140%);
-    border:1px solid rgba(255,255,255,0.14);
-    border-radius:18px;
-    padding:18px;
-    margin-top:14px;
-    display:flex;
-    flex-direction:column;
-    align-items:stretch;
-    gap:14px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  /* status glow bleeding in from the top edge */
+  .rec::after{
+    content:"";position:absolute;top:0;left:0;right:0;height:110px;pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 0%, var(--tone,transparent) 0%, transparent 70%);
+    opacity:.16;
   }
-  .photos-row{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    align-items:center;
+  .rec[data-s="ok"]  {--tone:var(--ok);}
+  .rec[data-s="warn"]{--tone:var(--warn);}
+  .rec[data-s="bad"] {--tone:var(--bad);}
+  .rec[data-s="mute"]{--tone:#8d8570;}
+
+  .rec-head{
+    position:relative;z-index:1;text-align:center;
+    padding:16px 14px 15px;border-radius:15px;margin-bottom:9px;
+    background:linear-gradient(150deg,rgba(255,255,255,.07),rgba(255,255,255,.018));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1);
   }
-  .photo{
-    width:100%;
-    max-width:320px;
-    height:auto;
-    border-radius:14px;
-    background:var(--gray-dim);
-    object-fit:contain;
-    border:1px solid var(--line);
+  .rec-code{
+    display:inline-flex;align-items:center;gap:7px;margin:0 0 11px;
+    font-size:11px;font-weight:600;letter-spacing:.06em;
+    color:var(--gold);background:rgba(224,166,58,.12);
+    border:1px solid var(--edge);border-radius:999px;padding:4px 12px;
   }
-  .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
-  .info .name{font-size:17px;font-weight:700;margin:0 0 2px;}
-  .info .job{color:var(--ink-dim);font-size:13.5px;margin:0 0 10px;}
-  .badge{
-    display:inline-flex;align-items:center;gap:6px;
-    padding:5px 12px;border-radius:999px;
-    font-size:13px;font-weight:700;
-    align-self:flex-start;
+  .rec-code-l{color:var(--ink-3);font-family:'Tajawal',sans-serif;font-weight:700;}
+  .rec-code .num{font-size:12.5px;font-weight:600;}
+  .rec-name{font-size:20px;font-weight:800;line-height:1.35;margin:0;color:#fff;}
+  .rec-name-en{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:.07em;
+    font-size:14px;color:#fff;text-transform:uppercase;direction:ltr;
+    margin:4px 0 0;
   }
-  .badge.ok{background:var(--success-dim);color:var(--success);}
-  .badge.warn{background:var(--amber-dim);color:var(--amber);}
-  .badge.bad{background:var(--red-dim);color:var(--red);}
-  .badge.mute{background:var(--gray-dim);color:var(--gray);}
-  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
-  .expiry-block{
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-    padding:10px 14px;
-    border-radius:12px;
-    background:var(--gray-dim);
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center;}
+  .chip{
+    font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:999px;
+    background:rgba(255,255,255,.06);color:var(--ink-2);border:1px solid rgba(255,255,255,.09);
   }
-  .expiry-block.ok{background:var(--success-dim);}
-  .expiry-block.warn{background:var(--amber-dim);}
-  .expiry-block.bad{background:var(--red-dim);}
-  .expiry-label{
-    font-size:12px;
-    color:var(--ink-dim);
-    font-weight:500;
+  .chip.tone{border-color:transparent;}
+  .chip.ok{background:rgba(63,174,111,.16);color:var(--ok);}
+  .chip.warn{background:rgba(226,161,43,.16);color:var(--warn);}
+  .chip.bad{background:rgba(224,85,74,.17);color:var(--bad);}
+  .chip.mute{background:rgba(141,133,112,.16);color:var(--mute);}
+
+  /* permit — the loudest panel in the card */
+  .permit{
+    position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 16px;border-radius:15px;margin-bottom:9px;
+    background:linear-gradient(150deg,rgba(255,255,255,.07),rgba(255,255,255,.018));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1);
   }
-  .expiry-date{
-    font-size:26px;
-    font-weight:900;
-    letter-spacing:.5px;
-    color:var(--brand);
+  .permit-l{font-size:14px;font-weight:800;letter-spacing:.02em;color:var(--ink);}
+  .rec[data-s="ok"] .permit-l{color:var(--ok);}
+  .rec[data-s="warn"] .permit-l{color:var(--warn);}
+  .rec[data-s="bad"] .permit-l{color:var(--bad);}
+  .rec[data-s="mute"] .permit-l{color:var(--mute);}
+  .permit-v{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;letter-spacing:.01em;line-height:1;}
+  .permit-v.small{font-family:'Tajawal',sans-serif;font-size:17px;font-weight:800;}
+  .rec[data-s="ok"] .permit-v{color:var(--ok);}
+  .rec[data-s="warn"] .permit-v{color:var(--warn);}
+  .rec[data-s="bad"] .permit-v{color:var(--bad);}
+  .rec[data-s="mute"] .permit-v{color:var(--mute);}
+  .permit-note{font-size:11.5px;color:var(--ink-3);margin-top:5px;}
+
+  /* every field is its own glass slab */
+  .grid{position:relative;z-index:1;display:flex;flex-direction:column;gap:7px;margin:0;}
+  .cell{
+    display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+    padding:11px 15px;border-radius:13px;min-width:0;
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.07);
   }
-  .expiry-block.ok .expiry-date{color:var(--success);}
-  .expiry-block.warn .expiry-date{color:var(--amber);}
-  .expiry-block.bad .expiry-date{color:var(--red);}
-  .expiry-block.mute .expiry-date{color:var(--gray);}
-  .field{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    background:rgba(255,255,255,0.045);
-    border:1px solid rgba(255,255,255,0.09);
-    border-radius:12px;
-    padding:11px 14px;
+  .cell dt{flex:none;font-size:11.5px;letter-spacing:.04em;color:var(--ink-3);margin:0;}
+  .cell dd{margin:0;font-size:14px;font-weight:700;color:var(--ink);text-align:left;word-break:break-word;}
+  .cell dd.num{font-size:14.5px;font-weight:500;letter-spacing:.02em;}
+  .cell dd.warn{color:var(--warn);}
+  .cell dd.bad{color:var(--bad);}
+
+  .shots{position:relative;z-index:1;padding:9px 0 0;display:flex;flex-direction:column;gap:9px;}
+  .shot{
+    position:relative;border-radius:14px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);
   }
-  .field .row-label{
-    font-size:12.5px;
-    color:var(--ink-dim);
-    white-space:nowrap;
-    font-weight:500;
-  }
-  .field b{
-    font-size:14.5px;
-    font-weight:700;
-    color:var(--ink);
-    text-align:left;
-  }
-  .field.field-name b{
-    font-size:18px;
-    font-weight:800;
-  }
-  .rows{display:grid;gap:6px;font-size:13.5px;color:var(--ink-dim);}
-  .rows b{color:var(--ink);font-weight:500;}
-  .row-label{color:var(--ink-dim);}
-  footer{
-    text-align:center;color:var(--ink-dim);font-size:11.5px;
-    padding:20px;opacity:.6;
+  .shot img{display:block;width:100%;height:auto;}
+  .noshot{
+    display:flex;align-items:center;justify-content:center;
+    aspect-ratio:16/10;
+    background:linear-gradient(160deg,#454545,#333333 60%,#2c2c2c);
+    color:#fff;font-size:13.5px;font-weight:700;letter-spacing:.02em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09);
   }
 </style>
 </head>
 <body>
 
-<div id="lock-screen">
-  <div class="lock-box">
-    <div class="logo"><span>NCM Permission</span></div>
-    <p class="lock-title">أدخل الرقم السري للدخول</p>
-    <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••">
-    <button id="pin-submit" class="pin-submit">دخول</button>
-    <p id="pin-error" class="pin-error"></p>
+<div id="lock">
+  <div class="lock-card">
+    <div class="brand">NCM Permission</div>
+    <div class="brand-rule"></div>
+    <p class="lock-sub">الرقم السري</p>
+    <input id="pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••">
+    <button id="pin-go">دخول</button>
+    <p id="pin-err"></p>
   </div>
 </div>
 
-<div id="app-root" style="display:none;">
+<div id="app" hidden>
+  <header>
+    <div class="brand">NCM Permission</div>
+    <div class="brand-rule"></div>
+  </header>
 
-<header>
-  <div class="logo"><span>NCM Permission</span></div>
-  <h1>بحث</h1>
-</header>
-
-<div class="search-wrap">
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="search">بحث</button>
-    <button class="tab-btn" data-tab="banned">الممنوعين</button>
-    <button class="tab-btn" data-tab="expiring">قرب الانتهاء</button>
-    <button id="refresh-btn" class="refresh-btn" title="تحديث البيانات" aria-label="تحديث البيانات">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-  </div>
-  <div id="search-tab">
-    <div class="search-box">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9fb7c8" stroke-width="2"/><path d="M20 20L16.5 16.5" stroke="#9fb7c8" stroke-width="2" stroke-linecap="round"/></svg>
-      <input id="q" type="text" placeholder="اكتب الكود، الرقم القومي، أو الاسم..." autocomplete="off" inputmode="search">
+  <div class="wrap">
+    <div class="bar" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="search">بحث</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="banned">الممنوعين</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="expiring">قرب الانتهاء</button>
+      <button id="refresh" class="icon-btn" aria-label="تحديث">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
-    <div class="hint" id="hint">ابحث بأي من الثلاثة: كود الموظف، الرقم القومي، أو الاسم</div>
+
+    <div id="searchbox">
+      <div class="field-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="q" type="text" placeholder="الكود · الرقم القومي · الاسم" autocomplete="off" inputmode="search">
+      </div>
+    </div>
+
+    <div id="out"></div>
   </div>
 </div>
-
-<main>
-  <div id="results"></div>
-</main>
-
-<footer>نظام بحث التصاريح · للاستخدام الداخلي</footer>
 
 <script>
-// ---- قفل الدخول بالرقم السري ----
-// غيّر الرقم ده لأي رقم تاني تحبه، وشاركه بس مع اللي مصرح لهم يدخلوا (شخصين)
 const APP_PIN = "1804";
 const AUTH_KEY = "ncm_authorized";
-
-const lockScreen = document.getElementById('lock-screen');
-const appRoot = document.getElementById('app-root');
-const pinInput = document.getElementById('pin-input');
-const pinSubmit = document.getElementById('pin-submit');
-const pinError = document.getElementById('pin-error');
-
-function unlockApp() {
-  lockScreen.style.display = 'none';
-  appRoot.style.display = 'block';
-}
-
-function tryUnlock() {
-  if (pinInput.value === APP_PIN) {
-    localStorage.setItem(AUTH_KEY, '1');
-    unlockApp();
-  } else {
-    pinError.textContent = 'الرقم غير صحيح';
-    pinInput.value = '';
-    pinInput.focus();
-  }
-}
-
-if (localStorage.getItem(AUTH_KEY) === '1') {
-  unlockApp();
-} else {
-  pinInput.focus();
-}
-
-pinSubmit.addEventListener('click', tryUnlock);
-pinInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') tryUnlock();
-});
-
-// ---- إعدادات الاتصال بـ Supabase ----
 const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqY2FsZ3VtbG9kZWhvdWxid3RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDU4OTgsImV4cCI6MjEwMDkyMTg5OH0.RD3ZfSdrAEIYyhJqeQazAQ6JHhk9ji_ZfUrSHXE-RuE";
-const PHOTO_BUCKET = "employee-photos";
-
+const BUCKET = "employee-photos";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const qInput = document.getElementById('q');
-const resultsEl = document.getElementById('results');
-const hintEl = document.getElementById('hint');
-const searchTabEl = document.getElementById('search-tab');
-const tabButtons = document.querySelectorAll('.tab-btn');
-const refreshBtn = document.getElementById('refresh-btn');
+const $ = (id) => document.getElementById(id);
+const lock = $('lock'), app = $('app'), pin = $('pin'), pinErr = $('pin-err');
+const q = $('q'), out = $('out'), searchbox = $('searchbox'), refresh = $('refresh');
+const tabs = document.querySelectorAll('.tab');
 
-let debounceTimer = null;
-let currentTab = 'search';
+function unlock(){ lock.style.display='none'; app.hidden=false; }
+function tryPin(){
+  if (pin.value === APP_PIN){ localStorage.setItem(AUTH_KEY,'1'); unlock(); }
+  else { pinErr.textContent='رقم غير صحيح'; pin.value=''; pin.focus(); }
+}
+if (localStorage.getItem(AUTH_KEY)==='1') unlock(); else pin.focus();
+$('pin-go').addEventListener('click', tryPin);
+pin.addEventListener('keydown', e => { if(e.key==='Enter') tryPin(); });
 
-function refreshCurrentView() {
-  refreshBtn.classList.add('spinning');
-  const done = () => refreshBtn.classList.remove('spinning');
-
-  if (currentTab === 'search') {
-    const term = qInput.value.trim();
-    if (term) {
-      Promise.resolve(runSearch(term)).finally(done);
-    } else {
-      done();
-    }
-  } else if (currentTab === 'banned') {
-    Promise.resolve(loadBannedList()).finally(done);
-  } else if (currentTab === 'expiring') {
-    Promise.resolve(loadExpiringList()).finally(done);
-  } else {
-    done();
-  }
+// Dates arrive as dd/mm/yyyy or yyyy-mm-dd depending on when the row was imported.
+function parseDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return new Date(+m[3], +m[2]-1, +m[1]);
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function fmtDate(v){
+  const d = parseDate(v);
+  if(!d) return null;
+  const p = n => String(n).padStart(2,'0');
+  return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear();
+}
+function daysLeft(v){
+  const d = parseDate(v); if(!d) return null;
+  const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((d - t)/86400000);
+}
+function fmtPhone(v){
+  if(!v) return null;
+  let s = String(v).replace(/\D/g,'');
+  if(!s) return null;
+  if(s.length===10) s='0'+s;
+  return s;
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-refreshBtn.addEventListener('click', refreshCurrentView);
+function status(emp){
+  const st = emp.permit_status || '';
+  if (st === 'ممنوع') return {k:'bad', label:'ممنوع'};
+  if (st === 'ساري'){
+    const dl = daysLeft(emp.permit_date);
+    if (dl !== null && dl < 0)   return {k:'bad',  label:'تصريح منتهي'};
+    if (dl !== null && dl <= 30) return {k:'warn', label:'قرب الانتهاء'};
+    return {k:'ok', label:'ساري'};
+  }
+  if (st === 'منتهي الصلاحية') return {k:'bad', label:'تصريح منتهي'};
+  return {k:'mute', label:'بدون تصريح'};
+}
 
+function shot(code, second){
+  const url = SUPABASE_URL+'/storage/v1/object/public/'+BUCKET+'/'+code+(second?'_2':'')+'.jpg';
+  return '<figure class="shot">'
+    + '<img src="'+url+'" alt="" loading="lazy" onerror="this.closest(\'.shot\').innerHTML=\'<div class=&quot;noshot&quot;>لا يوجد صورة</div>\'">'
+    + '</figure>';
+}
 
-tabButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    tabButtons.forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentTab = btn.dataset.tab;
-    resultsEl.innerHTML = '';
+function buildGrid(fields){
+  return fields.filter(function(f){ return f.v; }).map(function(f){
+    return '<div class="cell"><dt>'+f.k+'</dt><dd class="'+(f.cls||'')+'">'+esc(f.v)+'</dd></div>';
+  }).join('');
+}
 
-    if (currentTab === 'search') {
-      searchTabEl.style.display = 'block';
-      hintEl.style.display = qInput.value.trim() ? 'none' : 'block';
-      if (qInput.value.trim()) runSearch(qInput.value.trim());
-    } else if (currentTab === 'banned') {
-      searchTabEl.style.display = 'none';
-      loadBannedList();
-    } else if (currentTab === 'expiring') {
-      searchTabEl.style.display = 'none';
-      loadExpiringList();
-    }
+function render(emp){
+  const s = status(emp);
+  const code = emp.emp_code == null ? '' : emp.emp_code;
+  const resigned = !!emp.resignation_end_date;
+  const cat = emp.category === 'blue' ? 'BLUE COLLAR' : emp.category === 'white' ? 'WHITE COLLAR' : null;
+  const dl = daysLeft(emp.permit_date);
+  const permitDate = fmtDate(emp.permit_date);
+
+  const permitMain = permitDate
+    ? '<div class="permit-v num">'+permitDate+'</div>'
+    : '<div class="permit-v small">—</div>';
+  const permitNote = (permitDate && dl !== null)
+    ? '<div class="permit-note">'+(dl < 0 ? 'انتهى من ' + Math.abs(dl) + ' يوم' : 'باقي ' + dl + ' يوم على الانتهاء')+'</div>'
+    : '';
+
+  return '<article class="rec" data-s="'+s.k+'">'
+    + '<div class="rec-head">'
+      + '<span class="rec-code"><span class="rec-code-l">الكود</span><span class="num">'+esc(code)+'</span></span>'
+      + '<h2 class="rec-name">'+esc(emp.full_name || '—')+'</h2>'
+      + (emp.full_name_en ? '<p class="rec-name-en">'+esc(emp.full_name_en)+'</p>' : '')
+      + '<div class="chips">'
+        + '<span class="chip tone '+s.k+'">'+esc(s.label)+'</span>'
+        + (resigned ? '<span class="chip tone bad">استقالة</span>' : '<span class="chip tone ok">موجود</span>')
+        + (cat ? '<span class="chip">'+cat+'</span>' : '')
+      + '</div>'
+    + '</div>'
+    + '<div class="permit">'
+      + '<div><div class="permit-l">'+esc(s.label)+'</div>'+permitNote+'</div>'
+      + permitMain
+    + '</div>'
+    + '<dl class="grid">' + buildGrid([
+        {k:'الرقم القومي',     v:emp.national_id,                   cls:'num'},
+        {k:'الوظيفة',          v:emp.job_title},
+        {k:'القسم',            v:emp.department},
+        {k:'العنوان',          v:emp.address},
+        {k:'تاريخ التعيين',    v:fmtDate(emp.hire_date),            cls:'num'},
+        {k:'رقم الهاتف',       v:fmtPhone(emp.phone),               cls:'num'},
+        {k:'انتهاء الاستقالة', v:fmtDate(emp.resignation_end_date), cls:'num warn'},
+        {k:'سبب المنع',        v:emp.ban_reason,                    cls:'bad'}
+      ]) + '</dl>'
+    + '<div class="shots">'+shot(code,false)+shot(code,true)+'</div>'
+  + '</article>';
+}
+
+function show(rows, label){
+  if(!rows || !rows.length){ out.innerHTML = '<p class="state">لا توجد نتائج</p>'; return; }
+  const head = label ? '<div class="count">'+label+' <b>'+rows.length+'</b></div>' : '';
+  out.innerHTML = head + rows.map(render).join('');
+}
+function loading(){ out.innerHTML = '<p class="state">جارٍ التحميل</p>'; }
+function failed(m){ out.innerHTML = '<p class="state">تعذر تحميل البيانات — '+esc(m)+'</p>'; }
+
+async function runSearch(term){
+  loading();
+  const digits = /^[0-9]+$/.test(term);
+  let query = sb.from('employees').select('*');
+  query = digits
+    ? query.or('emp_code.eq.'+term+',national_id.eq.'+term)
+    : query.or('full_name.ilike.%'+term+'%,full_name_en.ilike.%'+term+'%');
+  const { data, error } = await query.limit(30);
+  if (error) return failed(error.message);
+  show(data, (data && data.length > 1) ? 'نتائج' : '');
+}
+
+async function loadBanned(){
+  loading();
+  // Resigned staff are no longer relevant to the gate, so only current employees show here.
+  const { data, error } = await sb.from('employees').select('*')
+    .eq('permit_status','ممنوع').order('emp_code');
+  if (error) return failed(error.message);
+  const current = (data || []).filter(function(r){ return !r.resignation_end_date; });
+  show(current, 'ممنوعين');
+}
+
+async function loadExpiring(){
+  loading();
+  const { data, error } = await sb.from('employees').select('*').eq('permit_status','ساري');
+  if (error) return failed(error.message);
+  const soon = (data || [])
+    .filter(function(r){ return !r.resignation_end_date; })
+    .map(function(r){ return { r:r, d:daysLeft(r.permit_date) }; })
+    .filter(function(x){ return x.d !== null && x.d >= 0 && x.d <= 30; })
+    .sort(function(a,b){ return a.d - b.d; })
+    .map(function(x){ return x.r; });
+  show(soon, 'تنتهي خلال ٣٠ يوم');
+}
+
+let tab = 'search', timer = null;
+
+function load(){
+  if (tab === 'banned')   return loadBanned();
+  if (tab === 'expiring') return loadExpiring();
+  const t = q.value.trim();
+  if (t) return runSearch(t);
+  out.innerHTML = '';
+  return Promise.resolve();
+}
+
+tabs.forEach(function(btn){
+  btn.addEventListener('click', function(){
+    tabs.forEach(function(b){ b.setAttribute('aria-selected', String(b === btn)); });
+    tab = btn.dataset.tab;
+    searchbox.hidden = tab !== 'search';
+    out.innerHTML = '';
+    load();
   });
 });
 
-qInput.addEventListener('input', () => {
-  clearTimeout(debounceTimer);
-  const term = qInput.value.trim();
-  if (term.length < 1) {
-    resultsEl.innerHTML = '';
-    hintEl.style.display = 'block';
-    return;
-  }
-  hintEl.style.display = 'none';
-  debounceTimer = setTimeout(() => runSearch(term), 300);
+q.addEventListener('input', function(){
+  clearTimeout(timer);
+  const t = q.value.trim();
+  if(!t){ out.innerHTML=''; return; }
+  timer = setTimeout(function(){ runSearch(t); }, 280);
 });
 
-async function loadBannedList() {
-  resultsEl.innerHTML = `<div class="msg">جارِ التحميل...</div>`;
-  const { data, error } = await sb
-    .from('employees')
-    .select('*')
-    .eq('permit_status', 'ممنوع')
-    .order('emp_code', { ascending: true });
+refresh.addEventListener('click', function(){
+  refresh.classList.add('busy');
+  Promise.resolve(load()).finally(function(){ refresh.classList.remove('busy'); });
+});
 
-  if (error) {
-    resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
-    return;
-  }
-  if (!data || data.length === 0) {
-    resultsEl.innerHTML = `<div class="msg">لا يوجد أشخاص ممنوعين حاليًا.</div>`;
-    return;
-  }
-  resultsEl.innerHTML =
-    `<div class="list-summary">عدد الممنوعين: ${data.length}</div>` +
-    data.map(renderCard).join('');
-}
-
-async function loadExpiringList() {
-  resultsEl.innerHTML = `<div class="msg">جارِ التحميل...</div>`;
-  const today = new Date();
-  const in30 = new Date(today.getTime() + 30 * 86400000);
-  const todayIso = today.toISOString().slice(0, 10);
-  const in30Iso = in30.toISOString().slice(0, 10);
-
-  const { data, error } = await sb
-    .from('employees')
-    .select('*')
-    .eq('permit_status', 'ساري')
-    .gte('permit_date', todayIso)
-    .lte('permit_date', in30Iso)
-    .order('permit_date', { ascending: true });
-
-  if (error) {
-    resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
-    return;
-  }
-  if (!data || data.length === 0) {
-    resultsEl.innerHTML = `<div class="msg">لا يوجد تصاريح قربت تنتهي خلال الشهر القادم.</div>`;
-    return;
-  }
-  resultsEl.innerHTML =
-    `<div class="list-summary">عدد التصاريح القريبة من الانتهاء: ${data.length}</div>` +
-    data.map(renderCard).join('');
-}
-
-async function runSearch(term) {
-  resultsEl.innerHTML = `<div class="msg">جارِ البحث...</div>`;
-
-  const isNumeric = /^[0-9]+$/.test(term);
-  let query = sb.from('employees').select('*');
-
-  if (isNumeric) {
-    // Numbers must match the code or national ID EXACTLY — no partial/substring hits.
-    query = query.or(`emp_code.eq.${term},national_id.eq.${term}`);
-  } else {
-    // Text search still matches within the name, since typing a full name isn't practical.
-    query = query.ilike('full_name', `%${term}%`);
-  }
-
-  const { data, error } = await query.limit(25);
-
-  if (error) {
-    resultsEl.innerHTML = `<div class="msg">حصل خطأ في الاتصال بالبيانات.<br>${error.message}</div>`;
-    return;
-  }
-  if (!data || data.length === 0) {
-    resultsEl.innerHTML = `<div class="msg">لا يوجد موظف مطابق لهذا البحث.</div>`;
-    return;
-  }
-  resultsEl.innerHTML = data.map(renderCard).join('');
-}
-
-function formatDate(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-function statusInfo(emp) {
-  const today = new Date();
-  let cls = 'mute', label = emp.permit_status || 'غير محدد';
-  const dateStr = formatDate(emp.permit_date);
-
-  if (emp.permit_status === 'ساري' && emp.permit_date) {
-    const d = new Date(emp.permit_date);
-    const daysLeft = Math.ceil((d - today) / 86400000);
-    if (daysLeft <= 30) {
-      cls = 'warn'; label = `قرب الانتهاء (${daysLeft} يوم)`;
-    } else {
-      cls = 'ok'; label = 'ساري';
-    }
-  } else if (emp.permit_status === 'منتهي الصلاحية') {
-    cls = 'bad'; label = 'تصريح منتهي';
-  } else if (emp.permit_status === 'ممنوع') {
-    cls = 'bad'; label = 'ممنوع';
-  } else if (emp.permit_status === 'بدون تصريح') {
-    cls = 'mute'; label = 'بدون تصريح';
-  }
-  return { cls, label };
-}
-
-function formatDateNumeric(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
-}
-
-function renderCard(emp) {
-  const { cls, label } = statusInfo(emp);
-  const photoUrl1 = emp.emp_code
-    ? `${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${emp.emp_code}.jpg`
-    : '';
-  const photoUrl2 = emp.emp_code
-    ? `${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${emp.emp_code}_2.jpg`
-    : '';
-  const catLabel = emp.category === 'blue' ? 'BLUE COLLAR' : 'WHITE COLLAR';
-
-  return `
-    <div class="card">
-      <div class="info">
-        ${emp.permit_date ? `
-        <div class="expiry-block ${cls}">
-          <span class="expiry-label">تاريخ انتهاء التصريح</span>
-          <span class="expiry-date">${formatDateNumeric(emp.permit_date)}</span>
-        </div>` : `
-        <div class="expiry-block ${cls}">
-          <span class="expiry-label">حالة التصريح</span>
-          <span class="expiry-date">${label}</span>
-        </div>`}
-        <div class="field field-name">
-          <span class="row-label">الاسم</span>
-          <b>${escHtml(emp.full_name || '-')}</b>
-        </div>
-        <div class="field">
-          <span class="row-label">الكود</span>
-          <b>${escHtml(emp.emp_code ?? '-')}</b>
-        </div>
-        <div class="field">
-          <span class="row-label">الرقم القومي</span>
-          <b>${escHtml(emp.national_id ?? '-')}</b>
-        </div>
-        <div class="field">
-          <span class="row-label">الوظيفة</span>
-          <b>${escHtml(emp.job_title || '-')}</b>
-        </div>
-        <div class="field">
-          <span class="row-label">النوع</span>
-          <b>${catLabel}</b>
-        </div>
-        ${emp.department ? `
-        <div class="field">
-          <span class="row-label">القسم</span>
-          <b>${escHtml(emp.department)}</b>
-        </div>` : ''}
-        <div class="field">
-          <span class="row-label">العنوان</span>
-          <b>${escHtml(emp.address ?? '-')}</b>
-        </div>
-        <span class="badge ${cls}"><span class="dot"></span>${label}</span>
-        ${emp.ban_reason ? `
-        <div class="field">
-          <span class="row-label">سبب المنع</span>
-          <b>${escHtml(emp.ban_reason)}</b>
-        </div>` : ''}
-        ${emp.notes ? `
-        <div class="field">
-          <span class="row-label">ملاحظات</span>
-          <b>${escHtml(emp.notes)}</b>
-        </div>` : ''}
-      </div>
-      <div class="photos-row">
-        <img class="photo" src="${photoUrl1}" onerror="this.src='data:image/svg+xml;utf8,${placeholderSvg()}'">
-        <img class="photo" src="${photoUrl2}" onerror="this.src='data:image/svg+xml;utf8,${placeholderSvg()}'">
-      </div>
-    </div>`;
-}
-
-function escHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-function placeholderSvg() {
-  return encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 74 74'><rect width='74' height='74' rx='14' fill='%2322303a'/><circle cx='37' cy='29' r='12' fill='%237c8b96'/><path d='M15 62c3-13 14-20 22-20s19 7 22 20' fill='%237c8b96'/></svg>`);
-}
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./service-worker.js').catch(function(){});
   });
 }
 </script>
-</div>
-
 </body>
 </html>
