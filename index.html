@@ -227,6 +227,44 @@ button{font-family:inherit;cursor:pointer;}
   background:rgba(221,166,63,.09);color:var(--gold);font-weight:800;font-size:13.5px;
 }
 
+/* overview tiles */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;}
+.tile{
+  display:flex;flex-direction:column;gap:7px;padding:13px 15px;
+  border-radius:var(--r);background:var(--panel-2);border:1px solid var(--line);
+  animation:rise .26s ease-out both;
+}
+.tile-k{font-size:11.5px;color:var(--muted);}
+.tile-v{font-size:23px;font-weight:600;color:var(--text);line-height:1;}
+.tile.mute .tile-v{color:var(--text-2);}
+.tile.warn{background:rgba(223,162,53,.1);border-color:rgba(223,162,53,.24);}
+.tile.warn .tile-k,.tile.warn .tile-v{color:var(--warning);}
+.tile.bad{background:rgba(221,90,78,.11);border-color:rgba(221,90,78,.26);}
+.tile.bad .tile-k,.tile.bad .tile-v{color:var(--danger);}
+.sk-tile{
+  height:70px;border-radius:var(--r);background:rgba(255,255,255,.05);
+  position:relative;overflow:hidden;
+}
+.sk-tile::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  animation:shimmer 1.5s infinite;
+}
+
+/* save-photo control */
+.savebtn{
+  position:absolute;top:9px;inset-inline-end:9px;
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.16);background:rgba(12,10,7,.72);
+  color:var(--gold);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:background .16s,color .16s,transform .12s;
+}
+.savebtn:active{transform:scale(.92);}
+.savebtn.busy{opacity:.55;}
+.savebtn.done{color:var(--success);border-color:rgba(70,177,119,.5);}
+.savebtn.fail{color:var(--danger);border-color:rgba(221,90,78,.5);}
+
 /* skeleton */
 .sk{margin-top:14px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--panel-2);padding:20px 16px;}
 .sk i{display:block;border-radius:8px;background:rgba(255,255,255,.05);position:relative;overflow:hidden;}
@@ -433,15 +471,24 @@ button{font-family:inherit;cursor:pointer;}
 /* ============================================================
    CONFIG — unchanged backend contract
    ============================================================ */
-const APP_PIN  = "1804";
-const AUTH_KEY = "ncm_authorized";
+const AUTH_KEY = "ncm_key";
 const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxqY2FsZ3VtbG9kZWhvdWxid3RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDU4OTgsImV4cCI6MjEwMDkyMTg5OH0.RD3ZfSdrAEIYyhJqeQazAQ6JHhk9ji_ZfUrSHXE-RuE";
 const BUCKET = "employee-photos";
 const EXPIRY_WINDOW = 30;      // days that count as "expiring soon"
 const MAX_RESULTS   = 30;
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* The database key is NOT stored in this file. It is sealed with the PIN
+   (PBKDF2-SHA256, 300k iterations → AES-256-GCM). A wrong PIN fails to
+   decrypt, so the app cannot reach the database at all — not "reaches it
+   and hides the rows". Changing the PIN means re-sealing this blob. */
+const VAULT = {
+  salt: "1ZNV5xAf3NZ1xK1iZmAnSA==",
+  iv:   "8Fn1FfSAB6PgT89a",
+  data: "WnVezfySqOjP/as8v7Qy1gBat4ogZnEmLwVjm8EgGDw3t8z1caZC5iFs9pQCsU1aeLDQoYcwCPgINotqnOhlT1d1rvn7iZLC2LvidByLEBK0bt7Ol3Q6xpSxOc14s6YBGB85mstlpbzbUSub8ZE5V2UW5n+e+HQJfSzFxHyZO+Ku43kMV2mGc38T9eM39HN+m5jh3jIoHVFk86jnCrFYpwidRzLKaO47k1odbdxWj9xhCThjWIjPisB6bnNt+vgHmAG2NbvVT7xCrtVFgxrM/g8Opv/ltrR7p235EuJ3EQ4="
+};
+const KDF_ITERATIONS = 300000;
+
+let sb = null;                 // built only after the vault opens
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
@@ -455,7 +502,9 @@ const I18N = {
   ar:{
     dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
     gateAria:'شاشة الدخول', pinLabel:'الرقم السري', pinAria:'اضغط لإدخال الرقم',
-    enter:'دخول', wrongPin:'رمز غير صحيح',
+    enter:'دخول', checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح',
+    statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
+    statExpiring:'قرب الانتهاء', statBanned:'الممنوعون', savePhoto:'حفظ الصورة',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين', tabExpiring:'قرب الانتهاء',
     refresh:'تحديث البيانات', resultsAria:'نتائج',
     searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
@@ -478,7 +527,9 @@ const I18N = {
   en:{
     dir:'ltr', htmlLang:'en', other:'عربي', otherIsArabic:true,
     gateAria:'Login screen', pinLabel:'PIN Code', pinAria:'Tap to enter the PIN',
-    enter:'Enter', wrongPin:'Incorrect PIN',
+    enter:'Enter', checking:'Checking', wrongPin:'Incorrect PIN',
+    statActive:'Active employees', statResigned:'Resignations',
+    statExpiring:'Expiring soon', statBanned:'Banned', savePhoto:'Save photo',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned', tabExpiring:'Expiring',
     refresh:'Refresh data', resultsAria:'Results',
     searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
@@ -528,15 +579,43 @@ function openApp(){
   q.focus({preventScroll:true});
   renderIdle();
 }
-function submitPin(){
-  if (pin.value === APP_PIN){
-    try { localStorage.setItem(AUTH_KEY,'1'); } catch(e){}
+const b64d = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+// Throws when the PIN is wrong: AES-GCM refuses to authenticate the blob.
+async function unlockVault(entered){
+  const material = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(entered), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt:b64d(VAULT.salt), iterations:KDF_ITERATIONS, hash:'SHA-256'},
+    material, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  const plain = await crypto.subtle.decrypt(
+    {name:'AES-GCM', iv:b64d(VAULT.iv)}, key, b64d(VAULT.data));
+  return new TextDecoder().decode(plain);
+}
+function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
+
+let unlocking = false;
+async function submitPin(){
+  if(unlocking || !pin.value) return;
+  const btn = $('gate-go');
+  unlocking = true;
+  btn.disabled = true;
+  btn.textContent = t('checking');
+  gateErr.textContent = '';
+  try{
+    const apiKey = await unlockVault(pin.value);
+    try { localStorage.setItem(AUTH_KEY, apiKey); } catch(e){}
+    connect(apiKey);
     openApp();
-  } else {
+  }catch(err){
     gateErr.textContent = t('wrongPin');
     gate.querySelector('.gate-card').classList.add('shake');
     setTimeout(() => gate.querySelector('.gate-card').classList.remove('shake'), 400);
     pin.value = ''; paintDots(); pin.focus();
+  }finally{
+    unlocking = false;
+    btn.disabled = false;
+    btn.textContent = t('enter');
   }
 }
 pinpad.addEventListener('click', () => pin.focus());
@@ -653,6 +732,12 @@ function countdownText(dl){
    STATUS — the permit DATE is authoritative over the stored label,
    so a row marked "ساري" with a past date still reads as expired.
    ============================================================ */
+// Any value in the resignation column counts, not just a readable date:
+// four rows carry "غير محدد", and those people have still left.
+function isResigned(emp){
+  return !!(emp && emp.resignation_end_date && String(emp.resignation_end_date).trim());
+}
+
 function statusOf(emp){
   const raw = (emp && emp.permit_status ? String(emp.permit_status) : '').trim();
   const dl  = daysLeft(emp && emp.permit_date);
@@ -696,10 +781,18 @@ function NOSHOT(){
   '</div>';
 }
 
+const ICON_SAVE =
+  '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 4v10.5M7.6 10.6L12 15l4.4-4.4" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 17.5v1.2A1.3 1.3 0 0 0 5.8 20h12.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>';
+
 function shotHTML(code, second){
   if(code === '') return '<figure class="shot">' + NOSHOT() + '</figure>';
-  return '<figure class="shot"><img src="' + photoURL(code, second) +
-         '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom></figure>';
+  const src  = photoURL(code, second);
+  const name = code + (second ? '_2' : '') + '.jpg';
+  return '<figure class="shot">' +
+    '<img src="' + src + '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom>' +
+    '<button class="savebtn" type="button" data-save="' + esc(src) + '" data-name="' + esc(name) +
+    '" aria-label="' + esc(t('savePhoto')) + '" title="' + esc(t('savePhoto')) + '">' + ICON_SAVE + '</button>' +
+  '</figure>';
 }
 // Renders a labelled block only when it actually has rows, so an employee
 // with no security notes never shows an empty "بيانات أمنية" heading.
@@ -725,7 +818,7 @@ function statusIcon(k){
 function recordHTML(emp){
   const s        = statusOf(emp);
   const code     = (emp.emp_code === null || emp.emp_code === undefined) ? '' : String(emp.emp_code).trim();
-  const resigned = !!(emp.resignation_end_date && parseDate(emp.resignation_end_date));
+  const resigned = isResigned(emp);
   const cat      = emp.category === 'blue' ? 'BLUE COLLAR' : emp.category === 'white' ? 'WHITE COLLAR' : null;
   const dl       = daysLeft(emp.permit_date);
   const pdate    = fmtDate(emp.permit_date);
@@ -794,9 +887,30 @@ function renderSkeleton(n){
   }
   out.innerHTML = h;
 }
+/* ---------- overview tiles (shown whenever the search box is empty) ---------- */
+let statsCache = null;
+
+function tileHTML(label, value, tone){
+  return '<div class="tile' + (tone ? ' ' + tone : '') + '">' +
+           '<span class="tile-k">' + esc(label) + '</span>' +
+           '<span class="tile-v num">' + value + '</span>' +
+         '</div>';
+}
+function paintStats(s){
+  setBusy(false);
+  out.innerHTML =
+    '<div class="tiles">' +
+      tileHTML(t('statActive'),   s.active,   '') +
+      tileHTML(t('statResigned'), s.resigned, 'mute') +
+      tileHTML(t('statExpiring'), s.expiring, 'warn') +
+      tileHTML(t('statBanned'),   s.banned,   'bad') +
+    '</div>';
+}
 function renderIdle(){
   setBusy(false);
-  out.innerHTML = '';
+  if(tab !== 'search'){ out.innerHTML = ''; return; }
+  if(statsCache){ paintStats(statsCache); return; }
+  return loadStats();
 }
 function renderEmpty(msg, hint){
   setBusy(false);
@@ -875,6 +989,39 @@ async function runSearch(term){
   }catch(err){ friendlyFail(err, myToken); }
 }
 
+// One pass over a trimmed projection of the table; the counts have to be
+// computed here because permit dates are stored as dd/mm/yyyy text.
+async function loadStats(){
+  const myToken = ++token;
+  setBusy(true);
+  out.innerHTML = '<div class="tiles">' +
+    '<div class="sk-tile"></div><div class="sk-tile"></div>' +
+    '<div class="sk-tile"></div><div class="sk-tile"></div></div>';
+  try{
+    const { data, error } = await sb.from('employees')
+      .select('id,emp_code,national_id,permit_status,permit_date,resignation_end_date');
+    if(myToken !== token) return;
+    if(error) return friendlyFail(error, myToken);
+
+    let active = 0, resigned = 0, expiring = 0, banned = 0;
+    dedupe(data).forEach(r => {
+      if(isResigned(r)){ resigned++; return; }
+      active++;
+      const raw = (r.permit_status || '').trim();
+      if(raw === 'ممنوع'){ banned++; return; }
+      if(raw === 'ساري'){
+        const d = daysLeft(r.permit_date);
+        if(d !== null && d >= 0 && d <= EXPIRY_WINDOW) expiring++;
+      }
+    });
+
+    statsCache = {active, resigned, expiring, banned};
+    setCount('n-banned', banned);
+    setCount('n-exp', expiring);
+    paintStats(statsCache);
+  }catch(err){ friendlyFail(err, myToken); }
+}
+
 async function loadBanned(){
   const myToken = ++token;
   renderSkeleton(2);
@@ -886,7 +1033,7 @@ async function loadBanned(){
 
     // Resigned staff no longer pass the gate, so they are out of scope here.
     const rows = dedupe(data)
-      .filter(r => !(r.resignation_end_date && parseDate(r.resignation_end_date)))
+      .filter(r => !isResigned(r))
       .sort(byCode);
 
     setCount('n-banned', rows.length);
@@ -905,7 +1052,7 @@ async function loadExpiring(){
     if(error) return friendlyFail(error, myToken);
 
     const rows = dedupe(data)
-      .filter(r => !(r.resignation_end_date && parseDate(r.resignation_end_date)))
+      .filter(r => !isResigned(r))
       .map(r => ({ r, d: daysLeft(r.permit_date) }))
       .filter(x => x.d !== null && x.d >= 0 && x.d <= EXPIRY_WINDOW)
       .sort((a,b) => a.d - b.d || byCode(a.r, b.r))   // soonest first
@@ -952,10 +1099,9 @@ const searchwrap = $('searchwrap'), refresh = $('refresh'), clearBtn = $('clear'
 function runCurrent(){
   if(tab === 'banned')   return loadBanned();
   if(tab === 'expiring') return loadExpiring();
-  const t = sanitize(q.value);
-  if(t) return runSearch(t);
-  renderIdle();
-  return Promise.resolve();
+  const term = sanitize(q.value);
+  if(term) return runSearch(term);
+  return Promise.resolve(renderIdle());
 }
 
 navBtns.forEach(btn => btn.addEventListener('click', () => {
@@ -987,6 +1133,7 @@ let refreshing = false;
 refresh.addEventListener('click', () => {
   if(refreshing) return;                     // guards against double taps
   refreshing = true;
+  statsCache = null;                         // a refresh must re-count too
   refresh.classList.add('spin');
   refresh.disabled = true;
   Promise.resolve(runCurrent()).finally(() => {
@@ -1049,6 +1196,40 @@ langBtn.addEventListener('click', () => {
   if(!app.hidden) runCurrent();   // repaint whatever is on screen
 });
 
+/* ---------- save a photo ----------
+   The file lives on another origin, where the download attribute is ignored,
+   so it is pulled as a blob first and handed over from a local object URL. */
+async function savePhoto(btn){
+  if(btn.classList.contains('busy')) return;
+  btn.classList.add('busy');
+  btn.classList.remove('done','fail');
+  try{
+    const res = await fetch(btn.dataset.save);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = btn.dataset.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    btn.classList.add('done');
+  }catch(err){
+    console.error('[NCM] save photo', err);
+    btn.classList.add('fail');
+  }finally{
+    btn.classList.remove('busy');
+    setTimeout(() => btn.classList.remove('done','fail'), 1800);
+  }
+}
+out.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-save]');
+  if(!btn) return;
+  e.stopPropagation();
+  savePhoto(btn);
+});
+
 /* ---------- photo zoom ---------- */
 const zoom = $('zoom'), zoomImg = $('zoom-img');
 out.addEventListener('click', e => {
@@ -1074,9 +1255,10 @@ out.addEventListener('error', e => {
 /* ---------- boot ---------- */
 applyLang();
 
-let authed = false;
-try { authed = localStorage.getItem(AUTH_KEY) === '1'; } catch(e){}
-if(authed) openApp(); else setTimeout(() => pin.focus(), 120);
+let storedKey = null;
+try { storedKey = localStorage.getItem(AUTH_KEY); } catch(e){}
+if(storedKey){ connect(storedKey); openApp(); }
+else setTimeout(() => pin.focus(), 120);
 paintDots();
 
 if('serviceWorker' in navigator){
