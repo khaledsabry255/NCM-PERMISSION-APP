@@ -57,6 +57,27 @@ button{font-family:inherit;cursor:pointer;}
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;}
 }
 
+/* language switch — floats above both the gate and the app */
+.langbtn{
+  position:fixed;z-index:250;
+  top:calc(12px + env(safe-area-inset-top));inset-inline-end:14px;
+  display:flex;align-items:center;gap:6px;padding:7px 12px;
+  border-radius:999px;border:1px solid rgba(221,166,63,.28);
+  background:rgba(221,166,63,.1);color:var(--gold);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:background .16s,transform .12s;
+}
+.langbtn:hover{background:rgba(221,166,63,.18);}
+.langbtn:active{transform:scale(.94);}
+.langbtn svg{flex:none;}
+.langbtn span{font-family:var(--cond);font-weight:700;font-size:14px;letter-spacing:.1em;line-height:1;}
+.langbtn span.ar{font-family:var(--sans);font-weight:800;font-size:12.5px;letter-spacing:0;}
+/* on the narrowest phones the wordmark reaches the corner, so give it room */
+@media (max-width:359px){
+  .langbtn{padding:6px 10px;}
+  .topbar{padding-top:36px;}
+}
+
 /* wordmark */
 .mark{font-family:var(--cond);font-weight:600;letter-spacing:.2em;text-indent:.2em;line-height:1;}
 .mark b{
@@ -237,6 +258,8 @@ button{font-family:inherit;cursor:pointer;}
   font-family:var(--cond);font-weight:700;letter-spacing:.04em;font-size:19px;
   color:#fff;text-transform:uppercase;direction:ltr;margin:4px 0 0;line-height:1.3;
 }
+/* in English mode the Latin name leads, so the gap moves under it */
+.nm-en.lead{margin:0 0 5px;}
 .pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
 .pill{
   display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;
@@ -277,7 +300,7 @@ button{font-family:inherit;cursor:pointer;}
   background:var(--panel-2);border:1px solid var(--line);
 }
 .row dt{flex:none;font-size:12.5px;color:var(--muted);margin:0;}
-.row dd{margin:0;font-size:14px;font-weight:700;color:var(--text);text-align:left;word-break:break-word;min-width:0;}
+.row dd{margin:0;font-size:14px;font-weight:700;color:var(--text);text-align:end;word-break:break-word;min-width:0;}
 .row dd.num{font-size:14px;font-weight:500;}
 .row dd.warn{color:var(--warning);}
 .row dd.bad{color:var(--danger);}
@@ -313,6 +336,12 @@ button{font-family:inherit;cursor:pointer;}
 </head>
 <body>
 
+<!-- ================= LANGUAGE ================= -->
+<button class="langbtn" id="lang" type="button" aria-label="Switch language">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
+  <span id="lang-t">EN</span>
+</button>
+
 <!-- ================= LOGIN ================= -->
 <div id="gate" role="dialog" aria-modal="true" aria-label="شاشة الدخول">
   <div class="gate-card">
@@ -336,15 +365,15 @@ button{font-family:inherit;cursor:pointer;}
     <nav class="nav" role="tablist" aria-label="أقسام النظام">
       <button class="nav-btn" role="tab" aria-selected="true" data-tab="search" id="tab-search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        بحث
+        <span class="lb" id="lb-search">بحث</span>
       </button>
       <button class="nav-btn" role="tab" aria-selected="false" data-tab="banned" id="tab-banned">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M6.2 6.2l11.6 11.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        الممنوعين<span class="tag num" id="n-banned" hidden></span>
+        <span class="lb" id="lb-banned">الممنوعين</span><span class="tag num" id="n-banned" hidden></span>
       </button>
       <button class="nav-btn" role="tab" aria-selected="false" data-tab="expiring" id="tab-expiring">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M12 7.4V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        قرب الانتهاء<span class="tag num" id="n-exp" hidden></span>
+        <span class="lb" id="lb-expiring">قرب الانتهاء</span><span class="tag num" id="n-exp" hidden></span>
       </button>
       <button class="iconbtn" id="refresh" aria-label="تحديث البيانات" title="تحديث">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -390,6 +419,69 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
+   LANGUAGE
+   Only the interface is translated. Stored values (names, job
+   titles, departments, addresses, ban reasons) are shown exactly
+   as they sit in the database — nothing is translated on the fly.
+   ============================================================ */
+const LANG_KEY = "ncm_lang";
+const I18N = {
+  ar:{
+    dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
+    gateAria:'شاشة الدخول', pinLabel:'الرقم السري', pinAria:'اضغط لإدخال الرقم',
+    enter:'دخول', wrongPin:'رمز غير صحيح',
+    navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين', tabExpiring:'قرب الانتهاء',
+    refresh:'تحديث البيانات', resultsAria:'نتائج',
+    searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
+    zoomAria:'عرض الصورة', closeAria:'إغلاق',
+    code:'الكود', noName:'اسم غير مسجل', resigned:'استقالة', present:'موجود',
+    photoAlt:'صورة الموظف', noPhoto:'لا يوجد صورة',
+    permitStatus:'حالة التصريح',
+    grpPersonal:'البيانات الشخصية', grpWork:'بيانات التوظيف', grpSecurity:'بيانات أمنية',
+    nationalId:'الرقم القومي', phone:'رقم الهاتف', address:'العنوان',
+    jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
+    banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة',
+    searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
+    noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
+    noBanned:'لا يوجد موظفون ممنوعون حاليًا',
+    noExpiring:'لا توجد تصاريح تنتهي خلال ' + EXPIRY_WINDOW + ' يوم',
+    loadFail:'تعذر تحميل البيانات', loadFailHint:'تحقق من الاتصال بالإنترنت وحاول مرة أخرى', retry:'إعادة المحاولة',
+    stBanned:'ممنوع', stValid:'ساري', stExpiring:'قرب الانتهاء',
+    stExpired:'تصريح منتهي', stNoPermit:'بدون تصريح', stNoDate:'بدون تاريخ'
+  },
+  en:{
+    dir:'ltr', htmlLang:'en', other:'عربي', otherIsArabic:true,
+    gateAria:'Login screen', pinLabel:'PIN Code', pinAria:'Tap to enter the PIN',
+    enter:'Enter', wrongPin:'Incorrect PIN',
+    navAria:'System sections', tabSearch:'Search', tabBanned:'Banned', tabExpiring:'Expiring',
+    refresh:'Refresh data', resultsAria:'Results',
+    searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
+    zoomAria:'Photo viewer', closeAria:'Close',
+    code:'CODE', noName:'Name not recorded', resigned:'RESIGNED', present:'ACTIVE',
+    photoAlt:'Employee photo', noPhoto:'No photo available',
+    permitStatus:'Permit Status',
+    grpPersonal:'PERSONAL DETAILS', grpWork:'EMPLOYMENT DETAILS', grpSecurity:'SECURITY DETAILS',
+    nationalId:'National ID', phone:'Phone', address:'Address',
+    jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
+    banReason:'Ban Reason', resignEnd:'Resignation Ends',
+    searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
+    noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
+    noBanned:'No banned employees at the moment',
+    noExpiring:'No permits expiring within ' + EXPIRY_WINDOW + ' days',
+    loadFail:'Could not load data', loadFailHint:'Check your internet connection and try again', retry:'Try again',
+    stBanned:'Banned', stValid:'Valid', stExpiring:'Expiring Soon',
+    stExpired:'Expired', stNoPermit:'No Permit', stNoDate:'No Date'
+  }
+};
+let lang = 'ar';
+try { const saved = localStorage.getItem(LANG_KEY); if(saved === 'en' || saved === 'ar') lang = saved; } catch(e){}
+function t(k){
+  const v = I18N[lang][k];
+  return v === undefined ? (I18N.ar[k] === undefined ? k : I18N.ar[k]) : v;
+}
+function isEN(){ return lang === 'en'; }
+
+/* ============================================================
    GATE
    NOTE: this PIN lives in the client bundle. It deters casual
    access only — anyone who reads the source can see it, and the
@@ -415,7 +507,7 @@ function submitPin(){
     try { localStorage.setItem(AUTH_KEY,'1'); } catch(e){}
     openApp();
   } else {
-    gateErr.textContent = 'رمز غير صحيح';
+    gateErr.textContent = t('wrongPin');
     gate.querySelector('.gate-card').classList.add('shake');
     setTimeout(() => gate.querySelector('.gate-card').classList.remove('shake'), 400);
     pin.value = ''; paintDots(); pin.focus();
@@ -511,8 +603,9 @@ function daysLeft(v){
   const b = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
   return Math.round((a - b) / 86400000);
 }
-function arDays(n){
+function daysWord(n){
   n = Math.abs(n);
+  if(isEN()) return n === 1 ? '1 day' : n + ' days';
   if(n === 1) return 'يوم واحد';
   if(n === 2) return 'يومين';
   if(n >= 3 && n <= 10) return n + ' أيام';
@@ -520,9 +613,14 @@ function arDays(n){
 }
 function countdownText(dl){
   if(dl === null) return null;
+  if(isEN()){
+    if(dl === 0) return 'Expires today';
+    if(dl < 0)   return 'Expired ' + daysWord(dl) + ' ago';
+    return daysWord(dl) + ' left';
+  }
   if(dl === 0)  return 'ينتهي اليوم';
-  if(dl < 0)    return 'منتهي منذ ' + arDays(dl);
-  return 'متبقي ' + arDays(dl);
+  if(dl < 0)    return 'منتهي منذ ' + daysWord(dl);
+  return 'متبقي ' + daysWord(dl);
 }
 
 /* ============================================================
@@ -533,18 +631,20 @@ function statusOf(emp){
   const raw = (emp && emp.permit_status ? String(emp.permit_status) : '').trim();
   const dl  = daysLeft(emp && emp.permit_date);
 
-  if(raw === 'ممنوع') return {k:'bad', label:'ممنوع', verdict:'ممنوع من الدخول', code:'BANNED'};
+  // The raw values below are the ones stored in the database and are
+  // matched as-is in both languages; only the shown label changes.
+  if(raw === 'ممنوع') return {k:'bad', label:t('stBanned'), code:'BANNED'};
 
   if(raw === 'ساري'){
-    if(dl === null)        return {k:'mute', label:'بدون تاريخ', verdict:'تصريح بدون تاريخ', code:'NO DATE'};
-    if(dl < 0)             return {k:'bad',  label:'تصريح منتهي', verdict:'تصريح منتهي', code:'EXPIRED'};
-    if(dl <= EXPIRY_WINDOW)return {k:'warn', label:'قرب الانتهاء', verdict:'تصريح قرب الانتهاء', code:'EXPIRING'};
-    return {k:'ok', label:'ساري', verdict:'تصريح ساري', code:'VERIFIED'};
+    if(dl === null)        return {k:'mute', label:t('stNoDate'),   code:'NO DATE'};
+    if(dl < 0)             return {k:'bad',  label:t('stExpired'),  code:'EXPIRED'};
+    if(dl <= EXPIRY_WINDOW)return {k:'warn', label:t('stExpiring'), code:'EXPIRING'};
+    return {k:'ok', label:t('stValid'), code:'VERIFIED'};
   }
-  if(raw === 'منتهي الصلاحية') return {k:'bad', label:'تصريح منتهي', verdict:'تصريح منتهي', code:'EXPIRED'};
-  if(raw === 'بدون تصريح' || raw === '') return {k:'mute', label:'بدون تصريح', verdict:'بدون تصريح', code:'NO PERMIT'};
+  if(raw === 'منتهي الصلاحية') return {k:'bad', label:t('stExpired'), code:'EXPIRED'};
+  if(raw === 'بدون تصريح' || raw === '') return {k:'mute', label:t('stNoPermit'), code:'NO PERMIT'};
   // Anything unexpected is surfaced as-is rather than silently relabelled.
-  return {k:'mute', label:raw, verdict:raw, code:'UNKNOWN'};
+  return {k:'mute', label:raw, code:'UNKNOWN'};
 }
 
 /* ============================================================
@@ -563,16 +663,17 @@ function photoURL(code, second){
   return SUPABASE_URL + '/storage/v1/object/public/' + BUCKET + '/' +
          encodeURIComponent(code) + (second ? '_2' : '') + '.jpg';
 }
-const NOSHOT =
-  '<div class="noshot">' +
+function NOSHOT(){
+  return '<div class="noshot">' +
     '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10.5" r="1.9" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 17.5l4.7-4.2 3.6 3 3-2.4 3.7 3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-    '<span>لا يوجد صورة</span>' +
+    '<span>' + esc(t('noPhoto')) + '</span>' +
   '</div>';
+}
 
 function shotHTML(code, second){
-  if(code === '') return '<figure class="shot">' + NOSHOT + '</figure>';
+  if(code === '') return '<figure class="shot">' + NOSHOT() + '</figure>';
   return '<figure class="shot"><img src="' + photoURL(code, second) +
-         '" alt="صورة الموظف" loading="lazy" decoding="async" data-zoom></figure>';
+         '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom></figure>';
 }
 // Renders a labelled block only when it actually has rows, so an employee
 // with no security notes never shows an empty "بيانات أمنية" heading.
@@ -608,21 +709,27 @@ function recordHTML(emp){
     ? '<div class="track"><span style="width:' + Math.max(4, Math.round(dl / EXPIRY_WINDOW * 100)) + '%"></span></div>'
     : '';
 
+  // In English the Latin name leads; the Arabic name stays underneath it.
+  const nmAr = '<h2 class="nm">' + esc(emp.full_name || t('noName')) + '</h2>';
+  const nmEn = emp.full_name_en
+    ? '<p class="nm-en' + (isEN() ? ' lead' : '') + '">' + esc(emp.full_name_en) + '</p>'
+    : '';
+  const names = (isEN() && nmEn) ? nmEn + nmAr : nmAr + nmEn;
+
   return '<article class="rec" data-s="' + s.k + '">' +
     '<div class="head">' +
-      (code ? '<span class="code"><em>الكود</em><span class="num">' + esc(code) + '</span></span>' : '') +
-      '<h2 class="nm">' + esc(emp.full_name || 'اسم غير مسجل') + '</h2>' +
-      (emp.full_name_en ? '<p class="nm-en">' + esc(emp.full_name_en) + '</p>' : '') +
+      (code ? '<span class="code"><em>' + esc(t('code')) + '</em><span class="num">' + esc(code) + '</span></span>' : '') +
+      names +
       '<div class="pills">' +
         '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
-        (resigned ? '<span class="pill bad">استقالة</span>'
-                  : (tab === 'banned' ? '<span class="pill ok">موجود</span>' : '')) +
+        (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>'
+                  : (tab === 'banned' ? '<span class="pill ok">' + esc(t('present')) + '</span>' : '')) +
         (cat ? '<span class="pill">' + cat + '</span>' : '') +
       '</div>' +
     '</div>' +
 
     '<div class="permit">' +
-      '<div><div class="permit-k">حالة التصريح</div>' +
+      '<div><div class="permit-k">' + esc(t('permitStatus')) + '</div>' +
            '<div class="permit-s">' + esc(s.label) + '</div>' +
            (cd ? '<div class="permit-c">' + cd + '</div>' : '') +
            bar +
@@ -630,19 +737,19 @@ function recordHTML(emp){
       (pdate ? '<div class="permit-d num">' + pdate + '</div>' : '<div class="permit-d na">—</div>') +
     '</div>' +
 
-    group('البيانات الشخصية',
-      rowHTML('الرقم القومي', emp.national_id, 'num') +
-      rowHTML('رقم الهاتف', fmtPhone(emp.phone), 'num') +
-      rowHTML('العنوان', emp.address)
+    group(t('grpPersonal'),
+      rowHTML(t('nationalId'), emp.national_id, 'num') +
+      rowHTML(t('phone'), fmtPhone(emp.phone), 'num') +
+      rowHTML(t('address'), emp.address)
     ) +
-    group('بيانات التوظيف',
-      rowHTML('الوظيفة', emp.job_title) +
-      rowHTML('القسم', emp.department) +
-      rowHTML('تاريخ التعيين', fmtDate(emp.hire_date), 'num')
+    group(t('grpWork'),
+      rowHTML(t('jobTitle'), emp.job_title) +
+      rowHTML(t('department'), emp.department) +
+      rowHTML(t('hireDate'), fmtDate(emp.hire_date), 'num')
     ) +
-    group('بيانات أمنية',
-      rowHTML('سبب المنع', emp.ban_reason, 'bad') +
-      rowHTML('انتهاء الاستقالة', fmtDate(emp.resignation_end_date), 'num warn')
+    group(t('grpSecurity'),
+      rowHTML(t('banReason'), emp.ban_reason, 'bad') +
+      rowHTML(t('resignEnd'), fmtDate(emp.resignation_end_date), 'num warn')
     ) +
 
     '<div class="shots">' + shotHTML(code, false) + shotHTML(code, true) + '</div>' +
@@ -679,9 +786,9 @@ function renderError(){
   out.innerHTML =
     '<div class="state">' +
       '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.8"/></svg>' +
-      '<h3>تعذر تحميل البيانات</h3>' +
-      '<p>تحقق من الاتصال بالإنترنت وحاول مرة أخرى</p>' +
-      '<button class="retry" id="retry">إعادة المحاولة</button>' +
+      '<h3>' + esc(t('loadFail')) + '</h3>' +
+      '<p>' + esc(t('loadFailHint')) + '</p>' +
+      '<button class="retry" id="retry">' + esc(t('retry')) + '</button>' +
     '</div>';
   const r = $('retry');
   if(r) r.addEventListener('click', () => runCurrent());
@@ -720,7 +827,7 @@ async function runSearch(term){
 
     if(isNumericTerm(raw)){
       const d = digitsOnly(raw);
-      if(!d){ if(myToken===token) renderEmpty('لم يتم العثور على موظف مطابق'); return; }
+      if(!d){ if(myToken===token) renderEmpty(t('noMatch')); return; }
       // Numbers must match exactly — no partial/substring hits.
       query = query.or('emp_code.eq.' + d + ',national_id.eq.' + d);
     } else {
@@ -735,10 +842,10 @@ async function runSearch(term){
 
     const rows = dedupe(data);
     if(!rows.length){
-      renderEmpty('لم يتم العثور على موظف مطابق', 'تأكد من الكود أو الرقم القومي أو الاسم');
+      renderEmpty(t('noMatch'), t('noMatchHint'));
       return;
     }
-    renderList(rows, rows.length > 1 ? 'نتائج البحث' : '', '');
+    renderList(rows, rows.length > 1 ? t('searchResults') : '', '');
   }catch(err){ friendlyFail(err, myToken); }
 }
 
@@ -757,8 +864,8 @@ async function loadBanned(){
       .sort(byCode);
 
     setCount('n-banned', rows.length);
-    if(!rows.length){ renderEmpty('لا يوجد موظفون ممنوعون حاليًا'); return; }
-    renderList(rows, 'قائمة الممنوعين', 'alert');
+    if(!rows.length){ renderEmpty(t('noBanned')); return; }
+    renderList(rows, t('bannedList'), 'alert');
   }catch(err){ friendlyFail(err, myToken); }
 }
 
@@ -779,8 +886,8 @@ async function loadExpiring(){
       .map(x => x.r);
 
     setCount('n-exp', rows.length);
-    if(!rows.length){ renderEmpty('لا توجد تصاريح تنتهي خلال ' + EXPIRY_WINDOW + ' يوم'); return; }
-    renderList(rows, 'تصاريح قرب الانتهاء', 'warn');
+    if(!rows.length){ renderEmpty(t('noExpiring')); return; }
+    renderList(rows, t('expiringList'), 'warn');
   }catch(err){ friendlyFail(err, myToken); }
 }
 
@@ -863,6 +970,59 @@ refresh.addEventListener('click', () => {
   });
 });
 
+/* ============================================================
+   LANGUAGE SWITCH
+   Repaints every static label, flips the document direction, then
+   re-runs the current view so rendered records pick up the change.
+   ============================================================ */
+const langBtn = $('lang'), langT = $('lang-t');
+
+function setText(id, value){ const el = $(id); if(el) el.textContent = value; }
+function setAria(id, value){ const el = $(id); if(el) el.setAttribute('aria-label', value); }
+
+function applyLang(){
+  document.documentElement.lang = t('htmlLang');
+  document.documentElement.dir  = t('dir');
+
+  // the button always offers the *other* language
+  langT.textContent = t('other');
+  langT.classList.toggle('ar', !!t('otherIsArabic'));
+  langBtn.setAttribute('aria-label', isEN() ? 'التحويل إلى العربية' : 'Switch to English');
+
+  // gate
+  setAria('gate', t('gateAria'));
+  const gl = document.querySelector('.gate-label');
+  if(gl) gl.textContent = t('pinLabel');
+  setAria('pin', t('pinLabel'));
+  setAria('pinpad', t('pinAria'));
+  setText('gate-go', t('enter'));
+  gateErr.textContent = '';
+
+  // tabs + toolbar
+  const nav = document.querySelector('.nav');
+  if(nav) nav.setAttribute('aria-label', t('navAria'));
+  setText('lb-search',   t('tabSearch'));
+  setText('lb-banned',   t('tabBanned'));
+  setText('lb-expiring', t('tabExpiring'));
+  setAria('refresh', t('refresh'));
+  refresh.title = t('refresh');
+
+  // search + viewer
+  q.placeholder = t('searchPh');
+  setAria('q', t('searchAria'));
+  setAria('clear', t('clearAria'));
+  setAria('out', t('resultsAria'));
+  setAria('zoom', t('zoomAria'));
+  setAria('zoom-x', t('closeAria'));
+}
+
+langBtn.addEventListener('click', () => {
+  lang = isEN() ? 'ar' : 'en';
+  try { localStorage.setItem(LANG_KEY, lang); } catch(e){}
+  applyLang();
+  if(!app.hidden) runCurrent();   // repaint whatever is on screen
+});
+
 /* ---------- photo zoom ---------- */
 const zoom = $('zoom'), zoomImg = $('zoom-img');
 out.addEventListener('click', e => {
@@ -881,11 +1041,13 @@ out.addEventListener('error', e => {
   const img = e.target;
   if(img && img.tagName === 'IMG' && img.hasAttribute('data-zoom')){
     const fig = img.closest('.shot');
-    if(fig) fig.innerHTML = NOSHOT;
+    if(fig) fig.innerHTML = NOSHOT();
   }
 }, true);
 
 /* ---------- boot ---------- */
+applyLang();
+
 let authed = false;
 try { authed = localStorage.getItem(AUTH_KEY) === '1'; } catch(e){}
 if(authed) openApp(); else setTimeout(() => pin.focus(), 120);
