@@ -251,19 +251,18 @@ button{font-family:inherit;cursor:pointer;}
   animation:shimmer 1.5s infinite;
 }
 
-/* save-photo control */
-.savebtn{
-  position:absolute;top:9px;inset-inline-end:9px;
-  width:34px;height:34px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid rgba(255,255,255,.16);background:rgba(12,10,7,.72);
-  color:var(--gold);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:background .16s,color .16s,transform .12s;
+/* download control, under both photos */
+.dlbtn{
+  width:100%;padding:12px;border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  border:1px solid rgba(221,166,63,.3);background:rgba(221,166,63,.09);
+  color:var(--gold);font-weight:800;font-size:13.5px;
+  transition:background .16s,color .16s,border-color .16s;
 }
-.savebtn:active{transform:scale(.92);}
-.savebtn.busy{opacity:.55;}
-.savebtn.done{color:var(--success);border-color:rgba(70,177,119,.5);}
-.savebtn.fail{color:var(--danger);border-color:rgba(221,90,78,.5);}
+.dlbtn:hover{background:rgba(221,166,63,.15);}
+.dlbtn[disabled]{cursor:default;}
+.dlbtn.done{color:var(--success);border-color:rgba(70,177,119,.45);background:rgba(70,177,119,.1);}
+.dlbtn.fail{color:var(--danger);border-color:rgba(221,90,78,.45);background:rgba(221,90,78,.1);}
 
 /* skeleton */
 .sk{margin-top:14px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--panel-2);padding:20px 16px;}
@@ -504,7 +503,8 @@ const I18N = {
     gateAria:'شاشة الدخول', pinLabel:'الرقم السري', pinAria:'اضغط لإدخال الرقم',
     enter:'دخول', checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح',
     statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
-    statExpiring:'قرب الانتهاء', statBanned:'الممنوعون', savePhoto:'حفظ الصورة',
+    statExpiring:'قرب الانتهاء', statBanned:'الممنوعون',
+    download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين', tabExpiring:'قرب الانتهاء',
     refresh:'تحديث البيانات', resultsAria:'نتائج',
     searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
@@ -515,7 +515,7 @@ const I18N = {
     grpPersonal:'البيانات الشخصية', grpWork:'بيانات التوظيف', grpSecurity:'بيانات أمنية',
     nationalId:'الرقم القومي', phone:'رقم الهاتف', address:'العنوان',
     jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
-    banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة',
+    banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
     noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
     noBanned:'لا يوجد موظفون ممنوعون حاليًا',
@@ -529,7 +529,8 @@ const I18N = {
     gateAria:'Login screen', pinLabel:'PIN Code', pinAria:'Tap to enter the PIN',
     enter:'Enter', checking:'Checking', wrongPin:'Incorrect PIN',
     statActive:'Active employees', statResigned:'Resignations',
-    statExpiring:'Expiring soon', statBanned:'Banned', savePhoto:'Save photo',
+    statExpiring:'Expiring soon', statBanned:'Banned',
+    download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned', tabExpiring:'Expiring',
     refresh:'Refresh data', resultsAria:'Results',
     searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
@@ -540,7 +541,7 @@ const I18N = {
     grpPersonal:'PERSONAL DETAILS', grpWork:'EMPLOYMENT DETAILS', grpSecurity:'SECURITY DETAILS',
     nationalId:'National ID', phone:'Phone', address:'Address',
     jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
-    banReason:'Ban Reason', resignEnd:'Resignation Ends',
+    banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
     noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
     noBanned:'No banned employees at the moment',
@@ -733,9 +734,18 @@ function countdownText(dl){
    so a row marked "ساري" with a past date still reads as expired.
    ============================================================ */
 // Any value in the resignation column counts, not just a readable date:
-// four rows carry "غير محدد", and those people have still left.
+// some rows carry "غير محدد", and those people have still left.
 function isResigned(emp){
   return !!(emp && emp.resignation_end_date && String(emp.resignation_end_date).trim());
+}
+// Shows the date when there is one, otherwise the stored wording itself.
+function resignEnd(v){
+  if(v === null || v === undefined) return null;
+  const raw = String(v).trim();
+  if(!raw) return null;
+  const asDate = fmtDate(raw);
+  if(asDate) return {text:asDate, cls:'num warn'};
+  return {text: raw === 'غير محدد' ? t('notSpecified') : raw, cls:'warn'};
 }
 
 function statusOf(emp){
@@ -786,13 +796,14 @@ const ICON_SAVE =
 
 function shotHTML(code, second){
   if(code === '') return '<figure class="shot">' + NOSHOT() + '</figure>';
-  const src  = photoURL(code, second);
-  const name = code + (second ? '_2' : '') + '.jpg';
-  return '<figure class="shot">' +
-    '<img src="' + src + '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom>' +
-    '<button class="savebtn" type="button" data-save="' + esc(src) + '" data-name="' + esc(name) +
-    '" aria-label="' + esc(t('savePhoto')) + '" title="' + esc(t('savePhoto')) + '">' + ICON_SAVE + '</button>' +
-  '</figure>';
+  return '<figure class="shot"><img src="' + photoURL(code, second) +
+         '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom></figure>';
+}
+// One control under both photos; it saves the pair.
+function downloadHTML(code){
+  if(code === '') return '';
+  return '<button class="dlbtn" type="button" data-dl="' + esc(code) + '">' +
+         ICON_SAVE + '<span>' + esc(t('download')) + '</span></button>';
 }
 // Renders a labelled block only when it actually has rows, so an employee
 // with no security notes never shows an empty "بيانات أمنية" heading.
@@ -819,6 +830,7 @@ function recordHTML(emp){
   const s        = statusOf(emp);
   const code     = (emp.emp_code === null || emp.emp_code === undefined) ? '' : String(emp.emp_code).trim();
   const resigned = isResigned(emp);
+  const rEnd     = resignEnd(emp.resignation_end_date);
   const cat      = emp.category === 'blue' ? 'BLUE COLLAR' : emp.category === 'white' ? 'WHITE COLLAR' : null;
   const dl       = daysLeft(emp.permit_date);
   const pdate    = fmtDate(emp.permit_date);
@@ -868,10 +880,12 @@ function recordHTML(emp){
     ) +
     group(t('grpSecurity'),
       rowHTML(t('banReason'), emp.ban_reason, 'bad') +
-      rowHTML(t('resignEnd'), fmtDate(emp.resignation_end_date), 'num warn')
+      rowHTML(t('resignEnd'), rEnd && rEnd.text, rEnd && rEnd.cls)
     ) +
 
-    '<div class="shots">' + shotHTML(code, false) + shotHTML(code, true) + '</div>' +
+    '<div class="shots">' + shotHTML(code, false) + shotHTML(code, true) +
+      downloadHTML(code) +
+    '</div>' +
   '</article>';
 }
 
@@ -1196,38 +1210,49 @@ langBtn.addEventListener('click', () => {
   if(!app.hidden) runCurrent();   // repaint whatever is on screen
 });
 
-/* ---------- save a photo ----------
-   The file lives on another origin, where the download attribute is ignored,
-   so it is pulled as a blob first and handed over from a local object URL. */
-async function savePhoto(btn){
-  if(btn.classList.contains('busy')) return;
-  btn.classList.add('busy');
+/* ---------- save both photos ----------
+   The files live on another origin, where the download attribute is ignored,
+   so each is pulled as a blob and handed over from a local object URL. */
+async function grab(url, name){
+  const res = await fetch(url);
+  if(!res.ok) return false;                 // a missing second photo is normal
+  const obj = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = obj;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(obj), 5000);
+  return true;
+}
+async function saveBoth(btn){
+  if(btn.disabled) return;
+  const code = btn.dataset.dl;
+  const label = btn.querySelector('span');
+  btn.disabled = true;
   btn.classList.remove('done','fail');
-  try{
-    const res = await fetch(btn.dataset.save);
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const url = URL.createObjectURL(await res.blob());
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = btn.dataset.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    btn.classList.add('done');
-  }catch(err){
-    console.error('[NCM] save photo', err);
-    btn.classList.add('fail');
-  }finally{
-    btn.classList.remove('busy');
-    setTimeout(() => btn.classList.remove('done','fail'), 1800);
+  label.textContent = t('downloading');
+  let saved = 0;
+  for(const second of [false, true]){
+    try{
+      if(await grab(photoURL(code, second), code + (second ? '_2' : '') + '.jpg')) saved++;
+    }catch(err){ console.error('[NCM] download', err); }
+    if(!second) await new Promise(r => setTimeout(r, 500));   // browsers throttle bursts
   }
+  btn.classList.add(saved ? 'done' : 'fail');
+  label.textContent = saved ? t('downloaded') : t('downloadFail');
+  setTimeout(() => {
+    btn.classList.remove('done','fail');
+    label.textContent = t('download');
+    btn.disabled = false;
+  }, 2200);
 }
 out.addEventListener('click', e => {
-  const btn = e.target.closest('button[data-save]');
+  const btn = e.target.closest('button[data-dl]');
   if(!btn) return;
   e.stopPropagation();
-  savePhoto(btn);
+  saveBoth(btn);
 });
 
 /* ---------- photo zoom ---------- */
