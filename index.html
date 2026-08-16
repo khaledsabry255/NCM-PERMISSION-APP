@@ -21,6 +21,10 @@
   --panel-2:rgba(255,255,255,.028);
   --gold:#dda63f;
   --gold-soft:#f0d69c;
+  /* company logo — brightened from the print colours so they hold up
+     against the dark surface; the printed values are #3FA535 / #1B75BB */
+  --brand-green:#4cb944;
+  --brand-blue:#2e90ce;
   --success:#46b177;
   --warning:#dfa235;
   --danger:#dd5a4e;
@@ -72,27 +76,36 @@ button{font-family:inherit;cursor:pointer;}
 .langbtn svg{flex:none;}
 .langbtn span{font-family:var(--cond);font-weight:700;font-size:14px;letter-spacing:.1em;line-height:1;}
 .langbtn span.ar{font-family:var(--sans);font-weight:800;font-size:12.5px;letter-spacing:0;}
-/* on the narrowest phones the wordmark reaches the corner, so give it room */
 @media (max-width:359px){
   .langbtn{padding:6px 10px;}
-  .topbar{padding-top:36px;}
 }
 
-/* wordmark */
-.mark{font-family:var(--cond);font-weight:600;letter-spacing:.2em;text-indent:.2em;line-height:1;}
-.mark b{
-  display:block;font-weight:700;font-size:27px;letter-spacing:.13em;text-indent:.13em;
+/* brand lockup — company logo, then the app name underneath */
+.brand{display:flex;flex-direction:column;align-items:center;line-height:1;}
+.brand-row{display:flex;align-items:center;justify-content:center;gap:6px;}
+.ncm{
+  font-family:var(--sans),'Arial Black',system-ui;
+  font-weight:900;font-size:34px;line-height:1;letter-spacing:-.01em;
+  color:#fff;   /* printed black would vanish on this background */
+}
+.ncm i{font-style:normal;color:var(--brand-green);}
+.emblem{flex:none;width:34px;height:34px;margin-inline-start:-4px;}
+.emblem .arc{stroke:var(--brand-green);}
+.emblem .wave{fill:var(--brand-blue);}
+.tagline{font-size:9.5px;letter-spacing:.2em;text-indent:.2em;color:var(--muted);margin-top:10px;}
+.brand .hr{
+  display:block;width:46px;height:1px;margin:12px auto 10px;
+  background:linear-gradient(90deg,transparent,rgba(221,166,63,.5),transparent);
+}
+.appname{
+  font-family:var(--cond);font-weight:700;font-size:20px;
+  letter-spacing:.13em;text-indent:.13em;line-height:1;
   background:linear-gradient(180deg,#fdf6e6 0%,var(--gold) 62%,#9c7223 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-.mark i{
-  display:block;font-style:normal;font-size:10px;color:var(--muted);
-  letter-spacing:.26em;text-indent:.26em;margin-top:9px;
-}
-.mark .hr{
-  display:block;width:46px;height:1px;margin:10px auto 0;
-  background:linear-gradient(90deg,transparent,rgba(221,166,63,.5),transparent);
-}
+.brand.sm .ncm{font-size:29px;}
+.brand.sm .emblem{width:29px;height:29px;}
+.brand.sm .appname{font-size:18px;}
 
 /* ============================================================
    LOGIN
@@ -330,7 +343,9 @@ button{font-family:inherit;cursor:pointer;}
 }
 
 @media (min-width:620px){
-  .mark b{font-size:30px;}
+  .ncm{font-size:38px;}
+  .emblem{width:38px;height:38px;}
+  .appname{font-size:22px;}
 }
 </style>
 </head>
@@ -345,7 +360,18 @@ button{font-family:inherit;cursor:pointer;}
 <!-- ================= LOGIN ================= -->
 <div id="gate" role="dialog" aria-modal="true" aria-label="شاشة الدخول">
   <div class="gate-card">
-    <div class="mark">NCM<b>PERMISSION</b></div>
+    <div class="brand sm">
+      <div class="brand-row">
+        <span class="ncm">N<i>C</i>M</span>
+        <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
+          <path class="arc" d="M76.9 23.1 A38 38 0 1 0 76.9 76.9" fill="none" stroke-width="14"/>
+          <path class="wave" d="M22 57 C34 41, 64 33, 96 42 C72 61, 44 71, 22 57 Z"/>
+        </svg>
+      </div>
+      <span class="tagline">NUCLEAR CONCRETE MIXES</span>
+      <span class="hr"></span>
+      <span class="appname">PERMISSION</span>
+    </div>
     <p class="gate-label">الرقم السري</p>
     <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="الرقم السري">
@@ -358,7 +384,18 @@ button{font-family:inherit;cursor:pointer;}
 <!-- ================= APP ================= -->
 <div id="app" hidden>
   <div class="topbar">
-    <div class="mark">NCM<b>PERMISSION</b><span class="hr"></span><i>SECURITY ACCESS CONTROL</i></div>
+    <div class="brand">
+      <div class="brand-row">
+        <span class="ncm">N<i>C</i>M</span>
+        <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
+          <path class="arc" d="M76.9 23.1 A38 38 0 1 0 76.9 76.9" fill="none" stroke-width="14"/>
+          <path class="wave" d="M22 57 C34 41, 64 33, 96 42 C72 61, 44 71, 22 57 Z"/>
+        </svg>
+      </div>
+      <span class="tagline">NUCLEAR CONCRETE MIXES</span>
+      <span class="hr"></span>
+      <span class="appname">PERMISSION</span>
+    </div>
   </div>
 
   <div class="shell">
