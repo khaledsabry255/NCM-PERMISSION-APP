@@ -1,4 +1,4 @@
-const CACHE = 'ncm-permits-v29';
+const CACHE = 'ncm-permits-v32';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

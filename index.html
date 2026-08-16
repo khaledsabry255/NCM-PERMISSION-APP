@@ -90,7 +90,12 @@ button{font-family:inherit;cursor:pointer;}
   color:#fff;   /* printed black would vanish on this background */
 }
 .ncm i{font-style:normal;color:var(--brand-green);}
-.tagline{font-size:9.5px;letter-spacing:.2em;text-indent:.2em;color:var(--muted);margin-top:10px;}
+/* dimmed brand gold — picks up the gold glow behind the header instead of
+   sitting on it as a flat grey */
+.tagline{
+  font-size:11.5px;letter-spacing:.17em;text-indent:.17em;
+  color:rgba(221,166,63,.92);margin-top:11px;
+}
 .brand .hr{
   display:block;width:46px;height:1px;margin:12px auto 10px;
   background:linear-gradient(90deg,transparent,rgba(221,166,63,.5),transparent);
