@@ -21,10 +21,9 @@
   --panel-2:rgba(255,255,255,.028);
   --gold:#dda63f;
   --gold-soft:#f0d69c;
-  /* company logo — brightened from the print colours so they hold up
-     against the dark surface; the printed values are #3FA535 / #1B75BB */
+  /* company green, brightened from the printed #3FA535 so it holds up
+     against the dark surface */
   --brand-green:#4cb944;
-  --brand-blue:#2e90ce;
   --success:#46b177;
   --warning:#dfa235;
   --danger:#dd5a4e;
@@ -63,15 +62,18 @@ button{font-family:inherit;cursor:pointer;}
 
 /* language switch — floats above both the gate and the app */
 .langbtn{
+  /* pinned to a physical corner on purpose: inset-inline-* would follow the
+     document direction and make the button jump sides when the language flips */
   position:fixed;z-index:250;
-  top:calc(12px + env(safe-area-inset-top));inset-inline-end:14px;
+  top:calc(12px + env(safe-area-inset-top));left:14px;
   display:flex;align-items:center;gap:6px;padding:7px 12px;
-  border-radius:999px;border:1px solid rgba(221,166,63,.28);
-  background:rgba(221,166,63,.1);color:var(--gold);
+  border-radius:999px;border:1px solid rgba(221,166,63,.3);
+  /* opaque enough that scrolled cards never show through it */
+  background:rgba(22,19,12,.88);color:var(--gold);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   transition:background .16s,transform .12s;
 }
-.langbtn:hover{background:rgba(221,166,63,.18);}
+.langbtn:hover{background:rgba(38,32,19,.94);}
 .langbtn:active{transform:scale(.94);}
 .langbtn svg{flex:none;}
 .langbtn span{font-family:var(--cond);font-weight:700;font-size:14px;letter-spacing:.1em;line-height:1;}
@@ -80,21 +82,16 @@ button{font-family:inherit;cursor:pointer;}
   .langbtn{padding:6px 10px;}
 }
 
-/* brand lockup — company logo, then the app name underneath */
+/* brand lockup — NCM wordmark above the app name */
 .brand{display:flex;flex-direction:column;align-items:center;line-height:1;}
-.brand-row{display:flex;align-items:center;justify-content:center;gap:6px;}
 .ncm{
   font-family:var(--sans),'Arial Black',system-ui;
-  font-weight:900;font-size:34px;line-height:1;letter-spacing:-.01em;
+  font-weight:900;font-size:36px;line-height:1;
   color:#fff;   /* printed black would vanish on this background */
 }
 .ncm i{font-style:normal;color:var(--brand-green);}
-.emblem{flex:none;width:34px;height:34px;margin-inline-start:-4px;}
-.emblem .arc{stroke:var(--brand-green);}
-.emblem .wave{fill:var(--brand-blue);}
-.tagline{font-size:9.5px;letter-spacing:.2em;text-indent:.2em;color:var(--muted);margin-top:10px;}
 .brand .hr{
-  display:block;width:46px;height:1px;margin:12px auto 10px;
+  display:block;width:46px;height:1px;margin:13px auto 11px;
   background:linear-gradient(90deg,transparent,rgba(221,166,63,.5),transparent);
 }
 .appname{
@@ -103,8 +100,7 @@ button{font-family:inherit;cursor:pointer;}
   background:linear-gradient(180deg,#fdf6e6 0%,var(--gold) 62%,#9c7223 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-.brand.sm .ncm{font-size:29px;}
-.brand.sm .emblem{width:29px;height:29px;}
+.brand.sm .ncm{font-size:31px;}
 .brand.sm .appname{font-size:18px;}
 
 /* ============================================================
@@ -343,8 +339,7 @@ button{font-family:inherit;cursor:pointer;}
 }
 
 @media (min-width:620px){
-  .ncm{font-size:38px;}
-  .emblem{width:38px;height:38px;}
+  .ncm{font-size:40px;}
   .appname{font-size:22px;}
 }
 </style>
@@ -361,14 +356,7 @@ button{font-family:inherit;cursor:pointer;}
 <div id="gate" role="dialog" aria-modal="true" aria-label="شاشة الدخول">
   <div class="gate-card">
     <div class="brand sm">
-      <div class="brand-row">
-        <span class="ncm">N<i>C</i>M</span>
-        <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
-          <path class="arc" d="M76.9 23.1 A38 38 0 1 0 76.9 76.9" fill="none" stroke-width="14"/>
-          <path class="wave" d="M22 57 C34 41, 64 33, 96 42 C72 61, 44 71, 22 57 Z"/>
-        </svg>
-      </div>
-      <span class="tagline">NUCLEAR CONCRETE MIXES</span>
+      <span class="ncm">N<i>C</i>M</span>
       <span class="hr"></span>
       <span class="appname">PERMISSION</span>
     </div>
@@ -385,14 +373,7 @@ button{font-family:inherit;cursor:pointer;}
 <div id="app" hidden>
   <div class="topbar">
     <div class="brand">
-      <div class="brand-row">
-        <span class="ncm">N<i>C</i>M</span>
-        <svg class="emblem" viewBox="0 0 100 100" aria-hidden="true">
-          <path class="arc" d="M76.9 23.1 A38 38 0 1 0 76.9 76.9" fill="none" stroke-width="14"/>
-          <path class="wave" d="M22 57 C34 41, 64 33, 96 42 C72 61, 44 71, 22 57 Z"/>
-        </svg>
-      </div>
-      <span class="tagline">NUCLEAR CONCRETE MIXES</span>
+      <span class="ncm">N<i>C</i>M</span>
       <span class="hr"></span>
       <span class="appname">PERMISSION</span>
     </div>
