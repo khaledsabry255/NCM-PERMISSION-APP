@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase.min.js"></script>
 <style>
 /* ============================================================
    DESIGN SYSTEM — calm dark surface, gold used only as accent
@@ -484,7 +484,13 @@ button{font-family:inherit;cursor:pointer;}
 /* ============================================================
    CONFIG — unchanged backend contract
    ============================================================ */
-const AUTH_KEY = "ncm_key";
+/* Bump ACCESS_VERSION to lock every device that is already unlocked: the
+   stored version stops matching, the cached key is wiped, and everyone is
+   asked for the PIN again. Bump CACHE_NAME in service-worker.js in the same
+   commit, otherwise devices keep serving the cached page and never see it. */
+const ACCESS_VERSION = "1";
+const UNLOCK_KEY = "ncm_device_unlocked";   // holds the access version, never the PIN
+const AUTH_KEY   = "ncm_key";               // holds the decrypted API key
 const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
 const BUCKET = "employee-photos";
 const EXPIRY_WINDOW = 30;      // days that count as "expiring soon"
@@ -623,7 +629,10 @@ async function submitPin(){
   gateErr.textContent = '';
   try{
     const apiKey = await unlockVault(pin.value);
-    try { localStorage.setItem(AUTH_KEY, apiKey); } catch(e){}
+    try {
+      localStorage.setItem(AUTH_KEY, apiKey);
+      localStorage.setItem(UNLOCK_KEY, ACCESS_VERSION);
+    } catch(e){}
     connect(apiKey);
     openApp();
   }catch(err){
@@ -1330,7 +1339,15 @@ out.addEventListener('error', e => {
 applyLang();
 
 let storedKey = null;
-try { storedKey = localStorage.getItem(AUTH_KEY); } catch(e){}
+try {
+  // A device stays unlocked only while it holds the current access version.
+  if(localStorage.getItem(UNLOCK_KEY) === ACCESS_VERSION){
+    storedKey = localStorage.getItem(AUTH_KEY);
+  }else{
+    localStorage.removeItem(AUTH_KEY);        // revoked: drop the cached key
+    localStorage.removeItem(UNLOCK_KEY);
+  }
+} catch(e){}
 if(storedKey){ connect(storedKey); openApp(); }
 else setTimeout(() => pin.focus(), 120);
 paintDots();

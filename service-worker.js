@@ -1,5 +1,14 @@
-const CACHE = 'ncm-permits-v36';
-const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+// Bump CACHE with every upload, otherwise devices keep serving the copy they
+// already have and never see the new files (including a raised ACCESS_VERSION).
+const CACHE = 'ncm-permits-v37';
+const SHELL = [
+  './',
+  './index.html',
+  './manifest.json',
+  './supabase.min.js',
+  './icon-192.png',
+  './icon-512.png'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
