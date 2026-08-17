@@ -165,13 +165,22 @@ button{font-family:inherit;cursor:pointer;}
   box-shadow:0 4px 12px rgba(221,166,63,.16);
 }
 .nav-btn .tag{display:none;}
-.iconbtn{
-  flex:none;width:44px;display:flex;align-items:center;justify-content:center;
-  border-radius:var(--r);color:var(--gold);background:var(--panel-2);border:1px solid var(--line);
+/* refresh sits in the opposite corner to the language button so the tab row
+   is free for four labels; both are pinned to physical sides, so neither
+   moves when the language flips */
+.fab{
+  position:fixed;z-index:250;
+  top:calc(12px + env(safe-area-inset-top));right:14px;
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(221,166,63,.3);background:rgba(22,19,12,.88);
+  color:var(--gold);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:background .16s,transform .12s;
 }
-.iconbtn:hover{background:var(--panel);}
-.iconbtn[disabled]{opacity:.5;cursor:default;}
-.iconbtn.spin svg{animation:spin .85s linear infinite;}
+.fab:hover{background:rgba(38,32,19,.94);}
+.fab:active{transform:scale(.92);}
+.fab[disabled]{opacity:.55;cursor:default;}
+.fab.spin svg{animation:spin .85s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @media (max-width:413px){
   .nav-btn{font-size:12.5px;padding:11px 3px;}
@@ -395,6 +404,10 @@ button{font-family:inherit;cursor:pointer;}
   <span id="lang-t">EN</span>
 </button>
 
+<button class="fab" id="refresh" type="button" aria-label="تحديث البيانات" title="تحديث">
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
 <!-- ================= LOGIN ================= -->
 <div id="gate" role="dialog" aria-modal="true" aria-label="شاشة الدخول">
   <div class="gate-card">
@@ -438,8 +451,9 @@ button{font-family:inherit;cursor:pointer;}
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M12 7.4V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="lb" id="lb-expiring">قرب الانتهاء</span><span class="tag num" id="n-exp" hidden></span>
       </button>
-      <button class="iconbtn" id="refresh" aria-label="تحديث البيانات" title="تحديث">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="nav-btn" role="tab" aria-selected="false" data-tab="expired" id="tab-expired">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M12 7.4V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8.6 8.6l6.8 6.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="lb" id="lb-expired">منتهية</span><span class="tag num" id="n-expired" hidden></span>
       </button>
     </nav>
 
@@ -505,7 +519,9 @@ const I18N = {
     statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
     statExpiring:'قرب الانتهاء', statBanned:'الممنوعون',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
-    navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين', tabExpiring:'قرب الانتهاء',
+    navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
+    tabExpiring:'قرب الانتهاء', tabExpired:'منتهية',
+    expiredList:'تصاريح منتهية', noExpired:'لا توجد تصاريح منتهية',
     refresh:'تحديث البيانات', resultsAria:'نتائج',
     searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
     zoomAria:'عرض الصورة', closeAria:'إغلاق',
@@ -531,7 +547,9 @@ const I18N = {
     statActive:'Active employees', statResigned:'Resignations',
     statExpiring:'Expiring soon', statBanned:'Banned',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
-    navAria:'System sections', tabSearch:'Search', tabBanned:'Banned', tabExpiring:'Expiring',
+    navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
+    tabExpiring:'Expiring', tabExpired:'Expired',
+    expiredList:'Expired Permits', noExpired:'No expired permits',
     refresh:'Refresh data', resultsAria:'Results',
     searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
     zoomAria:'Photo viewer', closeAria:'Close',
@@ -1056,6 +1074,35 @@ async function loadBanned(){
   }catch(err){ friendlyFail(err, myToken); }
 }
 
+// Permits already past their date, for people still on staff. Covers both
+// rows stored as "منتهي الصلاحية" and rows still marked "ساري" whose date
+// has passed — otherwise they would sit in no tab at all.
+async function loadExpired(){
+  const myToken = ++token;
+  renderSkeleton(2);
+  try{
+    const { data, error } = await sb.from('employees').select(FIELDS)
+      .in('permit_status', ['ساري','منتهي الصلاحية']);
+    if(myToken !== token) return;
+    if(error) return friendlyFail(error, myToken);
+
+    const rows = dedupe(data)
+      .filter(r => !isResigned(r))
+      .filter(r => statusOf(r).code === 'EXPIRED')
+      .map(r => ({ r, d: daysLeft(r.permit_date) }))
+      .sort((a,b) => {
+        if(a.d === null) return 1;
+        if(b.d === null) return -1;
+        return b.d - a.d || byCode(a.r, b.r);   // most recently expired first
+      })
+      .map(x => x.r);
+
+    setCount('n-expired', rows.length);
+    if(!rows.length){ renderEmpty(t('noExpired')); return; }
+    renderList(rows, t('expiredList'), 'alert');
+  }catch(err){ friendlyFail(err, myToken); }
+}
+
 async function loadExpiring(){
   const myToken = ++token;
   renderSkeleton(2);
@@ -1113,6 +1160,7 @@ const searchwrap = $('searchwrap'), refresh = $('refresh'), clearBtn = $('clear'
 function runCurrent(){
   if(tab === 'banned')   return loadBanned();
   if(tab === 'expiring') return loadExpiring();
+  if(tab === 'expired')  return loadExpired();
   const term = sanitize(q.value);
   if(term) return runSearch(term);
   return Promise.resolve(renderIdle());
@@ -1191,6 +1239,7 @@ function applyLang(){
   setText('lb-search',   t('tabSearch'));
   setText('lb-banned',   t('tabBanned'));
   setText('lb-expiring', t('tabExpiring'));
+  setText('lb-expired',  t('tabExpired'));
   setAria('refresh', t('refresh'));
   refresh.title = t('refresh');
 
