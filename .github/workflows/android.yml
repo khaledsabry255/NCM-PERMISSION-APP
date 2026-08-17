@@ -1,0 +1,62 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build release APK
+        working-directory: android
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/*.apk out/NCM-Permission.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NCM-Permission-APK
+          path: out/NCM-Permission.apk
+          if-no-files-found: error
+
+      # A fixed "latest-apk" release keeps the download link stable, which is far
+      # easier on a phone than digging an artifact out of an Actions run.
+      - name: Publish to latest-apk release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: Latest APK
+          body: |
+            أحدث نسخة من تطبيق NCM Permission (أندرويد).
+            اتبنت من commit ${{ github.sha }}.
+          files: out/NCM-Permission.apk
+          prerelease: true
