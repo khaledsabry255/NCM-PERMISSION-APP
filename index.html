@@ -52,6 +52,10 @@ body{
   background:transparent;color:var(--text);font-family:var(--sans);
   min-height:100dvh;padding-bottom:calc(40px + env(safe-area-inset-bottom));
   -webkit-font-smoothing:antialiased;
+  /* Tajawal swaps digits to Arabic-Indic forms while the page language is
+     Arabic; turning off the localised forms keeps every number Western. */
+  font-feature-settings:"locl" 0;
+  font-variant-numeric:lining-nums;
 }
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed;}
 button{font-family:inherit;cursor:pointer;}
@@ -60,13 +64,32 @@ button{font-family:inherit;cursor:pointer;}
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;}
 }
 
-/* language switch — floats above both the gate and the app */
+/* ============================================================
+   STICKY TOOLBAR — search plus both controls, pinned to the top
+   The row is forced to LTR so the language button stays physically on the
+   left and refresh on the right, whichever way the text runs.
+   ============================================================ */
+.toolbar{
+  position:sticky;top:0;z-index:60;
+  margin-inline:-16px;padding:12px 16px 0;
+  background:transparent;
+  /* the fill must snap, not fade — a fading panel lets a row of results show
+     through it while the transition runs */
+  transition:box-shadow .18s;
+}
+.toolbar.stuck{
+  background:var(--bg);
+  box-shadow:0 10px 22px rgba(11,10,8,.9);
+}
+.toolrow{display:flex;align-items:center;gap:9px;direction:ltr;}
+.toolrow #searchwrap{flex:1;min-width:0;}
+.searchbar{direction:rtl;}
+html[dir="ltr"] .searchbar{direction:ltr;}
+
+/* language switch */
 .langbtn{
-  /* pinned to a physical corner on purpose: inset-inline-* would follow the
-     document direction and make the button jump sides when the language flips */
-  position:fixed;z-index:250;
-  top:calc(12px + env(safe-area-inset-top));left:14px;
-  display:flex;align-items:center;gap:6px;padding:7px 12px;
+  flex:none;
+  display:flex;align-items:center;gap:6px;padding:9px 12px;
   border-radius:999px;border:1px solid rgba(221,166,63,.3);
   /* opaque enough that scrolled cards never show through it */
   background:rgba(22,19,12,.88);color:var(--gold);
@@ -78,8 +101,11 @@ button{font-family:inherit;cursor:pointer;}
 .langbtn svg{flex:none;}
 .langbtn span{font-family:var(--cond);font-weight:700;font-size:14px;letter-spacing:.1em;line-height:1;}
 .langbtn span.ar{font-family:var(--sans);font-weight:800;font-size:12.5px;letter-spacing:0;}
+/* the copy on the lock screen sits in the card's own corner */
+#lang-gate{position:absolute;top:13px;left:13px;padding:6px 11px;}
 @media (max-width:359px){
-  .langbtn{padding:6px 10px;}
+  .langbtn{padding:8px 9px;}
+  .toolrow{gap:7px;}
 }
 
 /* brand lockup — NCM wordmark above the app name */
@@ -117,6 +143,7 @@ button{font-family:inherit;cursor:pointer;}
   background:radial-gradient(560px 380px at 50% 30%, rgba(221,166,63,.07) 0%, transparent 70%), #0b0a08;
 }
 .gate-card{
+  position:relative;
   width:100%;max-width:328px;text-align:center;
   border:1px solid var(--line);border-radius:20px;
   background:var(--panel);padding:38px 28px 30px;
@@ -151,7 +178,7 @@ button{font-family:inherit;cursor:pointer;}
 .shell{max-width:600px;margin:0 auto;padding:0 16px;}
 
 /* tabs */
-.nav{display:flex;gap:6px;margin:20px 0 12px;}
+.nav{display:flex;gap:6px;margin:11px 0 12px;}
 .nav-btn{
   flex:1;min-width:0;white-space:nowrap;
   padding:11px 6px;border-radius:var(--r);font-weight:700;font-size:13px;
@@ -165,13 +192,10 @@ button{font-family:inherit;cursor:pointer;}
   box-shadow:0 4px 12px rgba(221,166,63,.16);
 }
 .nav-btn .tag{display:none;}
-/* refresh sits in the opposite corner to the language button so the tab row
-   is free for four labels; both are pinned to physical sides, so neither
-   moves when the language flips */
+/* refresh sits at the opposite end of the same row */
 .fab{
-  position:fixed;z-index:250;
-  top:calc(12px + env(safe-area-inset-top));right:14px;
-  width:38px;height:38px;border-radius:50%;
+  flex:none;
+  width:40px;height:40px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   border:1px solid rgba(221,166,63,.3);background:rgba(22,19,12,.88);
   color:var(--gold);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
@@ -398,19 +422,13 @@ button{font-family:inherit;cursor:pointer;}
 </head>
 <body>
 
-<!-- ================= LANGUAGE ================= -->
-<button class="langbtn" id="lang" type="button" aria-label="Switch language">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
-  <span id="lang-t">EN</span>
-</button>
-
-<button class="fab" id="refresh" type="button" aria-label="تحديث البيانات" title="تحديث">
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-</button>
-
 <!-- ================= LOGIN ================= -->
 <div id="gate" role="dialog" aria-modal="true" aria-label="شاشة الدخول">
   <div class="gate-card">
+    <button class="langbtn" id="lang-gate" type="button" aria-label="Switch language">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span class="lang-t">EN</span>
+    </button>
     <div class="brand sm">
       <span class="ncm">N<i>C</i>M</span>
       <span class="tagline">NUCLEAR CONCRETE MIXES</span>
@@ -438,6 +456,30 @@ button{font-family:inherit;cursor:pointer;}
   </div>
 
   <div class="shell">
+    <!-- Sticks to the top edge, so the search box and both controls stay in
+         reach while the results scroll underneath. -->
+    <div class="toolbar" id="toolbar">
+      <div class="toolrow">
+        <button class="langbtn" id="lang" type="button" aria-label="Switch language">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span class="lang-t">EN</span>
+        </button>
+
+        <div id="searchwrap">
+          <div class="searchbar">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input id="q" type="text" placeholder="ابحث بالكود أو الرقم القومي أو الاسم" autocomplete="off" inputmode="search" aria-label="بحث عن موظف">
+            <button class="clearbtn" id="clear" aria-label="مسح البحث">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="fab" id="refresh" type="button" aria-label="تحديث البيانات" title="تحديث">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
     <nav class="nav" role="tablist" aria-label="أقسام النظام">
       <button class="nav-btn" role="tab" aria-selected="true" data-tab="search" id="tab-search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -456,15 +498,6 @@ button{font-family:inherit;cursor:pointer;}
         <span class="lb" id="lb-expired">منتهية</span><span class="tag num" id="n-expired" hidden></span>
       </button>
     </nav>
-
-    <div id="searchwrap">
-      <div class="searchbar">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <input id="q" type="text" placeholder="ابحث بالكود أو الرقم القومي أو الاسم" autocomplete="off" inputmode="search" aria-label="بحث عن موظف">
-        <button class="clearbtn" id="clear" aria-label="مسح البحث">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-        </button>
-      </div>
     </div>
 
     <div id="out" role="region" aria-live="polite" aria-busy="false"></div>
@@ -736,13 +769,17 @@ function daysLeft(v){
   const b = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
   return Math.round((a - b) / 86400000);
 }
+// Digits are wrapped so they always render in the Latin monospace face,
+// never in the Arabic-Indic forms the body font would otherwise reach for.
+function numHTML(n){ return '<span class="num">' + n + '</span>'; }
+
 function daysWord(n){
   n = Math.abs(n);
-  if(isEN()) return n === 1 ? '1 day' : n + ' days';
+  if(isEN()) return n === 1 ? numHTML(1) + ' day' : numHTML(n) + ' days';
   if(n === 1) return 'يوم واحد';
   if(n === 2) return 'يومين';
-  if(n >= 3 && n <= 10) return n + ' أيام';
-  return n + ' يوم';
+  if(n >= 3 && n <= 10) return numHTML(n) + ' أيام';
+  return numHTML(n) + ' يوم';
 }
 function countdownText(dl){
   if(dl === null) return null;
@@ -955,6 +992,7 @@ function renderIdle(){
 }
 function renderEmpty(msg, hint){
   setBusy(false);
+  revealResults();
   out.innerHTML =
     '<div class="state">' +
       '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
@@ -976,6 +1014,7 @@ function renderError(){
 }
 function renderList(rows, title, tone){
   setBusy(false);
+  revealResults();
   const head = title
     ? '<div class="sect ' + (tone || '') + '"><span class="sect-t">' + title + '</span>' +
       '<span class="sect-n">' + rows.length + '</span><span class="sect-line"></span></div>'
@@ -1219,7 +1258,7 @@ refresh.addEventListener('click', () => {
    Repaints every static label, flips the document direction, then
    re-runs the current view so rendered records pick up the change.
    ============================================================ */
-const langBtn = $('lang'), langT = $('lang-t');
+const langBtns = [].slice.call(document.querySelectorAll('.langbtn'));
 
 function setText(id, value){ const el = $(id); if(el) el.textContent = value; }
 function setAria(id, value){ const el = $(id); if(el) el.setAttribute('aria-label', value); }
@@ -1228,10 +1267,15 @@ function applyLang(){
   document.documentElement.lang = t('htmlLang');
   document.documentElement.dir  = t('dir');
 
-  // the button always offers the *other* language
-  langT.textContent = t('other');
-  langT.classList.toggle('ar', !!t('otherIsArabic'));
-  langBtn.setAttribute('aria-label', isEN() ? 'التحويل إلى العربية' : 'Switch to English');
+  // both copies of the button always offer the *other* language
+  langBtns.forEach(btn => {
+    const label = btn.querySelector('.lang-t');
+    if(label){
+      label.textContent = t('other');
+      label.classList.toggle('ar', !!t('otherIsArabic'));
+    }
+    btn.setAttribute('aria-label', isEN() ? 'التحويل إلى العربية' : 'Switch to English');
+  });
 
   // gate
   setAria('gate', t('gateAria'));
@@ -1261,12 +1305,25 @@ function applyLang(){
   setAria('zoom-x', t('closeAria'));
 }
 
-langBtn.addEventListener('click', () => {
+langBtns.forEach(btn => btn.addEventListener('click', () => {
   lang = isEN() ? 'ar' : 'en';
   try { localStorage.setItem(LANG_KEY, lang); } catch(e){}
   applyLang();
   if(!app.hidden) runCurrent();   // repaint whatever is on screen
-});
+}));
+
+/* ---------- keep the toolbar useful while scrolling ---------- */
+const toolbar = $('toolbar');
+function paintStuck(){ toolbar.classList.toggle('stuck', window.scrollY > 6); }
+window.addEventListener('scroll', paintStuck, {passive:true});
+paintStuck();
+
+// Lifts the page so the toolbar meets the top edge and the result below it is
+// on screen — without yanking the view if the user already scrolled past it.
+function revealResults(){
+  const top = toolbar.getBoundingClientRect().top + window.scrollY;
+  if(window.scrollY < top - 2) window.scrollTo({top:top, behavior:'smooth'});
+}
 
 /* ---------- save both photos ----------
    The files live on another origin, where the download attribute is ignored,
