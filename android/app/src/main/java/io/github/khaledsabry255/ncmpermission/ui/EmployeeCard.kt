@@ -23,6 +23,13 @@ import coil.compose.SubcomposeAsyncImage
 import io.github.khaledsabry255.ncmpermission.data.*
 import kotlinx.coroutines.launch
 
+private fun toneBg(tone: Tone) = when (tone) {
+    Tone.OK -> Ink.SuccessBg
+    Tone.WARN -> Ink.WarningBg
+    Tone.BAD -> Ink.DangerBg
+    Tone.MUTE -> Ink.NeutralBg
+}
+
 @Composable
 fun EmployeeCard(emp: Employee, s: Strings, inBannedTab: Boolean) {
     val status = Status.of(emp)
@@ -39,8 +46,8 @@ fun EmployeeCard(emp: Employee, s: Strings, inBannedTab: Boolean) {
             .fillMaxWidth()
             .padding(top = 14.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(Ink.Panel)
-            .border(1.dp, Ink.Line, RoundedCornerShape(18.dp))
+            .background(Ink.Card)
+            .border(1.dp, Ink.CardLine, RoundedCornerShape(18.dp))
     ) {
         Identity(emp, s, status, tone, inBannedTab)
         PermitStrip(emp, s, status, tone, days)
@@ -130,13 +137,13 @@ private fun Identity(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Pill(s.statusLabel(status.code, status.rawLabel), tone, tone.copy(alpha = 0.13f))
+            Pill(s.statusLabel(status.code, status.rawLabel), tone, toneBg(status.tone))
             if (emp.resigned) {
-                Pill(s.resigned, Ink.Danger, Ink.Danger.copy(alpha = 0.14f))
+                Pill(s.resigned, Ink.Danger, Ink.DangerBg)
             } else if (inBannedTab) {
-                Pill(s.present, Ink.Success, Ink.Success.copy(alpha = 0.13f))
+                Pill(s.present, Ink.Success, Ink.SuccessBg)
             }
-            s.categoryLabel(emp)?.let { Pill(it, Ink.Text2, Ink.Panel2) }
+            s.categoryLabel(emp)?.let { Pill(it, Ink.Neutral, Ink.NeutralBg) }
         }
     }
 }
@@ -166,7 +173,7 @@ private fun PermitStrip(
     Row(
         Modifier
             .fillMaxWidth()
-            .background(tone.copy(alpha = 0.07f))
+            .background(tone.copy(alpha = 0.14f))
             .padding(horizontal = 18.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -212,8 +219,8 @@ private fun Photos(code: String, s: Strings) {
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Ink.Panel2)
-                    .border(1.dp, Ink.Line, RoundedCornerShape(14.dp))
+                    .background(Ink.Field)
+                    .border(1.dp, Ink.Line2, RoundedCornerShape(14.dp))
             ) {
                 if (code.isEmpty()) {
                     NoPhoto(s)
@@ -225,7 +232,7 @@ private fun Photos(code: String, s: Strings) {
                         modifier = Modifier.fillMaxWidth(),
                         error = { NoPhoto(s) },
                         loading = {
-                            Box(Modifier.fillMaxWidth().height(150.dp).background(Ink.Panel2))
+                            Box(Modifier.fillMaxWidth().height(150.dp).background(Ink.Field))
                         }
                     )
                 }
@@ -257,8 +264,8 @@ private fun Photos(code: String, s: Strings) {
                 },
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = fg.copy(alpha = 0.1f),
-                    contentColor = fg
+                    containerColor = if (outcome == null) Ink.Gold else fg.copy(alpha = 0.14f),
+                    contentColor = if (outcome == null) Color.White else fg
                 ),
                 modifier = Modifier.fillMaxWidth().height(46.dp)
             ) {
@@ -274,7 +281,7 @@ private fun NoPhoto(s: Strings) {
         Modifier.fillMaxWidth().height(150.dp).background(Ink.NoShot),
         contentAlignment = Alignment.Center
     ) {
-        Text(s.noPhoto, color = Ink.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(s.noPhoto, color = Ink.Neutral, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
 

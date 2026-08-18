@@ -125,8 +125,8 @@ private fun Toolbar(s: Strings, onToggleLang: () -> Unit, busy: Boolean, onRefre
             Row(
                 Modifier
                     .clip(RoundedCornerShape(999.dp))
-                    .background(Color(0xE0161310))
-                    .border(1.dp, Ink.Gold.copy(alpha = 0.3f), RoundedCornerShape(999.dp))
+                    .background(Ink.GoldTint)
+                    .border(1.dp, Ink.Line2, RoundedCornerShape(999.dp))
                     .clickable { onToggleLang() }
                     .padding(horizontal = 13.dp, vertical = 9.dp)
             ) {
@@ -137,8 +137,8 @@ private fun Toolbar(s: Strings, onToggleLang: () -> Unit, busy: Boolean, onRefre
                 Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xE0161310))
-                    .border(1.dp, Ink.Gold.copy(alpha = 0.3f), CircleShape)
+                    .background(Ink.GoldTint)
+                    .border(1.dp, Ink.Line2, CircleShape)
                     .clickable(enabled = !busy) { onRefresh() },
                 contentAlignment = Alignment.Center
             ) {
@@ -178,7 +178,7 @@ private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     textAlign = TextAlign.Center,
-                    color = if (on) Color(0xFF1A1305) else Ink.Text2
+                    color = if (on) Color.White else Ink.Text2
                 )
             }
         }

@@ -37,7 +37,7 @@ fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String)
                 .widthIn(max = 340.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(Ink.Panel)
-                .border(1.dp, Ink.Line, RoundedCornerShape(20.dp))
+                .border(1.dp, Ink.Line2, RoundedCornerShape(20.dp))
                 .padding(horizontal = 28.dp, vertical = 34.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -70,7 +70,10 @@ fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String)
                 onClick = { if (pin.isNotEmpty()) onSubmit(pin) },
                 enabled = !checking,
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Ink.Gold),
+                colors = ButtonDefaults.buttonColors(
+                containerColor = Ink.Gold,
+                contentColor = androidx.compose.ui.graphics.Color.White
+            ),
                 modifier = Modifier.fillMaxWidth().height(48.dp)
             ) {
                 Text(
@@ -115,8 +118,8 @@ private fun BasicPinField(
             focusedBorderColor = Ink.Gold,
             unfocusedBorderColor = Ink.Line2,
             cursorColor = Ink.Gold,
-            focusedContainerColor = Ink.Bg,
-            unfocusedContainerColor = Ink.Bg
+            focusedContainerColor = Ink.Panel2,
+            unfocusedContainerColor = Ink.Panel2
         ),
         modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
     )

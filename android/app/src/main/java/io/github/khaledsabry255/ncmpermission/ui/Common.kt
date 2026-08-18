@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** The NCM wordmark: white letters with the company green on the C. */
+/** The NCM wordmark: the printed black letters with the company green on the C. */
 @Composable
 fun Wordmark(big: Boolean = true) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -34,10 +34,10 @@ fun Wordmark(big: Boolean = true) {
             "NUCLEAR CONCRETE MIXES",
             fontSize = 9.sp,
             letterSpacing = 2.sp,
-            color = Ink.Gold.copy(alpha = 0.92f)
+            color = Ink.Muted
         )
         Spacer(Modifier.height(10.dp))
-        Box(Modifier.width(46.dp).height(1.dp).background(Ink.Gold.copy(alpha = 0.5f)))
+        Box(Modifier.width(46.dp).height(1.dp).background(Ink.Line2))
         Spacer(Modifier.height(9.dp))
         Text(
             "PERMISSION",
@@ -56,8 +56,8 @@ fun FieldRow(label: String, value: String, mono: Boolean = false, valueColor: Co
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Ink.Panel2)
-            .border(1.dp, Ink.Line, RoundedCornerShape(10.dp))
+            .background(Ink.Field)
+            .border(1.dp, Ink.Line2, RoundedCornerShape(10.dp))
             .padding(horizontal = 14.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
