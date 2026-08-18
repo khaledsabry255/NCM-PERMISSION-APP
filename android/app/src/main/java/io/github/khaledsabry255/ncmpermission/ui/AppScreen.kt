@@ -1,11 +1,13 @@
 package io.github.khaledsabry255.ncmpermission.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -28,6 +30,7 @@ import kotlinx.coroutines.delay
 
 enum class Tab { SEARCH, BANNED, EXPIRING, EXPIRED }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
     var tab by remember { mutableStateOf(Tab.SEARCH) }
@@ -37,6 +40,9 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
     var loading by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
     var reload by remember { mutableStateOf(0) }
+    var reveal by remember { mutableStateOf(0) }
+
+    val listState = rememberLazyListState()
 
     // Keying on the query makes Compose cancel the previous load, which gives
     // both the debounce and the guarantee that a slow reply cannot overwrite a
@@ -56,11 +62,12 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
                         delay(260)
                         loading = true
                         rows = repo.search(query)
+                        reveal++
                     }
                 }
-                Tab.BANNED -> { loading = true; rows = repo.banned() }
-                Tab.EXPIRING -> { loading = true; rows = repo.expiring() }
-                Tab.EXPIRED -> { loading = true; rows = repo.expired() }
+                Tab.BANNED -> { loading = true; rows = repo.banned(); reveal++ }
+                Tab.EXPIRING -> { loading = true; rows = repo.expiring(); reveal++ }
+                Tab.EXPIRED -> { loading = true; rows = repo.expired(); reveal++ }
             }
         } catch (e: Exception) {
             failed = true
@@ -69,18 +76,37 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().background(Ink.Bg)) {
-        Header(s, onToggleLang, refreshing = loading) {
-            stats = null
-            reload++
-        }
-        Column(Modifier.padding(horizontal = 16.dp)) {
-            Tabs(tab, s) { tab = it }
-            if (tab == Tab.SEARCH) {
-                SearchBox(query, s) { query = it }
+    // Lifts the wordmark off screen so the answer sits directly under the bar.
+    LaunchedEffect(reveal) {
+        if (reveal > 0 && listState.firstVisibleItemIndex < 1) listState.animateScrollToItem(1)
+    }
+
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize().background(Ink.Bg)) {
+        item {
+            Box(Modifier.fillMaxWidth().padding(top = 22.dp, bottom = 4.dp), Alignment.Center) {
+                Wordmark(big = true)
             }
         }
-        Body(tab, s, query, rows, stats, loading, failed) { reload++ }
+
+        // Pinned: the search box and both controls stay in reach while results
+        // scroll underneath.
+        stickyHeader {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Ink.Bg)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 12.dp, bottom = 4.dp)
+            ) {
+                Toolbar(s, onToggleLang, loading) { stats = null; reload++ }
+                Tabs(tab, s) { tab = it }
+                if (tab == Tab.SEARCH) SearchBox(query, s) { query = it }
+            }
+        }
+
+        body(tab, s, query, rows, stats, loading, failed) { reload++ }
+
+        item { Spacer(Modifier.height(48.dp)) }
     }
 }
 
@@ -89,39 +115,34 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
  * corners in both languages — they must not swap sides when the text flips.
  */
 @Composable
-private fun Header(s: Strings, onToggleLang: () -> Unit, refreshing: Boolean, onRefresh: () -> Unit) {
+private fun Toolbar(s: Strings, onToggleLang: () -> Unit, busy: Boolean, onRefresh: () -> Unit) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Box(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp)) {
+        Row(
+            Modifier.fillMaxWidth().padding(bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.Top
+                Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(Color(0xE0161310))
+                    .border(1.dp, Ink.Gold.copy(alpha = 0.3f), RoundedCornerShape(999.dp))
+                    .clickable { onToggleLang() }
+                    .padding(horizontal = 13.dp, vertical = 9.dp)
             ) {
-                Row(
-                    Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(Color(0xE0161310))
-                        .border(1.dp, Ink.Gold.copy(alpha = 0.3f), RoundedCornerShape(999.dp))
-                        .clickable { onToggleLang() }
-                        .padding(horizontal = 12.dp, vertical = 7.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(s.otherLang, color = Ink.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
-                Spacer(Modifier.weight(1f))
-                Box(
-                    Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xE0161310))
-                        .border(1.dp, Ink.Gold.copy(alpha = 0.3f), CircleShape)
-                        .clickable(enabled = !refreshing) { onRefresh() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("↻", color = Ink.Gold, fontSize = 17.sp)
-                }
+                Text(s.otherLang, color = Ink.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
-            Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.TopCenter) {
-                Wordmark(big = true)
+            Spacer(Modifier.weight(1f))
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xE0161310))
+                    .border(1.dp, Ink.Gold.copy(alpha = 0.3f), CircleShape)
+                    .clickable(enabled = !busy) { onRefresh() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("↻", color = Ink.Gold, fontSize = 17.sp)
             }
         }
     }
@@ -136,7 +157,7 @@ private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
         Tab.EXPIRED to s.tabExpired
     )
     Row(
-        Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 12.dp),
+        Modifier.fillMaxWidth().padding(bottom = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         labels.forEach { (tab, label) ->
@@ -146,11 +167,7 @@ private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
                     .weight(1f)
                     .clip(RoundedCornerShape(14.dp))
                     .background(if (on) Ink.Gold else Ink.Panel2)
-                    .border(
-                        1.dp,
-                        if (on) Color.Transparent else Ink.Line,
-                        RoundedCornerShape(14.dp)
-                    )
+                    .border(1.dp, if (on) Color.Transparent else Ink.Line, RoundedCornerShape(14.dp))
                     .clickable { onPick(tab) }
                     .padding(vertical = 11.dp, horizontal = 3.dp),
                 contentAlignment = Alignment.Center
@@ -174,13 +191,13 @@ private fun SearchBox(query: String, s: Strings, onChange: (String) -> Unit) {
         value = query,
         onValueChange = onChange,
         singleLine = true,
-        placeholder = { Text(s.searchHint, fontSize = 14.sp, color = Ink.Muted) },
+        placeholder = { Text(s.searchHint, fontSize = 14.sp, color = Ink.Muted, maxLines = 1) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 Text(
                     "✕",
                     color = Ink.Muted,
-                    modifier = Modifier.clickable { onChange("") }.padding(8.dp)
+                    modifier = Modifier.clickable { onChange("") }.padding(10.dp)
                 )
             }
         },
@@ -192,12 +209,11 @@ private fun SearchBox(query: String, s: Strings, onChange: (String) -> Unit) {
             focusedTextColor = Ink.Text,
             unfocusedTextColor = Ink.Text
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
     )
 }
 
-@Composable
-private fun Body(
+private fun androidx.compose.foundation.lazy.LazyListScope.body(
     tab: Tab,
     s: Strings,
     query: String,
@@ -207,63 +223,61 @@ private fun Body(
     failed: Boolean,
     onRetry: () -> Unit
 ) {
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        when {
-            failed -> item {
-                Column(
-                    Modifier.fillMaxWidth().padding(vertical = 52.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(s.loadFail, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Ink.Text2)
-                    Spacer(Modifier.height(7.dp))
-                    Text(s.loadFailHint, fontSize = 13.sp, color = Ink.Muted, textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = onRetry,
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Ink.GoldTint, contentColor = Ink.Gold
-                        )
-                    ) { Text(s.retry, fontWeight = FontWeight.Bold) }
-                }
-            }
-
-            loading -> item {
-                Box(Modifier.fillMaxWidth().padding(vertical = 60.dp), Alignment.Center) {
-                    CircularProgressIndicator(color = Ink.Gold, strokeWidth = 2.dp)
-                }
-            }
-
-            tab == Tab.SEARCH && query.isBlank() -> item {
-                stats?.let { Tiles(it, s) }
-            }
-
-            rows.isEmpty() -> item {
-                val (title, hint) = when (tab) {
-                    Tab.SEARCH -> s.noMatch to s.noMatchHint
-                    Tab.BANNED -> s.noBanned to null
-                    Tab.EXPIRING -> s.noExpiring to null
-                    Tab.EXPIRED -> s.noExpired to null
-                }
-                EmptyState(title, hint)
-            }
-
-            else -> {
-                val header = when (tab) {
-                    Tab.SEARCH -> if (rows.size > 1) s.searchResults to Ink.Gold else null
-                    Tab.BANNED -> s.bannedList to Ink.Danger
-                    Tab.EXPIRING -> s.expiringList to Ink.Warning
-                    Tab.EXPIRED -> s.expiredList to Ink.Danger
-                }
-                if (header != null) {
-                    item { SectionHeader(header.first, rows.size, header.second) }
-                }
-                items(rows, key = { it.id }) { emp ->
-                    EmployeeCard(emp, s, inBannedTab = tab == Tab.BANNED)
-                }
+    val pad = Modifier.padding(horizontal = 16.dp)
+    when {
+        failed -> item {
+            Column(
+                Modifier.fillMaxWidth().then(pad).padding(vertical = 52.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(s.loadFail, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Ink.Text2)
+                Spacer(Modifier.height(7.dp))
+                Text(s.loadFailHint, fontSize = 13.sp, color = Ink.Muted, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = onRetry,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Ink.GoldTint, contentColor = Ink.Gold
+                    )
+                ) { Text(s.retry, fontWeight = FontWeight.Bold) }
             }
         }
-        item { Spacer(Modifier.height(40.dp)) }
+
+        loading -> item {
+            Box(Modifier.fillMaxWidth().padding(vertical = 60.dp), Alignment.Center) {
+                CircularProgressIndicator(color = Ink.Gold, strokeWidth = 2.dp)
+            }
+        }
+
+        tab == Tab.SEARCH && query.isBlank() -> item {
+            stats?.let { Box(pad) { Tiles(it, s) } }
+        }
+
+        rows.isEmpty() -> item {
+            val (title, hint) = when (tab) {
+                Tab.SEARCH -> s.noMatch to s.noMatchHint
+                Tab.BANNED -> s.noBanned to null
+                Tab.EXPIRING -> s.noExpiring to null
+                Tab.EXPIRED -> s.noExpired to null
+            }
+            Box(pad) { EmptyState(title, hint) }
+        }
+
+        else -> {
+            val header = when (tab) {
+                Tab.SEARCH -> if (rows.size > 1) s.searchResults to Ink.Gold else null
+                Tab.BANNED -> s.bannedList to Ink.Danger
+                Tab.EXPIRING -> s.expiringList to Ink.Warning
+                Tab.EXPIRED -> s.expiredList to Ink.Danger
+            }
+            if (header != null) {
+                item { Box(pad) { SectionHeader(header.first, rows.size, header.second) } }
+            }
+            items(rows, key = { it.id }) { emp ->
+                Box(pad) { EmployeeCard(emp, s, inBannedTab = tab == Tab.BANNED) }
+            }
+        }
     }
 }
 
@@ -290,11 +304,7 @@ private fun Tile(label: String, value: Int, fg: Color, accent: Color?, modifier:
         modifier
             .clip(RoundedCornerShape(14.dp))
             .background(accent?.copy(alpha = 0.1f) ?: Ink.Panel2)
-            .border(
-                1.dp,
-                accent?.copy(alpha = 0.25f) ?: Ink.Line,
-                RoundedCornerShape(14.dp)
-            )
+            .border(1.dp, accent?.copy(alpha = 0.25f) ?: Ink.Line, RoundedCornerShape(14.dp))
             .padding(horizontal = 15.dp, vertical = 13.dp)
     ) {
         Text(label, fontSize = 11.5.sp, color = accent ?: Ink.Muted, maxLines = 1)

@@ -4,7 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -42,7 +45,15 @@ class MainActivity : ComponentActivity() {
                     LocalLayoutDirection provides
                         if (strings.rtl) LayoutDirection.Rtl else LayoutDirection.Ltr
                 ) {
-                    Surface(Modifier.fillMaxSize().background(Ink.Bg), color = Ink.Bg) {
+                    // safeDrawing keeps every edge clear of the notch, the status
+                    // bar and the gesture bar, which targetSdk 35 draws under.
+                    Surface(
+                        Modifier
+                            .fillMaxSize()
+                            .background(Ink.Bg)
+                            .windowInsetsPadding(WindowInsets.safeDrawing),
+                        color = Ink.Bg
+                    ) {
                         val key = apiKey
                         if (key == null) {
                             LockScreen(strings, checking, error) { pin ->

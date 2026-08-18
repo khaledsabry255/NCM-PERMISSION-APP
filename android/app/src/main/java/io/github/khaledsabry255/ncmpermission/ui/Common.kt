@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -115,4 +118,33 @@ fun EmptyState(title: String, hint: String? = null) {
             Text(hint, fontSize = 13.sp, color = Ink.Muted, textAlign = TextAlign.Center)
         }
     }
+}
+
+/**
+ * Renders text whose digits must stay Western even when the surrounding words
+ * are Arabic: the digit runs are drawn in the monospace face, which has no
+ * Arabic-Indic forms to fall back on.
+ */
+@Composable
+fun MixedNumberText(
+    text: String,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    color: Color,
+    fontWeight: FontWeight? = null
+) {
+    val built = buildAnnotatedString {
+        var i = 0
+        while (i < text.length) {
+            val start = i
+            val digit = text[i].isDigit()
+            while (i < text.length && text[i].isDigit() == digit) i++
+            val chunk = text.substring(start, i)
+            if (digit) {
+                withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) { append(chunk) }
+            } else {
+                append(chunk)
+            }
+        }
+    }
+    Text(built, fontSize = fontSize, color = color, fontWeight = fontWeight)
 }

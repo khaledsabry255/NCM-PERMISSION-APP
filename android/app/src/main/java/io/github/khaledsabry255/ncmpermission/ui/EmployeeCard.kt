@@ -179,7 +179,7 @@ private fun PermitStrip(
             )
             s.countdown(days)?.let {
                 Spacer(Modifier.height(5.dp))
-                Text(it, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = Ink.Text2)
+                MixedNumberText(it, 12.5.sp, Ink.Text2, FontWeight.SemiBold)
             }
         }
         val date = Dates.format(emp.permitDate)
