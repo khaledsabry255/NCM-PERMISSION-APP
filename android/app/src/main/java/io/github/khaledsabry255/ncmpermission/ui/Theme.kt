@@ -32,6 +32,8 @@ object Ink {
     val White = Color(0xFF0B1114)       // the wordmark reads black on a light page
 
     val BrandGreen = Color(0xFF4BA548)
+    val BrandBlue = Color(0xFF1565C0)
+    val BrandNavy = Color(0xFF1F4E79)
     val NoShot = Color(0xFFE6EEF8)
 }
 

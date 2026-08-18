@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -19,22 +22,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** The NCM wordmark: the printed black letters with the company green on the C. */
+/** The NCM wordmark, in the printed colours: blue letters, green on the C. */
 @Composable
 fun Wordmark(big: Boolean = true) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row {
-            val size = if (big) 34.sp else 30.sp
-            Text("N", fontSize = size, fontWeight = FontWeight.Black, color = Ink.White)
-            Text("C", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandGreen)
-            Text("M", fontSize = size, fontWeight = FontWeight.Black, color = Ink.White)
+        // Pinned to LTR: a Row follows the layout direction, so in Arabic the
+        // three letters would otherwise be laid out as M C N.
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row {
+                val size = if (big) 34.sp else 30.sp
+                Text("N", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
+                Text("C", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandGreen)
+                Text("M", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
+            }
         }
         Spacer(Modifier.height(8.dp))
         Text(
             "NUCLEAR CONCRETE MIXES",
             fontSize = 9.sp,
             letterSpacing = 2.sp,
-            color = Ink.Muted
+            color = Ink.BrandNavy
         )
         Spacer(Modifier.height(10.dp))
         Box(Modifier.width(46.dp).height(1.dp).background(Ink.Line2))

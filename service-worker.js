@@ -1,6 +1,6 @@
 // Bump CACHE with every upload, otherwise devices keep serving the copy they
 // already have and never see the new files (including a raised ACCESS_VERSION).
-const CACHE = 'ncm-permits-v41';
+const CACHE = 'ncm-permits-v42';
 const SHELL = [
   './',
   './index.html',
