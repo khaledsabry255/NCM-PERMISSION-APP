@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** The NCM wordmark, in the printed colours: blue letters, green on the C. */
+/** The NCM wordmark in its printed colours: blue N, green C, grey M. */
 @Composable
 fun Wordmark(big: Boolean = true) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -33,7 +33,7 @@ fun Wordmark(big: Boolean = true) {
                 val size = if (big) 34.sp else 30.sp
                 Text("N", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
                 Text("C", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandGreen)
-                Text("M", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
+                Text("M", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandGrey)
             }
         }
         Spacer(Modifier.height(8.dp))

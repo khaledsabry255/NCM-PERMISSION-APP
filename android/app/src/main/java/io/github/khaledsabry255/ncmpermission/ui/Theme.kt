@@ -34,6 +34,7 @@ object Ink {
     val BrandGreen = Color(0xFF4BA548)
     val BrandBlue = Color(0xFF1565C0)
     val BrandNavy = Color(0xFF1F4E79)
+    val BrandGrey = Color(0xFF5A646C)
     val NoShot = Color(0xFFE6EEF8)
 }
 
