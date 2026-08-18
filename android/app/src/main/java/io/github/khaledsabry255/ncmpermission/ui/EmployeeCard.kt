@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -173,12 +174,12 @@ private fun PermitStrip(
     Row(
         Modifier
             .fillMaxWidth()
-            .background(tone.copy(alpha = 0.14f))
+            .background(tone.copy(alpha = 0.16f).compositeOver(Color.White))
             .padding(horizontal = 18.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(s.permitStatus, fontSize = 11.5.sp, color = Ink.Muted)
+            Text(s.permitStatus, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Ink.Text)
             Spacer(Modifier.height(3.dp))
             Text(
                 s.statusLabel(status.code, status.rawLabel),
@@ -186,7 +187,7 @@ private fun PermitStrip(
             )
             s.countdown(days)?.let {
                 Spacer(Modifier.height(5.dp))
-                MixedNumberText(it, 12.5.sp, Ink.Text2, FontWeight.SemiBold)
+                MixedNumberText(it, 13.sp, Ink.Text, FontWeight.Bold)
             }
         }
         val date = Dates.format(emp.permitDate)

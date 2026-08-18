@@ -10,11 +10,13 @@ object Ink {
     val Bg = Color(0xFFEDF2F8)
     val Panel = Color(0xFFFFFFFF)
     val Panel2 = Color(0xFFF3F7FB)
-    val Card = Color(0xFFDBE2EA)        // records sit a shade below the page
-    val Field = Color(0xFFF7FAFD)
+    // Translucent so the page shows through and the record reads as glass.
+    val Card = Color(0x99ACBCCE)
+    val CardHighlight = Color(0x99FFFFFF)
+    val Field = Color(0xD1FFFFFF)
     val Line = Color(0xFFE2E9F2)
     val Line2 = Color(0xFFC0D3EC)
-    val CardLine = Color(0xFFC3CDD8)
+    val CardLine = Color(0xFFB3C2D4)
 
     // The accent is blue now; the names stay so every call site follows along.
     val Gold = Color(0xFF1565C0)

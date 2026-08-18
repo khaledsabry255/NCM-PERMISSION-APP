@@ -141,7 +141,7 @@ data class Strings(
         )
 
         val EN = Strings(
-            rtl = false, otherLang = "عربي",
+            rtl = false, otherLang = "AR",
             pinLabel = "PIN Code", enter = "Enter", checking = "Checking",
             wrongPin = "Incorrect PIN",
             tabSearch = "Search", tabBanned = "Banned",

@@ -68,13 +68,13 @@ fun FieldRow(label: String, value: String, mono: Boolean = false, valueColor: Co
             .padding(horizontal = 14.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 12.5.sp, color = Ink.Muted)
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Ink.Text)
         Spacer(Modifier.width(14.dp))
         Text(
             value,
             modifier = Modifier.weight(1f),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 14.5.sp,
+            fontWeight = FontWeight.ExtraBold,
             color = valueColor,
             textAlign = TextAlign.End,
             fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default
@@ -86,9 +86,10 @@ fun FieldRow(label: String, value: String, mono: Boolean = false, valueColor: Co
 fun GroupTitle(text: String) {
     Text(
         text,
-        fontSize = 10.5.sp,
-        letterSpacing = 1.4.sp,
-        color = Ink.Muted,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.2.sp,
+        color = Ink.Text,
         modifier = Modifier.padding(start = 4.dp, top = 15.dp, bottom = 8.dp)
     )
 }
