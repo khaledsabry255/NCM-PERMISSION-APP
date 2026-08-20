@@ -11,8 +11,8 @@
 | المكوّن | المكان | الحالة |
 |---|---|---|
 | PWA (نسخة الويب) | جذر الريبو (`index.html`) | شغّالة إنتاج |
-| تطبيق Android أصلي | `android/` | مخطط له |
-| بناء الـ APK | `.github/workflows/` | مخطط له |
+| تطبيق Android (غلاف WebView) | `android/` | شغّال |
+| بناء الـ APK | `.github/workflows/android.yml` | شغّال |
 
 **الريبو:** `khaledsabry255/NCM-PERMISSION-APP` — عام (Public).
 **اللينك:** https://khaledsabry255.github.io/NCM-PERMISSION-APP/
@@ -119,9 +119,21 @@ CSS بيستخدم خصائص منطقية (`inset-inline-*` / `text-align:end`)
 
 ---
 
-## الـ APK الحالي (TWA)
+## تطبيق الأندرويد (`android/`)
 
-مغلّف بـ PWABuilder، package `io.github.khaledsabry255.twa`. مجرد غلاف بيفتح نفس لينك GitHub Pages، فأي تحديث على الويب بيظهر فيه تلقائي.
+package `io.github.khaledsabry255.ncmpermission`. **مجرد WebView بيفتح نفس لينك GitHub Pages ملء الشاشة** — الواجهة كلها هي `index.html` نفسه، فأي تعديل على الويب بيظهر في التطبيق تلقائي من غير APK جديد.
+
+> 🚨 **متبنيش الواجهة تاني بـ Kotlin.** كانت متكتوبة بـ Compose قبل كده (لحد commit `e2af1a4`) والنتيجة إن كل تعديل على الويب كان لازم يتعمل مرتين، والاتنين فضلوا مختلفين. الشكل بيتظبط في `index.html` بس.
+
+الملفات: `MainActivity.kt` (الـ WebView + هوامش الشاشة + زرار الرجوع) و `Downloads.kt` (زرار حفظ الصور — الصفحة بتحوّل الصورة لـ blob، والـ WebView مش بيعرف يحفظه، فبيترجّع بـ JavaScript ويتكتب في مجلد Downloads).
+
+الـ APK بيتبني على GitHub Actions مع أي تعديل في `android/` وبينزل في release ثابت اسمه `latest-apk`، وموقّع بمفتاح الـ debug عشان يتثبت من اللينك على طول.
+
+> 🚨 **مع أي تعديل في `android/` زوّد `versionCode` و `versionName`** في `android/app/build.gradle.kts`، وإلا الأندرويد ممكن يرفض يثبّت النسخة الجديدة فوق القديمة.
+
+### الغلاف القديم (TWA)
+
+نسخة قديمة مغلّفة بـ PWABuilder، package `io.github.khaledsabry255.twa`، لسه متثبتة عند ناس. بتفتح نفس اللينك برضه.
 
 > 🚨 **ملف `assetlinks.json` مستضاف في ريبو منفصل** اسمه `khaledsabry255.github.io`، كملف واحد في الجذر بـ Jekyll front matter (`permalink: /.well-known/assetlinks.json`). فولدر `.well-known` المباشر **مابيشتغلش** على GitHub Pages — Jekyll بيتجاهل أي اسم بيبدأ بنقطة. الملف فيه بصمتين (المفتاح الجديد والقديم).
 
