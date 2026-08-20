@@ -10,13 +10,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -185,13 +192,34 @@ private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun SearchBox(query: String, s: Strings, onChange: (String) -> Unit) {
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focus = LocalFocusManager.current
     OutlinedTextField(
         value = query,
         onValueChange = onChange,
         singleLine = true,
-        placeholder = { Text(s.searchHint, fontSize = 14.sp, color = Ink.Muted, maxLines = 1) },
+        textStyle = LocalTextStyle.current.copy(
+            textAlign = if (query.isEmpty()) TextAlign.Center else TextAlign.Start
+        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = {
+            // Dropping the keyboard is what puts the record on screen.
+            keyboard?.hide()
+            focus.clearFocus()
+        }),
+        placeholder = {
+            Text(
+                s.searchHint,
+                modifier = Modifier.fillMaxWidth(),
+                fontSize = 14.sp,
+                color = Ink.Muted,
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+        },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 Text(

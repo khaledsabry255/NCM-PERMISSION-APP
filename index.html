@@ -247,8 +247,9 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 .searchbar svg{flex:none;color:var(--muted);}
 #q{
   flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);
-  font-family:var(--sans);font-size:16px;font-weight:500;
+  font-family:var(--sans);font-size:16px;font-weight:500;text-align:start;
 }
+#q:placeholder-shown{text-align:center;}
 #q::placeholder{color:var(--muted);}
 .clearbtn{
   flex:none;width:25px;height:25px;border-radius:50%;border:none;color:var(--muted);
@@ -703,7 +704,10 @@ async function submitPin(){
 }
 pinpad.addEventListener('click', () => pin.focus());
 pinpad.addEventListener('keydown', e => { if(e.key===' '||e.key==='Enter'){ e.preventDefault(); pin.focus(); }});
-pin.addEventListener('input', () => { gateErr.textContent=''; paintDots(); });
+pin.addEventListener('input', () => {
+  gateErr.textContent = ''; paintDots();
+  if(pin.value.length === 4) submitPin();
+});
 pin.addEventListener('focus', () => pinpad.classList.add('focus'));
 pin.addEventListener('blur',  () => pinpad.classList.remove('focus'));
 pin.addEventListener('keydown', e => { if(e.key==='Enter') submitPin(); });
@@ -1253,7 +1257,11 @@ q.addEventListener('input', () => {
   debounce = setTimeout(() => runSearch(t), 260);
 });
 q.addEventListener('keydown', e => {
-  if(e.key === 'Enter'){ clearTimeout(debounce); const t = sanitize(q.value); if(t) runSearch(t); }
+  if(e.key === 'Enter'){
+    clearTimeout(debounce);
+    q.blur();                                  // drop the keyboard off the result
+    const t = sanitize(q.value); if(t) runSearch(t);
+  }
   if(e.key === 'Escape'){ q.value=''; clearBtn.classList.remove('on'); ++token; renderIdle(); }
 });
 clearBtn.addEventListener('click', () => {

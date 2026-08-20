@@ -9,7 +9,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -22,11 +24,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String) -> Unit) {
     var pin by remember { mutableStateOf("") }
     val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) { focus.requestFocus() }
+
+    val submit: (String) -> Unit = { entered ->
+        keyboard?.hide()
+        onSubmit(entered)
+    }
 
     Box(
         Modifier.fillMaxSize().background(Ink.PageWash).padding(24.dp),
@@ -62,12 +71,12 @@ fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String)
                 enabled = !checking,
                 focusRequester = focus,
                 onChange = { pin = it.filter(Char::isDigit).take(8) },
-                onDone = { if (pin.isNotEmpty()) onSubmit(pin) }
+                onDone = { if (pin.isNotEmpty()) submit(pin) }
             )
             Spacer(Modifier.height(12.dp))
 
             Button(
-                onClick = { if (pin.isNotEmpty()) onSubmit(pin) },
+                onClick = { if (pin.isNotEmpty()) submit(pin) },
                 enabled = !checking,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
