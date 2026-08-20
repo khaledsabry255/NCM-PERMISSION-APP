@@ -73,28 +73,19 @@ fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String)
                 onChange = { pin = it.filter(Char::isDigit).take(8) },
                 onDone = { if (pin.isNotEmpty()) submit(pin) }
             )
-            Spacer(Modifier.height(12.dp))
-
-            Button(
-                onClick = { if (pin.isNotEmpty()) submit(pin) },
-                enabled = !checking,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                containerColor = Ink.Gold,
-                contentColor = androidx.compose.ui.graphics.Color.White
-            ),
-                modifier = Modifier.fillMaxWidth().height(48.dp)
-            ) {
-                Text(
-                    if (checking) s.checking else s.enter,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
+            // No confirm button: four digits are the whole PIN, so the field
+            // below carries the only two things left to say.
+            Spacer(Modifier.height(16.dp))
+            when {
+                checking -> Text(
+                    s.checking, color = Ink.Muted,
+                    fontSize = 13.sp, fontWeight = FontWeight.Bold
                 )
-            }
-
-            if (error != null) {
-                Spacer(Modifier.height(12.dp))
-                Text(error, color = Ink.Danger, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                error != null -> Text(
+                    error, color = Ink.Danger,
+                    fontSize = 13.sp, fontWeight = FontWeight.Bold
+                )
+                else -> Spacer(Modifier.height(20.dp))
             }
         }
     }

@@ -181,13 +181,8 @@ html[dir="ltr"] .searchbar{direction:ltr;}
   letter-spacing:.55em;text-indent:.55em;transition:border-color .16s;
 }
 .pinpad.focus{border-color:var(--gold);}
-.gate-btn{
-  width:100%;margin-top:12px;padding:13px;border:none;border-radius:var(--r);
-  font-weight:800;font-size:15px;color:#fff;
-  background:var(--gold);transition:transform .12s;
-}
-.gate-btn:active{transform:translateY(1px);}
-.gate-err{color:var(--danger);font-size:12.5px;min-height:18px;margin:12px 0 0;font-weight:700;}
+.gate-err{color:var(--danger);font-size:13px;min-height:20px;margin:16px 0 0;font-weight:700;}
+.gate-err.busy{color:var(--muted);}
 .shake{animation:shake .36s;}
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
 
@@ -245,11 +240,14 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 }
 .searchbar:focus-within svg{color:var(--gold);}
 .searchbar svg{flex:none;color:var(--muted);}
+.searchgo{
+  flex:none;display:flex;align-items:center;justify-content:center;
+  border:none;background:none;padding:0;margin:0;color:inherit;
+}
 #q{
   flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);
-  font-family:var(--sans);font-size:16px;font-weight:500;text-align:start;
+  font-family:var(--sans);font-size:16px;font-weight:500;text-align:center;
 }
-#q:placeholder-shown{text-align:center;}
 #q::placeholder{color:var(--muted);}
 .clearbtn{
   flex:none;width:25px;height:25px;border-radius:50%;border:none;color:var(--muted);
@@ -462,7 +460,6 @@ html[dir="ltr"] .searchbar{direction:ltr;}
     <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="الرقم السري">
     <div class="pinpad" id="pinpad" role="button" tabindex="0" aria-label="اضغط لإدخال الرقم">••••</div>
-    <button class="gate-btn" id="gate-go">دخول</button>
     <p class="gate-err" id="gate-err" role="alert" aria-live="assertive"></p>
   </div>
 </div>
@@ -490,7 +487,9 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 
         <div id="searchwrap">
           <div class="searchbar">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <button class="searchgo" id="searchgo" type="button" aria-label="بحث">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
             <input id="q" type="text" placeholder="ابحث بالكود أو الرقم القومي أو الاسم" autocomplete="off" inputmode="search" aria-label="بحث عن موظف">
             <button class="clearbtn" id="clear" aria-label="مسح البحث">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
@@ -678,11 +677,9 @@ function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
 let unlocking = false;
 async function submitPin(){
   if(unlocking || !pin.value) return;
-  const btn = $('gate-go');
   unlocking = true;
-  btn.disabled = true;
-  btn.textContent = t('checking');
-  gateErr.textContent = '';
+  gateErr.classList.add('busy');
+  gateErr.textContent = t('checking');
   try{
     const apiKey = await unlockVault(pin.value);
     try {
@@ -692,14 +689,13 @@ async function submitPin(){
     connect(apiKey);
     openApp();
   }catch(err){
+    gateErr.classList.remove('busy');
     gateErr.textContent = t('wrongPin');
     gate.querySelector('.gate-card').classList.add('shake');
     setTimeout(() => gate.querySelector('.gate-card').classList.remove('shake'), 400);
     pin.value = ''; paintDots(); pin.focus();
   }finally{
     unlocking = false;
-    btn.disabled = false;
-    btn.textContent = t('enter');
   }
 }
 pinpad.addEventListener('click', () => pin.focus());
@@ -711,7 +707,6 @@ pin.addEventListener('input', () => {
 pin.addEventListener('focus', () => pinpad.classList.add('focus'));
 pin.addEventListener('blur',  () => pinpad.classList.remove('focus'));
 pin.addEventListener('keydown', e => { if(e.key==='Enter') submitPin(); });
-$('gate-go').addEventListener('click', submitPin);
 
 /* ============================================================
    TEXT / SEARCH NORMALIZATION (display data is never mutated)
@@ -1264,6 +1259,12 @@ q.addEventListener('keydown', e => {
   }
   if(e.key === 'Escape'){ q.value=''; clearBtn.classList.remove('on'); ++token; renderIdle(); }
 });
+$('searchgo').addEventListener('click', () => {
+  clearTimeout(debounce);
+  q.blur();                                    // same effect as the keyboard's search key
+  const term = sanitize(q.value);
+  if(term) runSearch(term);
+});
 clearBtn.addEventListener('click', () => {
   q.value = ''; clearBtn.classList.remove('on');
   ++token; renderIdle(); q.focus();
@@ -1313,8 +1314,8 @@ function applyLang(){
   if(gl) gl.textContent = t('pinLabel');
   setAria('pin', t('pinLabel'));
   setAria('pinpad', t('pinAria'));
-  setText('gate-go', t('enter'));
   gateErr.textContent = '';
+  gateErr.classList.remove('busy');
 
   // tabs + toolbar
   const nav = document.querySelector('.nav');

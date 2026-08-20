@@ -201,15 +201,23 @@ private fun SearchBox(query: String, s: Strings, onChange: (String) -> Unit) {
         value = query,
         onValueChange = onChange,
         singleLine = true,
-        textStyle = LocalTextStyle.current.copy(
-            textAlign = if (query.isEmpty()) TextAlign.Center else TextAlign.Start
-        ),
+        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = {
             // Dropping the keyboard is what puts the record on screen.
             keyboard?.hide()
             focus.clearFocus()
         }),
+        leadingIcon = {
+            Text(
+                "⌕",
+                fontSize = 19.sp,
+                color = Ink.Muted,
+                modifier = Modifier
+                    .clickable { keyboard?.hide(); focus.clearFocus() }
+                    .padding(start = 4.dp, end = 2.dp)
+            )
+        },
         placeholder = {
             Text(
                 s.searchHint,
