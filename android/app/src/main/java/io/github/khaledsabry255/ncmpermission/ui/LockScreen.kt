@@ -29,7 +29,7 @@ fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String)
     LaunchedEffect(Unit) { focus.requestFocus() }
 
     Box(
-        Modifier.fillMaxSize().background(Ink.Bg).padding(24.dp),
+        Modifier.fillMaxSize().background(Ink.PageWash).padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -108,7 +108,7 @@ private fun BasicPinField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         textStyle = TextStyle(
             fontSize = 19.sp,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Fonts.Mono,
             textAlign = TextAlign.Center,
             letterSpacing = 8.sp,
             color = Ink.Text

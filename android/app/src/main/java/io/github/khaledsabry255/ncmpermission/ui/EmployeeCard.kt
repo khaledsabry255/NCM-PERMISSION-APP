@@ -110,7 +110,7 @@ private fun Identity(
                 Spacer(Modifier.width(7.dp))
                 Text(
                     emp.code, fontSize = 12.5.sp, fontWeight = FontWeight.Bold,
-                    color = Ink.Gold, fontFamily = FontFamily.Monospace
+                    color = Ink.Gold, fontFamily = Fonts.Mono
                 )
             }
             Spacer(Modifier.height(10.dp))
@@ -126,7 +126,8 @@ private fun Identity(
         val en = @Composable {
             emp.nameEn?.let {
                 Text(
-                    it.uppercase(), fontSize = 19.sp, fontWeight = FontWeight.Bold,
+                    it.uppercase(), fontFamily = Fonts.Condensed,
+                    fontSize = 20.sp, fontWeight = FontWeight.Bold,
                     color = Ink.White, textAlign = TextAlign.Center, letterSpacing = 0.8.sp
                 )
             }
@@ -195,7 +196,7 @@ private fun PermitStrip(
             date ?: "—",
             fontSize = if (date != null) 24.sp else 17.sp,
             fontWeight = FontWeight.SemiBold,
-            fontFamily = if (date != null) FontFamily.Monospace else FontFamily.Default,
+            fontFamily = if (date != null) Fonts.Mono else Fonts.Sans,
             color = if (date != null) tone else Ink.Neutral
         )
     }

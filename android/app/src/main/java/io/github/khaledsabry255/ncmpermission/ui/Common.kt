@@ -39,6 +39,7 @@ fun Wordmark(big: Boolean = true) {
         Spacer(Modifier.height(8.dp))
         Text(
             "NUCLEAR CONCRETE MIXES",
+            fontFamily = Fonts.Sans,
             fontSize = 9.sp,
             letterSpacing = 2.sp,
             color = Ink.BrandNavy
@@ -48,7 +49,8 @@ fun Wordmark(big: Boolean = true) {
         Spacer(Modifier.height(9.dp))
         Text(
             "PERMISSION",
-            fontSize = if (big) 20.sp else 18.sp,
+            fontFamily = Fonts.Condensed,
+            fontSize = if (big) 22.sp else 20.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 3.sp,
             color = Ink.Gold
@@ -77,7 +79,7 @@ fun FieldRow(label: String, value: String, mono: Boolean = false, valueColor: Co
             fontWeight = FontWeight.ExtraBold,
             color = valueColor,
             textAlign = TextAlign.End,
-            fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default
+            fontFamily = if (mono) Fonts.Mono else Fonts.Sans
         )
     }
 }
@@ -106,7 +108,7 @@ fun SectionHeader(title: String, count: Int, tone: Color) {
             "$count",
             fontSize = 12.5.sp,
             fontWeight = FontWeight.SemiBold,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Fonts.Mono,
             color = tone
         )
         Spacer(Modifier.width(10.dp))
@@ -148,7 +150,7 @@ fun MixedNumberText(
             while (i < text.length && text[i].isDigit() == digit) i++
             val chunk = text.substring(start, i)
             if (digit) {
-                withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) { append(chunk) }
+                withStyle(SpanStyle(fontFamily = Fonts.Mono)) { append(chunk) }
             } else {
                 append(chunk)
             }

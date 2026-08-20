@@ -11,8 +11,8 @@
 | المكوّن | المكان | الحالة |
 |---|---|---|
 | PWA (نسخة الويب) | جذر الريبو (`index.html`) | شغّالة إنتاج |
-| تطبيق Android أصلي | `android/` | مخطط له |
-| بناء الـ APK | `.github/workflows/` | مخطط له |
+| تطبيق Android أصلي (Kotlin + Compose) | `android/` | شغّال |
+| بناء الـ APK | `.github/workflows/android.yml` | شغّال |
 
 **الريبو:** `khaledsabry255/NCM-PERMISSION-APP` — عام (Public).
 **اللينك:** https://khaledsabry255.github.io/NCM-PERMISSION-APP/
@@ -119,7 +119,27 @@ CSS بيستخدم خصائص منطقية (`inset-inline-*` / `text-align:end`)
 
 ---
 
-## الـ APK الحالي (TWA)
+## تطبيق الأندرويد (`android/`)
+
+package `io.github.khaledsabry255.ncmpermission`. **تطبيق أصلي قائم بذاته** — بيقرا من Supabase مباشرةً وبيشتغل من غير ما يحتاج الموقع.
+
+> 🚨 **متحوّلوش لـ WebView.** ده حصل مرة واحدة في 20 أغسطس 2026 (commit `e7254df`) **من غير ما خالد يطلبه**، واترجع في نفس اليوم. هو طلب صراحةً إن كل تطبيق يشتغل لوحده. لو الشكل طلع مختلف عن الويب، الحل يكون في الخطوط والألوان — مش في إلغاء التطبيق.
+
+**الخطوط مضمّنة جوه الـ APK** في `res/font/`: Tajawal و IBM Plex Mono و Barlow Condensed — نفس خطوط الموقع بالظبط. `ui/Fonts.kt` هي المرجع، و`Fonts.Sans` متحطّة كخط افتراضي لكل الـ Typography في `Theme.kt`. من غيرها التطبيق بيرسم بخط الأندرويد الافتراضي والشكل بيختلف عن الويب.
+
+**المنطق متكرر في المكانين عن قصد** — نفس قواعد التواريخ والبحث والحالات موجودة في `index.html` وفي `android/…/data/`. أي تعديل في القواعد لازم يتعمل في الاتنين.
+
+الملفات: `MainActivity.kt` · `data/` (`Vault` التشفير · `Repository` لـ Supabase · `Dates` · `Search` · `Status` · `Models` · `Prefs`) · `ui/` (`AppScreen` · `EmployeeCard` · `LockScreen` · `Common` · `Strings` · `Theme` · `Fonts` · `PhotoSaver`).
+
+الـ APK بيتبني على GitHub Actions مع أي تعديل في `android/` وبينزل في release ثابت اسمه `latest-apk`، وموقّع بمفتاح debug عشان يتثبّت من اللينك مباشرةً.
+
+> 🚨 **مع أي تعديل في `android/` زوّد `versionCode` و `versionName`** في `android/app/build.gradle.kts`، وإلا أندرويد هيرفض يثبّت النسخة الجديدة فوق القديمة. آخر نسخة: `versionCode 8` / `2.1`.
+
+> 🚨 **مفيش JDK ولا Android SDK ولا Gradle على جهاز خالد** — التعديلات في `android/` مابتتجربش محلياً. البناء على Actions هو اللي بيكشف أخطاء الكومبايل، وخالد هو اللي بيجرّب الشكل على موبايله.
+
+---
+
+## الغلاف القديم (TWA)
 
 مغلّف بـ PWABuilder، package `io.github.khaledsabry255.twa`. مجرد غلاف بيفتح نفس لينك GitHub Pages، فأي تحديث على الويب بيظهر فيه تلقائي.
 

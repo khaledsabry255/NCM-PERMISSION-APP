@@ -3,6 +3,7 @@ package io.github.khaledsabry255.ncmpermission.ui
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /** Same palette as the web app: a light page with blue used only as accent. */
@@ -38,11 +39,36 @@ object Ink {
     val BrandNavy = Color(0xFF1F4E79)
     val BrandGrey = Color(0xFF5A646C)
     val NoShot = Color(0xFFE6EEF8)
+
+    /** The same wash the site paints behind its header. */
+    val PageWash = Brush.verticalGradient(
+        0f to Color(0xFFE4EDF8),
+        0.45f to Bg,
+        1f to Bg
+    )
 }
 
 @Composable
 fun NcmTheme(content: @Composable () -> Unit) {
+    val type = MaterialTheme.typography
     MaterialTheme(
+        typography = type.copy(
+            displayLarge = type.displayLarge.copy(fontFamily = Fonts.Sans),
+            displayMedium = type.displayMedium.copy(fontFamily = Fonts.Sans),
+            displaySmall = type.displaySmall.copy(fontFamily = Fonts.Sans),
+            headlineLarge = type.headlineLarge.copy(fontFamily = Fonts.Sans),
+            headlineMedium = type.headlineMedium.copy(fontFamily = Fonts.Sans),
+            headlineSmall = type.headlineSmall.copy(fontFamily = Fonts.Sans),
+            titleLarge = type.titleLarge.copy(fontFamily = Fonts.Sans),
+            titleMedium = type.titleMedium.copy(fontFamily = Fonts.Sans),
+            titleSmall = type.titleSmall.copy(fontFamily = Fonts.Sans),
+            bodyLarge = type.bodyLarge.copy(fontFamily = Fonts.Sans),
+            bodyMedium = type.bodyMedium.copy(fontFamily = Fonts.Sans),
+            bodySmall = type.bodySmall.copy(fontFamily = Fonts.Sans),
+            labelLarge = type.labelLarge.copy(fontFamily = Fonts.Sans),
+            labelMedium = type.labelMedium.copy(fontFamily = Fonts.Sans),
+            labelSmall = type.labelSmall.copy(fontFamily = Fonts.Sans)
+        ),
         colorScheme = lightColorScheme(
             primary = Ink.Gold,
             background = Ink.Bg,

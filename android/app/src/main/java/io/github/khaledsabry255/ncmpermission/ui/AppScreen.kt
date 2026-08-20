@@ -81,7 +81,7 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
         if (reveal > 0 && listState.firstVisibleItemIndex < 1) listState.animateScrollToItem(1)
     }
 
-    LazyColumn(state = listState, modifier = Modifier.fillMaxSize().background(Ink.Bg)) {
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize().background(Ink.PageWash)) {
         item {
             Box(Modifier.fillMaxWidth().padding(top = 22.dp, bottom = 4.dp), Alignment.Center) {
                 Wordmark(big = true)
@@ -313,7 +313,7 @@ private fun Tile(label: String, value: Int, fg: Color, accent: Color?, modifier:
             "$value",
             fontSize = 23.sp,
             fontWeight = FontWeight.SemiBold,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Fonts.Mono,
             color = fg
         )
     }
