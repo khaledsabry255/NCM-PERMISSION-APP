@@ -125,7 +125,20 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 }
 
 /* brand lockup — NCM wordmark above the app name */
-.brand{display:flex;flex-direction:column;align-items:center;line-height:1;}
+.brand{
+  display:flex;flex-direction:column;align-items:center;line-height:1;
+  transition:font-size .18s;
+}
+/* While there is something to read, the full mark steps aside and a small one
+   rides inside the pinned bar, so the app never stops saying what it is. */
+.topbar.compact{display:none;}
+.minibrand{
+  display:none;align-items:baseline;justify-content:center;gap:9px;
+  padding-bottom:9px;
+}
+.toolbar.compact .minibrand{display:flex;}
+.minibrand .ncm{font-size:21px;}
+.minibrand .appname{font-size:12.5px;letter-spacing:.1em;text-indent:.1em;}
 .ncm{
   font-family:var(--sans),'Arial Black',system-ui;
   font-weight:900;font-size:36px;line-height:1;
@@ -334,6 +347,9 @@ html[dir="ltr"] .searchbar{direction:ltr;}
    EMPLOYEE CARD — one calm card
    ============================================================ */
 .rec{
+  /* pinned: the interface may flip, but a record the guard has learned to read
+     must not rearrange itself around him */
+  direction:rtl;
   margin-top:14px;border-radius:var(--r-lg);overflow:hidden;
   border:1px solid var(--card-line);background:var(--card);
   backdrop-filter:blur(14px) saturate(1.15);
@@ -362,8 +378,6 @@ html[dir="ltr"] .searchbar{direction:ltr;}
   font-family:var(--cond);font-weight:700;letter-spacing:.04em;font-size:19px;
   color:var(--text-2);text-transform:uppercase;direction:ltr;margin:4px 0 0;line-height:1.3;
 }
-/* in English mode the Latin name leads, so the gap moves under it */
-.nm-en.lead{margin:0 0 5px;}
 .pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
 .pill{
   display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;
@@ -479,6 +493,11 @@ html[dir="ltr"] .searchbar{direction:ltr;}
     <!-- Sticks to the top edge, so the search box and both controls stay in
          reach while the results scroll underneath. -->
     <div class="toolbar" id="toolbar">
+      <div class="minibrand" aria-hidden="true">
+        <span class="ncm">N<i>C</i><b>M</b></span>
+        <span class="appname">PERMISSION</span>
+      </div>
+
       <div class="toolrow">
         <button class="langbtn" id="lang" type="button" aria-label="Switch language">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -656,7 +675,7 @@ function paintDots(){
 function openApp(){
   gate.style.display = 'none';
   app.hidden = false;
-  q.focus({preventScroll:true});
+  pin.blur();          // the PIN is done; let the keyboard go
   renderIdle();
 }
 const b64d = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -925,12 +944,8 @@ function recordHTML(emp){
     ? '<div class="track"><span style="width:' + Math.max(4, Math.round(dl / EXPIRY_WINDOW * 100)) + '%"></span></div>'
     : '';
 
-  // In English the Latin name leads; the Arabic name stays underneath it.
-  const nmAr = '<h2 class="nm">' + esc(emp.full_name || t('noName')) + '</h2>';
-  const nmEn = emp.full_name_en
-    ? '<p class="nm-en' + (isEN() ? ' lead' : '') + '">' + esc(emp.full_name_en) + '</p>'
-    : '';
-  const names = (isEN() && nmEn) ? nmEn + nmAr : nmAr + nmEn;
+  const names = '<h2 class="nm">' + esc(emp.full_name || t('noName')) + '</h2>' +
+    (emp.full_name_en ? '<p class="nm-en">' + esc(emp.full_name_en) + '</p>' : '');
 
   return '<article class="rec" data-s="' + s.k + '">' +
     '<div class="head">' +
@@ -1007,6 +1022,7 @@ function paintStats(s){
 }
 function renderIdle(){
   setBusy(false);
+  setCompact(false);
   if(tab !== 'search'){ out.innerHTML = ''; return; }
   if(statsCache){ paintStats(statsCache); return; }
   return loadStats();
@@ -1087,6 +1103,7 @@ async function runSearch(term){
       return;
     }
     renderList(rows, rows.length > 1 ? t('searchResults') : '', '');
+    if(rows.length === 1) q.blur();          // one hit is an answer, not a step
   }catch(err){ friendlyFail(err, myToken); }
 }
 
@@ -1345,6 +1362,12 @@ langBtns.forEach(btn => btn.addEventListener('click', () => {
 
 /* ---------- keep the toolbar useful while scrolling ---------- */
 const toolbar = $('toolbar');
+const topbar = document.querySelector('#app .topbar');
+
+function setCompact(on){
+  if(topbar) topbar.classList.toggle('compact', on);
+  toolbar.classList.toggle('compact', on);
+}
 function paintStuck(){
   const on = window.scrollY > 6;
   toolbar.classList.toggle('stuck', on);
@@ -1353,11 +1376,10 @@ function paintStuck(){
 window.addEventListener('scroll', paintStuck, {passive:true});
 paintStuck();
 
-// Lifts the page so the toolbar meets the top edge and the result below it is
-// on screen — without yanking the view if the user already scrolled past it.
+// The mark shrinks rather than scrolling away, so the result rises into view
+// while the app still says what it is.
 function revealResults(){
-  const top = toolbar.getBoundingClientRect().top + window.scrollY;
-  if(window.scrollY < top - 2) window.scrollTo({top:top, behavior:'smooth'});
+  setCompact(true);
 }
 
 /* ---------- save both photos ----------

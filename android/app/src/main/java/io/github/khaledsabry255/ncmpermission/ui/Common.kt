@@ -24,37 +24,67 @@ import androidx.compose.ui.unit.sp
 
 /** The NCM wordmark in its printed colours: blue N, green C, grey M. */
 @Composable
-fun Wordmark(big: Boolean = true) {
+fun Wordmark(big: Boolean = true, compact: Boolean = false) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         // Pinned to LTR: a Row follows the layout direction, so in Arabic the
         // three letters would otherwise be laid out as M C N.
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Row {
-                val size = if (big) 34.sp else 30.sp
+                val size = if (compact) 24.sp else if (big) 34.sp else 30.sp
                 Text("N", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
                 Text("C", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandGreen)
                 Text("M", fontSize = size, fontWeight = FontWeight.Black, color = Ink.BrandGrey)
             }
         }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "NUCLEAR CONCRETE MIXES",
-            fontFamily = Fonts.Sans,
-            fontSize = 9.sp,
-            letterSpacing = 2.sp,
-            color = Ink.BrandNavy
-        )
-        Spacer(Modifier.height(10.dp))
+        if (!compact) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "NUCLEAR CONCRETE MIXES",
+                fontFamily = Fonts.Sans,
+                fontSize = 9.sp,
+                letterSpacing = 2.sp,
+                color = Ink.BrandNavy
+            )
+        }
+        Spacer(Modifier.height(if (compact) 7.dp else 10.dp))
         Box(Modifier.width(46.dp).height(1.dp).background(Ink.Line2))
-        Spacer(Modifier.height(9.dp))
+        Spacer(Modifier.height(if (compact) 6.dp else 9.dp))
         Text(
             "PERMISSION",
             fontFamily = Fonts.Condensed,
-            fontSize = if (big) 22.sp else 20.sp,
+            fontSize = if (compact) 15.sp else if (big) 22.sp else 20.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 3.sp,
             color = Ink.Gold
         )
+    }
+}
+
+/**
+ * The one-line mark that rides inside the pinned bar, so the app keeps saying
+ * what it is while a record fills the screen.
+ */
+@Composable
+fun MiniWordmark() {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Row(
+            Modifier.fillMaxWidth().padding(bottom = 9.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text("N", fontSize = 21.sp, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
+            Text("C", fontSize = 21.sp, fontWeight = FontWeight.Black, color = Ink.BrandGreen)
+            Text("M", fontSize = 21.sp, fontWeight = FontWeight.Black, color = Ink.BrandGrey)
+            Spacer(Modifier.width(9.dp))
+            Text(
+                "PERMISSION",
+                fontFamily = Fonts.Condensed,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 2.sp,
+                color = Ink.Gold
+            )
+        }
     }
 }
 

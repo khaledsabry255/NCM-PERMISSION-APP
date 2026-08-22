@@ -8,6 +8,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +35,15 @@ private fun toneBg(tone: Tone) = when (tone) {
 
 @Composable
 fun EmployeeCard(emp: Employee, s: Strings, inBannedTab: Boolean) {
+    // Pinned to RTL: the interface may flip, but a record the guard has learned
+    // to read must not rearrange itself around him.
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Record(emp, s, inBannedTab)
+    }
+}
+
+@Composable
+private fun Record(emp: Employee, s: Strings, inBannedTab: Boolean) {
     val status = Status.of(emp)
     val tone = when (status.tone) {
         Tone.OK -> Ink.Success
@@ -116,7 +127,6 @@ private fun Identity(
             Spacer(Modifier.height(10.dp))
         }
 
-        // In English the Latin name leads; the Arabic name stays underneath.
         val ar = @Composable {
             Text(
                 emp.nameAr ?: s.noName, fontSize = 20.sp, fontWeight = FontWeight.Bold,
@@ -132,7 +142,7 @@ private fun Identity(
                 )
             }
         }
-        if (s.rtl) { ar(); en() } else { en(); ar() }
+        ar(); en()
 
         Spacer(Modifier.height(12.dp))
         Row(

@@ -37,7 +37,7 @@ import kotlinx.coroutines.delay
 
 enum class Tab { SEARCH, BANNED, EXPIRING, EXPIRED }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
     var tab by remember { mutableStateOf(Tab.SEARCH) }
@@ -47,7 +47,7 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
     var loading by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
     var reload by remember { mutableStateOf(0) }
-    var reveal by remember { mutableStateOf(0) }
+    var hideKeyboard by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
 
@@ -69,12 +69,12 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
                         delay(260)
                         loading = true
                         rows = repo.search(query)
-                        reveal++
+                        if (rows.size == 1) hideKeyboard = true
                     }
                 }
-                Tab.BANNED -> { loading = true; rows = repo.banned(); reveal++ }
-                Tab.EXPIRING -> { loading = true; rows = repo.expiring(); reveal++ }
-                Tab.EXPIRED -> { loading = true; rows = repo.expired(); reveal++ }
+                Tab.BANNED -> { loading = true; rows = repo.banned() }
+                Tab.EXPIRING -> { loading = true; rows = repo.expiring() }
+                Tab.EXPIRED -> { loading = true; rows = repo.expired() }
             }
         } catch (e: Exception) {
             failed = true
@@ -83,15 +83,22 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
         }
     }
 
-    // Lifts the wordmark off screen so the answer sits directly under the bar.
-    LaunchedEffect(reveal) {
-        if (reveal > 0 && listState.firstVisibleItemIndex < 1) listState.animateScrollToItem(1)
+    // The mark shrinks rather than scrolling away, so the result rises into
+    // view while the app still says what it is.
+    val compact = tab != Tab.SEARCH || query.isNotBlank()
+
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focus = LocalFocusManager.current
+    LaunchedEffect(hideKeyboard) {
+        if (hideKeyboard) { keyboard?.hide(); focus.clearFocus(); hideKeyboard = false }
     }
 
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize().background(Ink.PageWash)) {
-        item {
-            Box(Modifier.fillMaxWidth().padding(top = 22.dp, bottom = 4.dp), Alignment.Center) {
-                Wordmark(big = true)
+        if (!compact) {
+            item {
+                Box(Modifier.fillMaxWidth().padding(top = 22.dp, bottom = 4.dp), Alignment.Center) {
+                    Wordmark(big = true)
+                }
             }
         }
 
@@ -105,6 +112,7 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
                     .padding(horizontal = 16.dp)
                     .padding(top = 12.dp, bottom = 4.dp)
             ) {
+                if (compact) MiniWordmark()
                 Toolbar(s, onToggleLang, loading) { stats = null; reload++ }
                 Tabs(tab, s) { tab = it }
                 if (tab == Tab.SEARCH) SearchBox(query, s) { query = it }
