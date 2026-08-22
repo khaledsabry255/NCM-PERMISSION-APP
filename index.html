@@ -1103,7 +1103,6 @@ async function runSearch(term){
       return;
     }
     renderList(rows, rows.length > 1 ? t('searchResults') : '', '');
-    if(rows.length === 1) q.blur();          // one hit is an answer, not a step
   }catch(err){ friendlyFail(err, myToken); }
 }
 
@@ -1266,7 +1265,7 @@ q.addEventListener('input', () => {
   const t = sanitize(q.value);
   clearBtn.classList.toggle('on', q.value.length > 0);
   if(!t){ ++token; renderIdle(); return; }   // invalidate any in-flight request
-  debounce = setTimeout(() => runSearch(t), 260);
+  debounce = setTimeout(() => runSearch(t), 650);   // long enough to finish typing a code
 });
 q.addEventListener('keydown', e => {
   if(e.key === 'Enter'){
