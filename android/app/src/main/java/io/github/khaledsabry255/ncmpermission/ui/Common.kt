@@ -66,25 +66,26 @@ fun Wordmark(big: Boolean = true, compact: Boolean = false) {
  */
 @Composable
 fun MiniWordmark() {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Row(
-            Modifier.fillMaxWidth().padding(bottom = 9.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.Bottom
-        ) {
-            Text("N", fontSize = 21.sp, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
-            Text("C", fontSize = 21.sp, fontWeight = FontWeight.Black, color = Ink.BrandGreen)
-            Text("M", fontSize = 21.sp, fontWeight = FontWeight.Black, color = Ink.BrandGrey)
-            Spacer(Modifier.width(9.dp))
-            Text(
-                "PERMISSION",
-                fontFamily = Fonts.Condensed,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp,
-                color = Ink.Gold
-            )
+    Column(
+        Modifier.fillMaxWidth().padding(bottom = 9.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row {
+                Text("N", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Ink.BrandBlue)
+                Text("C", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Ink.BrandGreen)
+                Text("M", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Ink.BrandGrey)
+            }
         }
+        Spacer(Modifier.height(3.dp))
+        Text(
+            "PERMISSION",
+            fontFamily = Fonts.Condensed,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp,
+            color = Ink.Gold
+        )
     }
 }
 
