@@ -1,6 +1,7 @@
 package io.github.khaledsabry255.ncmpermission.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -26,7 +28,13 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String) -> Unit) {
+fun LockScreen(
+    s: Strings,
+    checking: Boolean,
+    error: String?,
+    onToggleLang: () -> Unit,
+    onSubmit: (String) -> Unit
+) {
     var pin by remember { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -41,13 +49,14 @@ fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String)
         Modifier.fillMaxSize().background(Ink.PageWash).padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
+        Box(Modifier.widthIn(max = 328.dp)) {
         Column(
             Modifier
-                .widthIn(max = 340.dp)
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
                 .background(Ink.Panel)
-                .border(1.dp, Ink.Line2, RoundedCornerShape(20.dp))
-                .padding(horizontal = 28.dp, vertical = 34.dp),
+                .border(1.dp, Ink.Line, RoundedCornerShape(20.dp))
+                .padding(start = 28.dp, end = 28.dp, top = 38.dp, bottom = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Wordmark(big = false)
@@ -87,6 +96,35 @@ fun LockScreen(s: Strings, checking: Boolean, error: String?, onSubmit: (String)
                 )
                 else -> Spacer(Modifier.height(20.dp))
             }
+        }
+
+        // The page keeps this in the card's own corner, physically left in both
+        // languages, so it never jumps sides when the text flips.
+        Box(
+            Modifier
+                .align(AbsoluteAlignment.TopLeft)
+                .padding(13.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .background(Ink.GoldTint)
+                .border(1.dp, Ink.Line2, RoundedCornerShape(999.dp))
+                .clickable { onToggleLang() }
+                .padding(horizontal = 11.dp, vertical = 6.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                GlobeIcon(14.dp, Ink.Gold)
+                Text(
+                    s.otherLang,
+                    color = Ink.Gold,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = Fonts.Condensed,
+                    letterSpacing = 1.4.sp
+                )
+            }
+        }
         }
     }
 }

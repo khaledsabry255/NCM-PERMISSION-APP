@@ -18,6 +18,12 @@ object Ink {
     val Line = Color(0xFFE2E9F2)
     val Line2 = Color(0xFFC0D3EC)
     val CardLine = Color(0xFFB3C2D4)
+    // The page gives the field rows and the photo frames their own lines,
+    // a shade warmer than the general one.
+    val RowLine = Color(0xFFC7D3E0)
+    val Shot = Color(0xFFF7FAFD)
+    val ShotLine = Color(0xFFCDD7E2)
+    val Skeleton = Color(0xFFE3EBF5)
 
     // The accent is blue now; the names stay so every call site follows along.
     val Gold = Color(0xFF1565C0)

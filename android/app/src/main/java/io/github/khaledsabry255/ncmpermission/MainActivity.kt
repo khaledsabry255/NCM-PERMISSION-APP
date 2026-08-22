@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val key = apiKey
                         if (key == null) {
-                            LockScreen(strings, checking, error) { pin ->
+                            LockScreen(strings, checking, error, toggleLang) { pin ->
                                 if (checking) return@LockScreen
                                 checking = true
                                 error = null

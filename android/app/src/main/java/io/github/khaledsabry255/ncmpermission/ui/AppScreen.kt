@@ -1,5 +1,11 @@
 package io.github.khaledsabry255.ncmpermission.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,14 +23,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
@@ -125,6 +130,16 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
  */
 @Composable
 private fun Toolbar(s: Strings, onToggleLang: () -> Unit, busy: Boolean, onRefresh: () -> Unit) {
+    // Declared unconditionally, so composition sees the same calls whether or
+    // not a refresh is running; only the angle read from it is conditional.
+    val turning = rememberInfiniteTransition(label = "refresh")
+    val turn by turning.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(850, easing = LinearEasing)),
+        label = "refresh-angle"
+    )
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Row(
             Modifier.fillMaxWidth().padding(bottom = 10.dp),
@@ -137,9 +152,19 @@ private fun Toolbar(s: Strings, onToggleLang: () -> Unit, busy: Boolean, onRefre
                     .background(Ink.GoldTint)
                     .border(1.dp, Ink.Line2, RoundedCornerShape(999.dp))
                     .clickable { onToggleLang() }
-                    .padding(horizontal = 13.dp, vertical = 9.dp)
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(s.otherLang, color = Ink.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                GlobeIcon(14.dp, Ink.Gold)
+                Text(
+                    s.otherLang,
+                    color = Ink.Gold,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = Fonts.Condensed,
+                    letterSpacing = 1.4.sp
+                )
             }
             Spacer(Modifier.weight(1f))
             Box(
@@ -151,7 +176,9 @@ private fun Toolbar(s: Strings, onToggleLang: () -> Unit, busy: Boolean, onRefre
                     .clickable(enabled = !busy) { onRefresh() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("↻", color = Ink.Gold, fontSize = 17.sp)
+                Box(Modifier.rotate(if (busy) turn else 0f)) {
+                    RefreshIcon(17.dp, Ink.Gold)
+                }
             }
         }
     }
@@ -184,7 +211,7 @@ private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
                 Text(
                     label,
                     fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
                     maxLines = 1,
                     textAlign = TextAlign.Center,
                     color = if (on) Color.White else Ink.Text2
@@ -203,7 +230,11 @@ private fun SearchBox(query: String, s: Strings, onChange: (String) -> Unit) {
         value = query,
         onValueChange = onChange,
         singleLine = true,
-        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+        textStyle = LocalTextStyle.current.copy(
+            textAlign = TextAlign.Center,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        ),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = {
             // Dropping the keyboard is what puts the record on screen.
@@ -211,20 +242,20 @@ private fun SearchBox(query: String, s: Strings, onChange: (String) -> Unit) {
             focus.clearFocus()
         }),
         leadingIcon = {
-            Text(
-                "⌕",
-                fontSize = 19.sp,
-                color = Ink.Muted,
-                modifier = Modifier
+            // The page's magnifier doubles as the search button.
+            Box(
+                Modifier
                     .clickable { keyboard?.hide(); focus.clearFocus() }
-                    .padding(start = 4.dp, end = 2.dp)
-            )
+                    .padding(start = 15.dp, end = 3.dp)
+            ) {
+                SearchIcon(19.dp, Ink.Muted)
+            }
         },
         placeholder = {
             Text(
                 s.searchHint,
                 modifier = Modifier.fillMaxWidth(),
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 color = Ink.Muted,
                 maxLines = 1,
                 textAlign = TextAlign.Center
@@ -232,16 +263,25 @@ private fun SearchBox(query: String, s: Strings, onChange: (String) -> Unit) {
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
-                Text(
-                    "✕",
-                    color = Ink.Muted,
-                    modifier = Modifier.clickable { onChange("") }.padding(10.dp)
-                )
+                Box(Modifier.padding(end = 12.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier
+                            .size(25.dp)
+                            .clip(CircleShape)
+                            .background(Ink.NeutralBg)
+                            .clickable { onChange("") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CloseIcon(13.dp, Ink.Muted)
+                    }
+                }
             }
         },
         shape = RoundedCornerShape(18.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Ink.Gold.copy(alpha = 0.45f),
+            focusedContainerColor = Ink.Panel2,
+            unfocusedContainerColor = Ink.Panel2,
+            focusedBorderColor = Ink.Gold,
             unfocusedBorderColor = Ink.Line2,
             cursorColor = Ink.Gold,
             focusedTextColor = Ink.Text,
@@ -268,23 +308,31 @@ private fun androidx.compose.foundation.lazy.LazyListScope.body(
                 Modifier.fillMaxWidth().then(pad).padding(vertical = 52.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(s.loadFail, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Ink.Text2)
+                FailIcon(34.dp, Ink.Muted.copy(alpha = 0.5f))
+                Spacer(Modifier.height(14.dp))
+                Text(s.loadFail, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = Ink.Text2)
                 Spacer(Modifier.height(7.dp))
                 Text(s.loadFailHint, fontSize = 13.sp, color = Ink.Muted, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = onRetry,
                     shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, Ink.Line2),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Ink.GoldTint, contentColor = Ink.Gold
                     )
-                ) { Text(s.retry, fontWeight = FontWeight.Bold) }
+                ) {
+                    Text(s.retry, fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp)
+                }
             }
         }
 
+        // The page draws waiting cards rather than a spinner, so the shape of
+        // what is coming is already on screen when it arrives.
         loading -> item {
-            Box(Modifier.fillMaxWidth().padding(vertical = 60.dp), Alignment.Center) {
-                CircularProgressIndicator(color = Ink.Gold, strokeWidth = 2.dp)
+            Column(pad) {
+                Skeleton()
+                if (tab != Tab.SEARCH) Skeleton()
             }
         }
 
@@ -326,26 +374,35 @@ private fun Tiles(stats: Stats, s: Strings) {
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            Tile(s.statActive, stats.active, Ink.Text, null, Modifier.weight(1f))
-            Tile(s.statResigned, stats.resigned, Ink.Text2, null, Modifier.weight(1f))
+            Tile(s.statActive, stats.active, Ink.Text, Ink.Muted, Ink.Panel2, Ink.Line, Modifier.weight(1f))
+            Tile(s.statResigned, stats.resigned, Ink.Text2, Ink.Muted, Ink.Panel2, Ink.Line, Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            Tile(s.statExpiring, stats.expiring, Ink.Warning, Ink.Warning, Modifier.weight(1f))
-            Tile(s.statBanned, stats.banned, Ink.Danger, Ink.Danger, Modifier.weight(1f))
+            Tile(s.statExpiring, stats.expiring, Ink.Warning, Ink.Warning, Ink.WarningBg, Ink.WarningBr, Modifier.weight(1f))
+            Tile(s.statBanned, stats.banned, Ink.Danger, Ink.Danger, Ink.DangerBg, Ink.DangerBr, Modifier.weight(1f))
         }
     }
 }
 
+/** The four counters, in the page's own swatches rather than a computed wash. */
 @Composable
-private fun Tile(label: String, value: Int, fg: Color, accent: Color?, modifier: Modifier) {
+private fun Tile(
+    label: String,
+    value: Int,
+    fg: Color,
+    labelColor: Color,
+    fill: Color,
+    line: Color,
+    modifier: Modifier
+) {
     Column(
         modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(accent?.copy(alpha = 0.1f) ?: Ink.Panel2)
-            .border(1.dp, accent?.copy(alpha = 0.25f) ?: Ink.Line, RoundedCornerShape(14.dp))
+            .background(fill)
+            .border(1.dp, line, RoundedCornerShape(14.dp))
             .padding(horizontal = 15.dp, vertical = 13.dp)
     ) {
-        Text(label, fontSize = 11.5.sp, color = accent ?: Ink.Muted, maxLines = 1)
+        Text(label, fontSize = 11.5.sp, color = labelColor, maxLines = 1)
         Spacer(Modifier.height(7.dp))
         Text(
             "$value",

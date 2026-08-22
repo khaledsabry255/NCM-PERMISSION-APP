@@ -97,7 +97,11 @@ class Repository(private val apiKey: String) {
         val filter = "or=" + enc("(permit_status.eq.ساري,permit_status.eq.منتهي الصلاحية)")
         return parse(get("select=*&$filter"))
             .filter { !it.resigned && Status.of(it).code == "EXPIRED" }
-            .sortedByDescending { Dates.daysLeft(it.permitDate) ?: Int.MIN_VALUE }
+            // Most recently expired first, then by code — the page's order.
+            .sortedWith(
+                compareByDescending<Employee> { Dates.daysLeft(it.permitDate) ?: Int.MIN_VALUE }
+                    .thenBy { Search.digitsOnly(it.code).toIntOrNull() ?: Int.MAX_VALUE }
+            )
     }
 
     suspend fun stats(): Stats {

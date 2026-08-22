@@ -1,5 +1,6 @@
 package io.github.khaledsabry255.ncmpermission.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -33,6 +34,13 @@ private fun toneBg(tone: Tone) = when (tone) {
     Tone.MUTE -> Ink.NeutralBg
 }
 
+private fun toneLine(tone: Tone) = when (tone) {
+    Tone.OK -> Ink.SuccessBr
+    Tone.WARN -> Ink.WarningBr
+    Tone.BAD -> Ink.DangerBr
+    Tone.MUTE -> Ink.NeutralBr
+}
+
 @Composable
 fun EmployeeCard(emp: Employee, s: Strings, inBannedTab: Boolean) {
     // Pinned to RTL: the interface may flip, but a record the guard has learned
@@ -62,7 +70,10 @@ private fun Record(emp: Employee, s: Strings, inBannedTab: Boolean) {
             .border(1.dp, Ink.CardLine, RoundedCornerShape(18.dp))
     ) {
         Identity(emp, s, status, tone, inBannedTab)
+        // The page rules a line under the name and under the permit strip.
+        Divider()
         PermitStrip(emp, s, status, tone, days)
+        Divider()
 
         Column(Modifier.padding(horizontal = 14.dp)) {
             Group(s.grpPersonal) {
@@ -114,6 +125,7 @@ private fun Identity(
                 Modifier
                     .clip(RoundedCornerShape(999.dp))
                     .background(Ink.GoldTint)
+                    .border(1.dp, Ink.Line2, RoundedCornerShape(999.dp))
                     .padding(horizontal = 12.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -129,16 +141,17 @@ private fun Identity(
 
         val ar = @Composable {
             Text(
-                emp.nameAr ?: s.noName, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-                color = Ink.White, textAlign = TextAlign.Center, lineHeight = 28.sp
+                emp.nameAr ?: s.noName, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
+                color = Ink.Text, textAlign = TextAlign.Center, lineHeight = 28.sp
             )
         }
         val en = @Composable {
             emp.nameEn?.let {
+                Spacer(Modifier.height(4.dp))
                 Text(
                     it.uppercase(), fontFamily = Fonts.Condensed,
-                    fontSize = 20.sp, fontWeight = FontWeight.Bold,
-                    color = Ink.White, textAlign = TextAlign.Center, letterSpacing = 0.8.sp
+                    fontSize = 19.sp, fontWeight = FontWeight.Bold,
+                    color = Ink.Text2, textAlign = TextAlign.Center, letterSpacing = 0.76.sp
                 )
             }
         }
@@ -149,29 +162,56 @@ private fun Identity(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Pill(s.statusLabel(status.code, status.rawLabel), tone, toneBg(status.tone))
+            Pill(
+                s.statusLabel(status.code, status.rawLabel),
+                tone, toneBg(status.tone), toneLine(status.tone)
+            ) { StatusIcon(status.tone, tone) }
             if (emp.resigned) {
-                Pill(s.resigned, Ink.Danger, Ink.DangerBg)
+                Pill(s.resigned, Ink.Danger, Ink.DangerBg, Ink.DangerBr)
             } else if (inBannedTab) {
-                Pill(s.present, Ink.Success, Ink.SuccessBg)
+                Pill(s.present, Ink.Success, Ink.SuccessBg, Ink.SuccessBr)
             }
-            s.categoryLabel(emp)?.let { Pill(it, Ink.Neutral, Ink.NeutralBg) }
+            s.categoryLabel(emp)?.let { Pill(it, Ink.Neutral, Ink.NeutralBg, Ink.NeutralBr) }
         }
     }
 }
 
 @Composable
-private fun Pill(text: String, fg: Color, bg: Color) {
-    Text(
-        text,
-        modifier = Modifier
+private fun Divider() {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Ink.CardLine))
+}
+
+@Composable
+private fun Pill(
+    text: String,
+    fg: Color,
+    bg: Color,
+    br: Color,
+    icon: @Composable (() -> Unit)? = null
+) {
+    Row(
+        Modifier
             .clip(RoundedCornerShape(999.dp))
             .background(bg)
+            .border(1.dp, br, RoundedCornerShape(999.dp))
             .padding(horizontal = 13.dp, vertical = 5.dp),
-        fontSize = 12.5.sp,
-        fontWeight = FontWeight.Bold,
-        color = fg
-    )
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) icon()
+        Text(text, fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = fg)
+    }
+}
+
+/** The same four marks the page draws beside a permit's word. */
+@Composable
+private fun StatusIcon(tone: Tone, color: Color) {
+    when (tone) {
+        Tone.OK -> CheckIcon(13.dp, color)
+        Tone.WARN -> WarnIcon(13.dp, color)
+        Tone.BAD -> CrossIcon(13.dp, color)
+        Tone.MUTE -> RingIcon(13.dp, color)
+    }
 }
 
 @Composable
@@ -200,12 +240,33 @@ private fun PermitStrip(
                 Spacer(Modifier.height(5.dp))
                 MixedNumberText(it, 13.sp, Ink.Text, FontWeight.Bold)
             }
+            // How much of the last month is left, drawn as the page draws it.
+            if (status.tone == Tone.WARN && days != null && days >= 0) {
+                Spacer(Modifier.height(9.dp))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(Ink.Line)
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth(
+                                (days.toFloat() / Config.EXPIRY_WINDOW).coerceIn(0.04f, 1f)
+                            )
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(tone.copy(alpha = 0.85f))
+                    )
+                }
+            }
         }
         val date = Dates.format(emp.permitDate)
         Text(
             date ?: "—",
             fontSize = if (date != null) 24.sp else 17.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = if (date != null) FontWeight.SemiBold else FontWeight.ExtraBold,
             fontFamily = if (date != null) Fonts.Mono else Fonts.Sans,
             color = if (date != null) tone else Ink.Neutral
         )
@@ -231,8 +292,8 @@ private fun Photos(code: String, s: Strings) {
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Ink.Field)
-                    .border(1.dp, Ink.Line2, RoundedCornerShape(14.dp))
+                    .background(Ink.Shot)
+                    .border(1.dp, Ink.ShotLine, RoundedCornerShape(14.dp))
             ) {
                 if (code.isEmpty()) {
                     NoPhoto(s)
@@ -244,7 +305,7 @@ private fun Photos(code: String, s: Strings) {
                         modifier = Modifier.fillMaxWidth(),
                         error = { NoPhoto(s) },
                         loading = {
-                            Box(Modifier.fillMaxWidth().height(150.dp).background(Ink.Field))
+                            Box(Modifier.fillMaxWidth().aspectRatio(1.6f).background(Ink.Shot))
                         }
                     )
                 }
@@ -255,6 +316,16 @@ private fun Photos(code: String, s: Strings) {
             val fg = when (outcome) {
                 true -> Ink.Success
                 false -> Ink.Danger
+                null -> Ink.Gold
+            }
+            val fill = when (outcome) {
+                true -> Ink.SuccessBg
+                false -> Ink.DangerBg
+                null -> Ink.Gold
+            }
+            val edge = when (outcome) {
+                true -> Ink.SuccessBr
+                false -> Ink.DangerBr
                 null -> Ink.Gold
             }
             Button(
@@ -275,13 +346,16 @@ private fun Photos(code: String, s: Strings) {
                     }
                 },
                 shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, edge),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (outcome == null) Ink.Gold else fg.copy(alpha = 0.14f),
+                    containerColor = fill,
                     contentColor = if (outcome == null) Color.White else fg
                 ),
                 modifier = Modifier.fillMaxWidth().height(46.dp)
             ) {
-                Text(label, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+                SaveIcon(16.dp, if (outcome == null) Color.White else fg)
+                Spacer(Modifier.width(8.dp))
+                Text(label, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }
@@ -289,10 +363,14 @@ private fun Photos(code: String, s: Strings) {
 
 @Composable
 private fun NoPhoto(s: Strings) {
-    Box(
-        Modifier.fillMaxWidth().height(150.dp).background(Ink.NoShot),
-        contentAlignment = Alignment.Center
+    Column(
+        // 16:10, the same window the page leaves for a photograph.
+        Modifier.fillMaxWidth().aspectRatio(1.6f).background(Ink.NoShot),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
+        PhotoIcon(26.dp, Ink.Neutral.copy(alpha = 0.5f))
+        Spacer(Modifier.height(8.dp))
         Text(s.noPhoto, color = Ink.Neutral, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
