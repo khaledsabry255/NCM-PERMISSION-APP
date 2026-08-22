@@ -47,7 +47,6 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
     var loading by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
     var reload by remember { mutableStateOf(0) }
-    var hideKeyboard by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
 
@@ -66,10 +65,11 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
                             stats = repo.stats()
                         }
                     } else {
-                        delay(260)
+                        // Long enough to finish typing a code: 5 may match one
+                        // record while the guard is still heading for 548.
+                        delay(650)
                         loading = true
                         rows = repo.search(query)
-                        if (rows.size == 1) hideKeyboard = true
                     }
                 }
                 Tab.BANNED -> { loading = true; rows = repo.banned() }
@@ -86,12 +86,6 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
     // The mark shrinks rather than scrolling away, so the result rises into
     // view while the app still says what it is.
     val compact = tab != Tab.SEARCH || query.isNotBlank()
-
-    val keyboard = LocalSoftwareKeyboardController.current
-    val focus = LocalFocusManager.current
-    LaunchedEffect(hideKeyboard) {
-        if (hideKeyboard) { keyboard?.hide(); focus.clearFocus(); hideKeyboard = false }
-    }
 
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize().background(Ink.PageWash)) {
         if (!compact) {
