@@ -7,6 +7,10 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="theme-color" content="#edf2f8">
+<!-- The app owns the whole screen, notch included: no system bar sits above it. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
@@ -98,6 +102,9 @@ button{font-family:inherit;cursor:pointer;}
   height:env(safe-area-inset-top);background:transparent;
 }
 body.stuck .notch{background:var(--bg);}
+/* Nothing of the phone's own shows through above the page: the app fills the
+   screen to the top edge, and only the content keeps clear of the cut-out. */
+html{min-height:100dvh;}
 .toolrow{display:flex;align-items:center;gap:9px;direction:ltr;}
 .toolrow #searchwrap{flex:1;min-width:0;}
 .searchbar{direction:rtl;}
