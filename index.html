@@ -213,7 +213,10 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 .shell{max-width:600px;margin:0 auto;padding:0 16px;}
 
 /* tabs */
-.nav{display:flex;gap:6px;margin:11px 0 12px;}
+/* Pinned like the counters: the tab the guard reaches for is in the same
+   place whichever language the interface is speaking. */
+.nav{display:flex;gap:6px;margin:11px 0 12px;direction:rtl;}
+html[dir="ltr"] .nav-btn{direction:ltr;}
 .nav-btn{
   flex:1;min-width:0;white-space:nowrap;
   padding:11px 6px;border-radius:var(--r);font-weight:700;font-size:13px;
