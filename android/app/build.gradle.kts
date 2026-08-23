@@ -15,8 +15,8 @@ android {
         applicationId = "io.github.khaledsabry255.ncmpermission"
         minSdk = 24
         targetSdk = 35
-        versionCode = 15
-        versionName = "2.8"
+        versionCode = 16
+        versionName = "2.9"
         resourceConfigurations += listOf("en", "ar")
     }
 

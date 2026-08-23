@@ -45,6 +45,11 @@ fun LockScreen(
         onSubmit(entered)
     }
 
+    // A refused PIN empties the field, the way the page does. Without this the
+    // four digits would still be sitting there when the field is re-enabled,
+    // and the field would submit them again, and again.
+    LaunchedEffect(error) { if (error != null) pin = "" }
+
     Box(
         Modifier.fillMaxSize().background(Ink.PageWash).padding(24.dp),
         contentAlignment = Alignment.Center
@@ -143,6 +148,17 @@ private fun BasicPinField(
         enabled = enabled,
         singleLine = true,
         visualTransformation = PasswordVisualTransformation('•'),
+        placeholder = {
+            Text(
+                "••••",
+                modifier = Modifier.fillMaxWidth(),
+                fontSize = 19.sp,
+                fontFamily = Fonts.Mono,
+                letterSpacing = 8.sp,
+                color = Ink.Line2,
+                textAlign = TextAlign.Center
+            )
+        },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         textStyle = TextStyle(
             fontSize = 19.sp,

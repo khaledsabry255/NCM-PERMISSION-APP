@@ -75,20 +75,33 @@ private fun Record(emp: Employee, s: Strings, inBannedTab: Boolean) {
         PermitStrip(emp, s, status, tone, days)
         Divider()
 
+        val phoneText = phone(emp.phone)
+        val hired = Dates.format(emp.hireDate)
+        val leaving = resignEnd(emp, s)
+
         Column(Modifier.padding(horizontal = 14.dp)) {
-            Group(s.grpPersonal) {
+            Group(
+                s.grpPersonal,
+                has = emp.nationalId != null || phoneText != null || emp.address != null
+            ) {
                 emp.nationalId?.let { FieldRow(s.nationalId, it, mono = true) }
-                phone(emp.phone)?.let { FieldRow(s.phone, it, mono = true) }
+                phoneText?.let { FieldRow(s.phone, it, mono = true) }
                 emp.address?.let { FieldRow(s.address, it) }
             }
-            Group(s.grpWork) {
+            Group(
+                s.grpWork,
+                has = emp.jobTitle != null || emp.department != null || hired != null
+            ) {
                 emp.jobTitle?.let { FieldRow(s.jobTitle, it) }
                 emp.department?.let { FieldRow(s.department, it) }
-                Dates.format(emp.hireDate)?.let { FieldRow(s.hireDate, it, mono = true) }
+                hired?.let { FieldRow(s.hireDate, it, mono = true) }
             }
-            Group(s.grpSecurity) {
+            Group(
+                s.grpSecurity,
+                has = emp.banReason != null || leaving != null
+            ) {
                 emp.banReason?.let { FieldRow(s.banReason, it, valueColor = Ink.Danger) }
-                resignEnd(emp, s)?.let { (text, mono) ->
+                leaving?.let { (text, mono) ->
                     FieldRow(s.resignEnd, text, mono = mono, valueColor = Ink.Warning)
                 }
             }
@@ -98,13 +111,16 @@ private fun Record(emp: Employee, s: Strings, inBannedTab: Boolean) {
     }
 }
 
-/** A labelled block only renders when it actually holds rows. */
+/**
+ * A labelled block only appears when it actually holds rows, so a man with
+ * nothing on his security record never gets a heading with nothing under it.
+ */
 @Composable
-private fun Group(title: String, content: @Composable ColumnScope.() -> Unit) {
-    val body = @Composable { Column(verticalArrangement = Arrangement.spacedBy(7.dp), content = content) }
+private fun Group(title: String, has: Boolean, content: @Composable ColumnScope.() -> Unit) {
+    if (!has) return
     Column {
         GroupTitle(title)
-        body()
+        Column(verticalArrangement = Arrangement.spacedBy(7.dp), content = content)
     }
 }
 
@@ -117,7 +133,7 @@ private fun Identity(
     inBannedTab: Boolean
 ) {
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 20.dp),
+        Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 22.dp, bottom = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (emp.code.isNotEmpty()) {
