@@ -32,8 +32,26 @@ jobs:
         with:
           gradle-version: '8.11.1'
 
+      # A stable key is what lets an update install over the copy already on a
+      # phone. Without one, every run signs with a fresh throwaway key and
+      # Android refuses the upgrade.
+      - name: Restore the signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.NCM_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/ncm.p12"
+            echo "NCM_KEYSTORE=$RUNNER_TEMP/ncm.p12" >> "$GITHUB_ENV"
+            echo "signing with the stored key"
+          else
+            echo "::warning::no stored signing key — this APK will not install over an existing one"
+          fi
+
       - name: Build release APK
         working-directory: android
+        env:
+          NCM_KEYSTORE_PASSWORD: ${{ secrets.NCM_KEYSTORE_PASSWORD }}
+          NCM_KEY_ALIAS: ncm
         run: gradle assembleRelease --no-daemon --stacktrace
 
       - name: Collect APK
@@ -50,7 +68,10 @@ jobs:
 
       # A fixed "latest-apk" release keeps the download link stable, which is far
       # easier on a phone than digging an artifact out of an Actions run.
+      # Only a correctly signed build may replace the download everyone uses:
+      # an APK signed by any other key cannot install over the one on a phone.
       - name: Publish to latest-apk release
+        if: env.NCM_KEYSTORE != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-apk

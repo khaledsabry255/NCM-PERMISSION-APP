@@ -4,7 +4,25 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// The signing key is handed in by the build environment, never checked in.
+// Without it the build still runs, but with a throwaway key — and an APK
+// signed by a different key cannot be installed over an existing one.
+val signingKeystore: String? = System.getenv("NCM_KEYSTORE")
+
 android {
+    signingConfigs {
+        if (signingKeystore != null) {
+            create("release") {
+                storeFile = file(signingKeystore)
+                storeType = "PKCS12"
+                // PKCS12 carries one password for both the store and the key.
+                storePassword = System.getenv("NCM_KEYSTORE_PASSWORD")
+                keyPassword = System.getenv("NCM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("NCM_KEY_ALIAS") ?: "ncm"
+            }
+        }
+    }
+
     namespace = "io.github.khaledsabry255.ncmpermission"
     compileSdk = 35
 
@@ -27,9 +45,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Signed with the debug key so CI output installs directly from the
-            // release page. A real keystore is only needed to publish on Play.
-            signingConfig = signingConfigs.getByName("debug")
+            // The stored key when the environment carries one, so every update
+            // installs over the last. The debug key is only a fallback for a
+            // build run without it.
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
         }
     }
 
