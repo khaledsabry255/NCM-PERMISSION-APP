@@ -15,6 +15,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.TextStyle
@@ -58,6 +59,7 @@ fun LockScreen(
         Column(
             Modifier
                 .fillMaxWidth()
+                .shadow(9.dp, RoundedCornerShape(20.dp), spotColor = Ink.Gold, ambientColor = Ink.Gold)
                 .clip(RoundedCornerShape(20.dp))
                 .background(Ink.Panel)
                 .border(1.dp, Ink.Line, RoundedCornerShape(20.dp))

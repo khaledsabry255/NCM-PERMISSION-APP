@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalFocusManager
@@ -54,6 +55,14 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
     var reload by remember { mutableStateOf(0) }
 
     val listState = rememberLazyListState()
+
+    // The page leaves the pinned bar clear until the list moves, so the wash
+    // behind the header is not cut by a flat rectangle at rest.
+    val stuck by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 6
+        }
+    }
 
     // Keying on the query makes Compose cancel the previous load, which gives
     // both the debounce and the guarantee that a slow reply cannot overwrite a
@@ -107,7 +116,11 @@ fun AppScreen(repo: Repository, s: Strings, onToggleLang: () -> Unit) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .background(Ink.Bg)
+                    .then(
+                        if (stuck) Modifier.shadow(7.dp, spotColor = Ink.Gold, ambientColor = Ink.Gold)
+                        else Modifier
+                    )
+                    .background(if (stuck) Ink.Bg else Color.Transparent)
                     .padding(horizontal = 16.dp)
                     .padding(top = 12.dp, bottom = 4.dp)
             ) {
@@ -201,6 +214,12 @@ private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
             Box(
                 Modifier
                     .weight(1f)
+                    .then(
+                        if (on) Modifier.shadow(
+                            4.dp, RoundedCornerShape(14.dp),
+                            spotColor = Ink.Gold, ambientColor = Ink.Gold
+                        ) else Modifier
+                    )
                     .clip(RoundedCornerShape(14.dp))
                     .background(if (on) Ink.Gold else Ink.Panel2)
                     .border(1.dp, if (on) Color.Transparent else Ink.Line, RoundedCornerShape(14.dp))

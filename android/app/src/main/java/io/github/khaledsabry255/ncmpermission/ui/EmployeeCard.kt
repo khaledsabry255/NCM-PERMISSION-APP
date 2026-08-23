@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.ContentScale
@@ -65,6 +66,8 @@ private fun Record(emp: Employee, s: Strings, inBannedTab: Boolean) {
         Modifier
             .fillMaxWidth()
             .padding(top = 14.dp)
+            // The page lifts the record off the wash with a soft blue shadow.
+            .shadow(6.dp, RoundedCornerShape(18.dp), spotColor = Ink.Gold, ambientColor = Ink.Gold)
             .clip(RoundedCornerShape(18.dp))
             .background(Ink.Card)
             .border(1.dp, Ink.CardLine, RoundedCornerShape(18.dp))
