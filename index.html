@@ -299,7 +299,10 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 }
 
 /* overview tiles */
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;}
+/* Pinned: the four counters keep the same corners in both languages. The
+   interface may flip, but the number the guard reaches for must not move. */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;direction:rtl;}
+html[dir="ltr"] .tile{direction:ltr;}
 .tile{
   display:flex;flex-direction:column;gap:7px;padding:13px 15px;
   border-radius:var(--r);background:var(--panel-2);border:1px solid var(--line);
