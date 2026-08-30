@@ -706,6 +706,19 @@ async function unlockVault(entered){
 }
 function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
 
+/* Ask the browser to hold on to this device's unlock.
+   Without this, a phone that is low on space — or that has not opened the app
+   for a while — may quietly evict the saved key, and the guard is asked for
+   the PIN again for no reason he can see. Granted silently for an installed
+   app; harmless where it is not supported. */
+async function keepUnlockStored(){
+  try{
+    if(!navigator.storage || !navigator.storage.persist) return false;
+    if(await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  }catch(e){ return false; }
+}
+
 let unlocking = false;
 async function submitPin(){
   if(unlocking || !pin.value) return;
@@ -719,6 +732,7 @@ async function submitPin(){
       localStorage.setItem(UNLOCK_KEY, ACCESS_VERSION);
     } catch(e){}
     connect(apiKey);
+    keepUnlockStored();          // the PIN was entered once; keep it that way
     openApp();
   }catch(err){
     gateErr.classList.remove('busy');
@@ -1474,7 +1488,7 @@ try {
     localStorage.removeItem(UNLOCK_KEY);
   }
 } catch(e){}
-if(storedKey){ connect(storedKey); openApp(); }
+if(storedKey){ connect(storedKey); keepUnlockStored(); openApp(); }
 else setTimeout(() => pin.focus(), 120);
 paintDots();
 
