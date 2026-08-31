@@ -160,7 +160,21 @@ package `io.github.khaledsabry255.ncmpermission`. **تطبيق أصلي قائم
 
 > ⚠️ **الأسرار لسه مش متحطّة على الريبو** — التوكن مالوش صلاحية `Secrets: Read and write`. لحد ما تتحط، البناء بينزل كـ artifact بس، والتوقيع والنشر بيتعملوا محلياً.
 
-**التوقيع محلياً** (مفيش JDK على الجهاز، فالتوقيع بيتعمل ببايثون بـ `apksigtool` + `cryptography`): الأداة `apksign.py` في مجلد الـ scratchpad. اتأكدت إنها مظبوطة بمقارنة بصمتها ببصمة نسخة وقّعتها أدوات جوجل فعلاً — طلعوا متطابقين بايت ببايت، وبعد التوقيع `verify_apk_signature_scheme_v2` بيعدّي.
+**التوقيع محلياً بأدوات جوجل** — الطريقة المعتمدة. مفيش JDK مثبّت على الجهاز، لكن الأدوات بتتجاب محمولة في دقيقتين وبتشتغل من غير صلاحيات مدير:
+
+| | |
+|---|---|
+| JDK 17 | `https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jdk/hotspot/normal/eclipse` |
+| Android build-tools 34 | `https://dl.google.com/android/repository/build-tools_r34-windows.zip` |
+
+```
+java -jar apksigner.jar sign --ks ncm-android-signing.p12 --ks-type PKCS12   --ks-pass file:pass.txt --key-pass file:pass.txt --ks-key-alias ncm   --v2-signing-enabled true --v3-signing-enabled true --min-sdk-version 24   --out signed.apk build.apk
+java -jar apksigner.jar verify --verbose --print-certs --min-sdk-version 24 signed.apk
+```
+
+> 🚨 **ملف الباسورد لازم يكون فيه السطر مرتين** — `apksigner` بيقراه مرة للمخزن ومرة للمفتاح، ولو سطر واحد بيقع بـ `end of file reached`.
+
+**النسخة الاحتياطية**: `apksign.py` في مجلد الـ scratchpad، بايثون خالص بـ `apksigtool` + `cryptography`، لو الأدوات مش متاحة. اتأكدت إنها مظبوطة بطريقتين: بصمتها اتطابقت بايت ببايت مع نسخة وقّعتها جوجل، وبعدين `apksigner verify` بتاعة جوجل نفسها قالت **Verifies** على APK وقّعته هي. بتعمل v2 بس (مش v3).
 
 ---
 
