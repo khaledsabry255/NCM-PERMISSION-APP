@@ -29,11 +29,10 @@
                 android:name="android.support.customtabs.trusted.DEFAULT_URL"
                 android:value="@string/launchUrl" />
 
-            <!-- Immersive: the page owns the whole screen, notch included,
-                 which is what the site's own manifest asks for. -->
-            <meta-data
-                android:name="android.support.customtabs.trusted.DISPLAY_MODE"
-                android:value="immersive" />
+            <!-- Not immersive. Hiding the bars leaves the cut-out strip black,
+                 because the page is not extended underneath it; letting the bar
+                 stand and painting it the page's own colour makes the top of the
+                 screen read as one surface instead. -->
 
             <meta-data
                 android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
