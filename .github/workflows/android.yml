@@ -1,11 +1,9 @@
 name: Build Android APK
 
+# Paused. The native app builds and signs correctly — Google's own apksigner
+# verifies it — but Khaled's phone refuses to install it, and the wrapper in
+# twa/ is the road being taken instead. Run by hand if that changes.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'android/**'
-      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 permissions:

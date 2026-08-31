@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="appName">بحث التصاريح</string>
+    <string name="launcherName">بحث التصاريح</string>
+
+    <!-- The live site. The repository was renamed once, and the wrapper built
+         before that rename still points at a URL that now returns 404. -->
+    <string name="launchUrl">https://khaledsabry255.github.io/NCM-PERMISSION-APP/</string>
+
+    <string name="assetStatements">
+        [{ \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+           \"target\": { \"namespace\": \"web\",
+                         \"site\": \"https://khaledsabry255.github.io\" } }]
+    </string>
+</resources>

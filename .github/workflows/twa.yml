@@ -1,0 +1,49 @@
+name: Build the site wrapper
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'twa/**'
+      - '.github/workflows/twa.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build the wrapper
+        working-directory: twa
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      # Deliberately unsigned here. It is signed afterwards with the key whose
+      # fingerprint is already published in assetlinks.json, so the build
+      # installs over the wrapper people already have.
+      - name: Collect the APK
+        run: |
+          mkdir -p out
+          cp twa/app/build/outputs/apk/release/*.apk out/wrapper-unsigned.apk
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NCM-Wrapper-unsigned
+          path: out/wrapper-unsigned.apk
+          if-no-files-found: error
