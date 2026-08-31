@@ -197,14 +197,21 @@ private fun Toolbar(s: Strings, onToggleLang: () -> Unit, busy: Boolean, onRefre
     }
 }
 
+/**
+ * Pinned to RTL like the page: the tab under the guard's thumb is in the same
+ * place whichever language the interface is speaking. Only the words turn
+ * around, which is why each label re-provides the app's own direction.
+ */
 @Composable
 private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
+    val reading = LocalLayoutDirection.current
     val labels = listOf(
         Tab.SEARCH to s.tabSearch,
         Tab.BANNED to s.tabBanned,
         Tab.EXPIRING to s.tabExpiring,
         Tab.EXPIRED to s.tabExpired
     )
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
     Row(
         Modifier.fillMaxWidth().padding(bottom = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -227,16 +234,19 @@ private fun Tabs(current: Tab, s: Strings, onPick: (Tab) -> Unit) {
                     .padding(vertical = 11.dp, horizontal = 3.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    label,
-                    fontSize = 12.5.sp,
-                    fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
-                    maxLines = 1,
-                    textAlign = TextAlign.Center,
-                    color = if (on) Color.White else Ink.Text2
-                )
+                CompositionLocalProvider(LocalLayoutDirection provides reading) {
+                    Text(
+                        label,
+                        fontSize = 12.5.sp,
+                        fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        color = if (on) Color.White else Ink.Text2
+                    )
+                }
             }
         }
+    }
     }
 }
 
@@ -386,20 +396,24 @@ private fun androidx.compose.foundation.lazy.LazyListScope.body(
     }
 }
 
+/** Pinned the same way, so the number reached for never changes corner. */
 @Composable
 private fun Tiles(stats: Stats, s: Strings) {
+    val reading = LocalLayoutDirection.current
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
     Column(
         Modifier.padding(top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            Tile(s.statActive, stats.active, Ink.Text, Ink.Muted, Ink.Panel2, Ink.Line, Modifier.weight(1f))
-            Tile(s.statResigned, stats.resigned, Ink.Text2, Ink.Muted, Ink.Panel2, Ink.Line, Modifier.weight(1f))
+            Tile(s.statActive, stats.active, Ink.Text, Ink.Muted, Ink.Panel2, Ink.Line, Modifier.weight(1f), reading)
+            Tile(s.statResigned, stats.resigned, Ink.Text2, Ink.Muted, Ink.Panel2, Ink.Line, Modifier.weight(1f), reading)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            Tile(s.statExpiring, stats.expiring, Ink.Warning, Ink.Warning, Ink.WarningBg, Ink.WarningBr, Modifier.weight(1f))
-            Tile(s.statBanned, stats.banned, Ink.Danger, Ink.Danger, Ink.DangerBg, Ink.DangerBr, Modifier.weight(1f))
+            Tile(s.statExpiring, stats.expiring, Ink.Warning, Ink.Warning, Ink.WarningBg, Ink.WarningBr, Modifier.weight(1f), reading)
+            Tile(s.statBanned, stats.banned, Ink.Danger, Ink.Danger, Ink.DangerBg, Ink.DangerBr, Modifier.weight(1f), reading)
         }
+    }
     }
 }
 
@@ -412,7 +426,8 @@ private fun Tile(
     labelColor: Color,
     fill: Color,
     line: Color,
-    modifier: Modifier
+    modifier: Modifier,
+    reading: LayoutDirection
 ) {
     Column(
         modifier
@@ -421,14 +436,19 @@ private fun Tile(
             .border(1.dp, line, RoundedCornerShape(14.dp))
             .padding(horizontal = 15.dp, vertical = 13.dp)
     ) {
-        Text(label, fontSize = 11.5.sp, color = labelColor, maxLines = 1)
-        Spacer(Modifier.height(7.dp))
-        Text(
-            "$value",
-            fontSize = 23.sp,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = Fonts.Mono,
-            color = fg
-        )
+        // The box does not move with the language; the words inside it do.
+        CompositionLocalProvider(LocalLayoutDirection provides reading) {
+            Column {
+                Text(label, fontSize = 11.5.sp, color = labelColor, maxLines = 1)
+                Spacer(Modifier.height(7.dp))
+                Text(
+                    "$value",
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = Fonts.Mono,
+                    color = fg
+                )
+            }
+        }
     }
 }

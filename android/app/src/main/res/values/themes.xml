@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.NcmPermission" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">#EDF2F8</item>
+        <!-- Transparent, because the page itself is what shows through there. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">#EDF2F8</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:windowBackground">#EDF2F8</item>
     </style>
 </resources>
