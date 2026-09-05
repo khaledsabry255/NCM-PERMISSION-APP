@@ -127,7 +127,8 @@ html[dir="ltr"] .searchbar{direction:ltr;}
   display:none;flex-direction:column;align-items:center;gap:3px;
   padding-bottom:9px;
 }
-.toolbar.compact .minibrand{display:flex;}
+.toolbar.compact .minibrand,
+.toolbar.stuck .minibrand{display:flex;}
 .minibrand .ncm{font-size:22px;}
 .minibrand .appname{font-size:11.5px;letter-spacing:.11em;text-indent:.11em;}
 .ncm{
@@ -294,50 +295,14 @@ html[dir="ltr"] .tile{direction:ltr;}
 .tile.job .tile-k{color:var(--brand-navy);}
 .tile.job .tile-v{color:var(--brand-blue);}
 .tiles-head{
-  display:flex;align-items:center;gap:10px;margin:22px 0 2px;
-  font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.02em;
+  display:flex;align-items:center;gap:12px;margin:24px 0 4px;
+  font-size:12px;font-weight:800;color:var(--brand-navy);letter-spacing:.04em;
 }
-.tiles-head::after{
-  content:'';flex:1;height:1px;
-  background:linear-gradient(90deg,var(--line-2),transparent);
+/* A hairline on each side, so the word sits in the middle of the row. */
+.tiles-head::before,.tiles-head::after{
+  content:'';flex:1;height:1px;background:var(--line-2);opacity:.7;
 }
 
-/* ---------- roster: a list of names, not a wall of cards ---------- */
-/* Navigation *inside* the system, not a way out of it: the phone's own back
-   button still leaves for the home screen. */
-.backlist,.backboard{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;margin-top:14px;padding:12px;border-radius:var(--r);
-  border:1px solid var(--line-2);background:var(--tint);color:var(--gold);
-  font:inherit;font-weight:700;font-size:13px;
-  transition:background .16s,transform .12s;
-}
-.backlist:hover,.backboard:hover{background:#d9e6f7;}
-.backlist:active,.backboard:active{transform:scale(.99);}
-.roster-hint{font-size:11.5px;color:var(--muted);margin:10px 0 0;text-align:center;}
-.roster{display:flex;flex-direction:column;gap:7px;margin-top:14px;}
-.rost{
-  display:flex;align-items:center;gap:12px;width:100%;
-  padding:12px 14px;border-radius:var(--r);
-  background:var(--panel);border:1px solid var(--line);
-  font:inherit;color:inherit;text-align:start;
-  animation:rise .22s ease-out both;
-  transition:transform .12s,box-shadow .18s,border-color .16s;
-}
-.rost:hover{border-color:var(--line-2);box-shadow:0 6px 16px rgba(21,101,192,.12);}
-.rost:active{transform:scale(.99);}
-.rost-c{
-  flex:none;min-width:52px;padding:5px 9px;border-radius:9px;
-  background:var(--tint);border:1px solid var(--line-2);
-  color:var(--brand-blue);font-size:12.5px;font-weight:700;text-align:center;
-}
-.rost-n{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.4;}
-.rost-j{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:3px;}
-.rost-s{flex:none;width:9px;height:9px;border-radius:50%;background:var(--neutral-br);}
-.rost-s.ok{background:var(--success);}
-.rost-s.warn{background:var(--warning);}
-.rost-s.bad{background:var(--danger);}
-.rost-s.mute{background:var(--neutral-br);}
 .tile-k{font-size:11.5px;color:var(--muted);}
 .tile-v{font-size:23px;font-weight:600;color:var(--text);line-height:1;}
 .tile.mute .tile-v{color:var(--text-2);}
@@ -345,6 +310,8 @@ html[dir="ltr"] .tile{direction:ltr;}
 .tile.warn .tile-k,.tile.warn .tile-v{color:var(--warning);}
 .tile.bad{background:var(--danger-bg);border-color:var(--danger-br);}
 .tile.bad .tile-k,.tile.bad .tile-v{color:var(--danger);}
+/* Five figures in a two-column grid leave one on its own; it takes the row. */
+.tile.wide{grid-column:1 / -1;}
 .sk-tile{
   height:70px;border-radius:var(--r);background:#e3ebf5;
   position:relative;overflow:hidden;
@@ -607,7 +574,7 @@ const I18N = {
   ar:{
     dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
     statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
-    statExpiring:'قرب الانتهاء', statBanned:'الممنوعون',
+    statExpiring:'قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
     tabExpiring:'قرب الانتهاء', tabExpired:'منتهية',
@@ -623,10 +590,8 @@ const I18N = {
     jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
     banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
-    byJob:'حسب الوظيفة', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة',
+    byJob:'الوظائف', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', none:'لا يوجد',
     listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
-    backToBoard:'رجوع للإحصائيات', backToList:'رجوع للقائمة',
-    tapForDetails:'اضغط على أي اسم لعرض بياناته',
     noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
     noBanned:'لا يوجد موظفون ممنوعون حاليًا',
     noExpiring:'لا توجد تصاريح تنتهي خلال ' + EXPIRY_WINDOW + ' يوم',
@@ -637,7 +602,7 @@ const I18N = {
   en:{
     dir:'ltr', htmlLang:'en', other:'AR', otherIsArabic:false,
     statActive:'Active employees', statResigned:'Resignations',
-    statExpiring:'Expiring soon', statBanned:'Banned',
+    statExpiring:'Expiring soon', statExpired:'Expired permits', statBanned:'Banned',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
     tabExpiring:'Expiring', tabExpired:'Expired',
@@ -653,10 +618,8 @@ const I18N = {
     jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
     banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
-    byJob:'By job title', jobList:'Job', noJob:'No job recorded',
+    byJob:'Job titles', jobList:'Job', noJob:'No job recorded', none:'None',
     listActive:'Active employees', listResigned:'Resignations',
-    backToBoard:'Back to the figures', backToList:'Back to the list',
-    tapForDetails:'Tap a name to see the full record',
     noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
     noBanned:'No banned employees at the moment',
     noExpiring:'No permits expiring within ' + EXPIRY_WINDOW + ' days',
@@ -677,48 +640,33 @@ function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
 
 /* ============================================================
    THE BOARD'S LISTS
-   A tile opens the people it counted. They arrive as a roster - code, name,
-   job, a dot for the permit - rather than full cards: "present" alone is 370
-   people, and 370 cards is 740 photographs fetched at once. Tapping a name
-   opens that one person in full.
+   A tile opens the people it counted, as the same record cards the search
+   shows. The photographs carry loading="lazy", so a list of 370 fetches the
+   handful on screen and the rest as they are scrolled to.
    ============================================================ */
-let rosterRows = null;     // what the roster is currently showing
-let lastRosterTitle = '', lastRosterTone = '';
 let onBoard = true;        // false while a tile's list is open
 
-function statusDot(emp){
-  if(isResigned(emp)) return 'mute';
-  const k = statusOf(emp).k;      // 'ok' | 'warn' | 'bad' | 'mute'
-  return (k === 'ok' || k === 'warn' || k === 'bad') ? k : 'mute';
-}
-function rosterHTML(rows, title, tone){
+function renderGroupList(rows, title, tone){
+  setBusy(false);
+  revealResults();
+  /* Opening a tile only swaps the page's contents, so the phone's back button
+     would leave the whole system instead of returning to the figures. One
+     history entry per trip away from the board gives it something to walk back
+     to; the second press then leaves for the home screen, as before. */
+  if(onBoard) history.pushState({ncm:'list'}, '');
+  onBoard = false;
   const head =
     '<div class="sect ' + (tone || '') + '">' +
       '<span class="sect-t">' + esc(title) + '</span>' +
       '<span class="sect-n">' + rows.length + '</span>' +
       '<span class="sect-line"></span>' +
-    '</div>' +
-    '<p class="roster-hint">' + esc(t('tapForDetails')) + '</p>';
-  const foot = '<button type="button" class="backboard" id="backboard">' +
-               esc(t('backToBoard')) + '</button>';
-  return head + '<div class="roster">' + rows.map((r, i) =>
-    '<button type="button" class="rost" data-row="' + i + '">' +
-      '<span class="rost-c num">' + esc(r.emp_code || '—') + '</span>' +
-      '<span class="rost-n">' + esc(r.full_name || t('noName')) +
-        (r.job_title ? '<span class="rost-j">' + esc(r.job_title) + '</span>' : '') +
-      '</span>' +
-      '<span class="rost-s ' + statusDot(r) + '"></span>' +
-    '</button>').join('') + '</div>' + foot;
-}
-function renderRoster(rows, title, tone){
-  setBusy(false);
-  revealResults();
-  rosterRows = rows;
-  lastRosterTitle = title; lastRosterTone = tone || '';
-  onBoard = false;
-  out.innerHTML = rosterHTML(rows, title, tone);
+    '</div>';
+  out.innerHTML = head + rows.map(recordHTML).join('');
   window.scrollTo({top: 0, behavior: 'auto'});
 }
+window.addEventListener('popstate', () => {
+  if(!onBoard) renderIdle();     // back on the phone walks back to the figures
+});
 
 /* One query, filtered here rather than in four different server-side shapes:
    the whole table is 725 rows, and every tile needs the same columns anyway. */
@@ -730,8 +678,12 @@ async function openGroup(pick, title, tone){
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
     const rows = dedupe(data).filter(pick).sort(byCode);
-    if(!rows.length) return renderEmpty(t('noMatch'));
-    renderRoster(rows, title, tone);
+    if(!rows.length){
+      if(onBoard) history.pushState({ncm:'list'}, '');
+      onBoard = false;
+      return renderEmpty(t('none'), title);
+    }
+    renderGroupList(rows, title, tone);
   }catch(err){ friendlyFail(err, myToken); }
 }
 
@@ -740,12 +692,10 @@ const GROUPS = {
   resigned: () => [r =>  isResigned(r),                        'listResigned', 'mute'],
   banned:   () => [r => !isResigned(r) && (r.permit_status || '').trim() === 'ممنوع',
                                                                'bannedList',   'alert'],
-  expiring: () => [r => {
-                     if(isResigned(r)) return false;
-                     if((r.permit_status || '').trim() !== 'ساري') return false;
-                     const d = daysLeft(r.permit_date);
-                     return d !== null && d >= 0 && d <= EXPIRY_WINDOW;
-                   },                                          'expiringList', 'warn']
+  expiring: () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRING',
+                                                               'expiringList', 'warn'],
+  expired:  () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRED',
+                                                               'expiredList',  'alert']
 };
 
 function openBoardGroup(key){
@@ -754,9 +704,14 @@ function openBoardGroup(key){
   const [pick, titleKey, tone] = g();
   openGroup(pick, t(titleKey), tone);
 }
+/* The one rule for who belongs to a job: on the payroll and not barred.
+   loadStats counts with it and openJob lists with it, so the number on a tile
+   and the people behind it can never disagree. */
+function worksHere(r){
+  return !isResigned(r) && (r.permit_status || '').trim() !== 'ممنوع';
+}
 function openJob(title){
-  // The tiles counted present staff, so the list has to agree with the number.
-  openGroup(r => !isResigned(r) && (r.job_title || '').trim() === title,
+  openGroup(r => worksHere(r) && (r.job_title || '').trim() === title,
             t('jobList') + ': ' + (title || t('noJob')), '');
 }
 
@@ -1037,13 +992,11 @@ function renderSkeleton(n){
 /* ---------- overview tiles (shown whenever the search box is empty) ---------- */
 let statsCache = null;
 
-/* A tile with nothing behind it stays a plain box; one that has people behind
-   it becomes a button that opens them. A count of zero is left unclickable
-   rather than opening an empty list. */
-function tileHTML(label, value, tone, key){
-  const live = key && value > 0;
-  return '<button type="button" class="tile' + (tone ? ' ' + tone : '') + '"' +
-           (live ? ' data-group="' + esc(key) + '"' : ' disabled') + '>' +
+/* Every tile opens, including one reading zero: pressing it and being told
+   "none" is an answer, and a dead button is not. */
+function tileHTML(label, value, tone, key, wide){
+  return '<button type="button" class="tile' + (tone ? ' ' + tone : '') +
+           (wide ? ' wide' : '') + '" data-group="' + esc(key) + '">' +
            '<span class="tile-k">' + esc(label) + '</span>' +
            '<span class="tile-v num">' + value + '</span>' +
          '</button>';
@@ -1061,7 +1014,8 @@ function paintStats(s){
       tileHTML(t('statActive'),   s.active,   '',     'active') +
       tileHTML(t('statResigned'), s.resigned, 'mute', 'resigned') +
       tileHTML(t('statExpiring'), s.expiring, 'warn', 'expiring') +
-      tileHTML(t('statBanned'),   s.banned,   'bad',  'banned') +
+      tileHTML(t('statExpired'),  s.expired,  'bad',  'expired') +
+      tileHTML(t('statBanned'),   s.banned,   'bad',  'banned', true) +
     '</div>';
   if(s.jobs && s.jobs.length){
     html += '<div class="tiles-head">' + esc(t('byJob')) + '</div>' +
@@ -1074,7 +1028,7 @@ function paintStats(s){
 function renderIdle(){
   setBusy(false);
   setCompact(false);
-  rosterRows = null; onBoard = true;
+  onBoard = true;
   if(tab !== 'search'){ out.innerHTML = ''; return; }
   if(statsCache){ paintStats(statsCache); return; }
   return loadStats();
@@ -1172,30 +1126,37 @@ async function loadStats(){
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
 
-    let active = 0, resigned = 0, expiring = 0, banned = 0;
+    let active = 0, resigned = 0, expiring = 0, expired = 0, banned = 0;
     // Jobs are counted for present staff only: a tile saying "12 drivers" that
     // opens a list half full of people who left would be worse than no tile.
     const jobCount = new Map();
     dedupe(data).forEach(r => {
       if(isResigned(r)){ resigned++; return; }
       active++;
-      const job = (r.job_title || '').trim();
-      jobCount.set(job, (jobCount.get(job) || 0) + 1);
       const raw = (r.permit_status || '').trim();
       if(raw === 'ممنوع'){ banned++; return; }
-      if(raw === 'ساري'){
-        const d = daysLeft(r.permit_date);
-        if(d !== null && d >= 0 && d <= EXPIRY_WINDOW) expiring++;
+      // worksHere() is the same test openJob lists by, so a tile's number and
+      // the people behind it cannot drift apart. Anyone who resigns or is
+      // barred drops out of both the moment the figures are read again.
+      if(worksHere(r)){
+        const job = (r.job_title || '').trim();
+        jobCount.set(job, (jobCount.get(job) || 0) + 1);
       }
+      // statusOf() decides, so a row marked 'ساري' with a date already gone
+      // counts as expired here exactly as it does on the card.
+      const st = statusOf(r).code;
+      if(st === 'EXPIRED')  expired++;
+      if(st === 'EXPIRING') expiring++;
     });
 
     const jobs = [...jobCount.entries()]
       .map(([title, count]) => ({title, count}))
       .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'ar'));
 
-    statsCache = {active, resigned, expiring, banned, jobs};
+    statsCache = {active, resigned, expiring, expired, banned, jobs};
     setCount('n-banned', banned);
     setCount('n-exp', expiring);
+    setCount('n-expired', expired);
     paintStats(statsCache);
   }catch(err){ friendlyFail(err, myToken); }
 }
@@ -1236,11 +1197,7 @@ async function loadExpired(){
       .filter(r => !isResigned(r))
       .filter(r => statusOf(r).code === 'EXPIRED')
       .map(r => ({ r, d: daysLeft(r.permit_date) }))
-      .sort((a,b) => {
-        if(a.d === null) return 1;
-        if(b.d === null) return -1;
-        return b.d - a.d || byCode(a.r, b.r);   // most recently expired first
-      })
+      .sort((a,b) => byCode(a.r, b.r))   // by code, as asked, not by urgency
       .map(x => x.r);
 
     setCount('n-expired', rows.length);
@@ -1262,7 +1219,7 @@ async function loadExpiring(){
       .filter(r => !isResigned(r))
       .map(r => ({ r, d: daysLeft(r.permit_date) }))
       .filter(x => x.d !== null && x.d >= 0 && x.d <= EXPIRY_WINDOW)
-      .sort((a,b) => a.d - b.d || byCode(a.r, b.r))   // soonest first
+      .sort((a,b) => byCode(a.r, b.r))   // by code, as asked, not by urgency
       .map(x => x.r);
 
     setCount('n-exp', rows.length);
@@ -1462,28 +1419,13 @@ out.addEventListener('click', e => {
   saveBoth(btn);
 });
 
-/* ---------- the board's tiles, and the roster rows ---------- */
+/* ---------- the board's tiles ---------- */
 out.addEventListener('click', e => {
   const tile = e.target.closest('button.tile');
   if(tile){
     if(tile.dataset.job !== undefined) return openJob(tile.dataset.job);
     if(tile.dataset.group) return openBoardGroup(tile.dataset.group);
     return;
-  }
-  if(e.target.closest('#backboard')){ rosterRows = null; onBoard = true; return renderIdle(); }
-  if(e.target.closest('#backlist') && rosterRows){
-    return renderRoster(rosterRows, lastRosterTitle, lastRosterTone);
-  }
-
-  const row = e.target.closest('button.rost');
-  if(row && rosterRows){
-    const emp = rosterRows[+row.dataset.row];
-    if(!emp) return;
-    // One person, in full, with a way back to the list that led here.
-    out.innerHTML =
-      '<button type="button" class="backlist" id="backlist">' + esc(t('backToList')) + '</button>' +
-      recordHTML(emp);
-    window.scrollTo({top: 0, behavior: 'auto'});
   }
 });
 
