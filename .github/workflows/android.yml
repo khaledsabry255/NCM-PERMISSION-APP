@@ -43,12 +43,17 @@ jobs:
           mkdir -p out
           cp android/app/build/outputs/apk/release/*.apk out/NCM-Permission.apk
 
+      # The release below is where the APK actually lives, so this copy is only
+      # a guard: if-no-files-found makes the build fail loudly when gradle
+      # produced nothing. One day is long enough for that - left at the default
+      # 90, every build piled up another copy of an APK already published.
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: NCM-Permission-APK
           path: out/NCM-Permission.apk
           if-no-files-found: error
+          retention-days: 1
 
       # Publishes to a fixed "latest-apk" release so the APK always has the same
       # download link — easier than digging through Actions artifacts on a phone.
