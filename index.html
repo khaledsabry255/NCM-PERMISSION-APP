@@ -3,67 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NCM Permission — Security Access Control</title>
+<title>NCM PERMISSION</title>
 <link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <meta name="theme-color" content="#edf2f8">
-<!-- The app owns the whole screen, notch included: no system bar sits above it. -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="./supabase.min.js"></script>
 <style>
 /* ============================================================
-   DESIGN SYSTEM — calm dark surface, gold used only as accent
+   The home screen borrows the two systems' shared design tokens
+   so the door and the rooms behind it read as one building.
    ============================================================ */
 :root{
   --bg:#edf2f8;
   --panel:#ffffff;
   --panel-2:#f3f7fb;
-  --gold:#1565c0;            /* the accent is blue now; name kept so every
-                                rule that reads it follows automatically */
-  --gold-soft:#1e75d6;
+  --gold:#1565c0;
   --tint:#e6eef8;
-  --card:rgba(172,188,206,.6);   /* translucent, so the card reads as glass
-                                    over the page rather than a flat panel */
-  --card-line:#b3c2d4;
-  /* the printed logo green — on a light page it needs no adjusting */
   --brand-green:#4ba548;
   --brand-blue:#1565c0;
   --brand-navy:#1f4e79;
   --brand-grey:#5a646c;
-  --brand-ink:#0b1114;
-  --success:#12874f;  --success-bg:#dff3e7;  --success-br:#8fd3ae;
-  --warning:#b96e08;  --warning-bg:#fcebd5;  --warning-br:#efc383;
-  --danger:#c22f2f;   --danger-bg:#fbe3e3;   --danger-br:#efa9a9;
-  --neutral:#5a646c;  --neutral-bg:#edf0f3;  --neutral-br:#cbd3db;
+  --danger:#c22f2f;
   --text:#0b1114;
-  --text-2:#2a3238;
   --muted:#474d54;
   --line:#e2e9f2;
   --line-2:#c0d3ec;
-  --r-sm:10px;
   --r:14px;
-  --r-lg:18px;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
   --cond:'Barlow Condensed',sans-serif;
   --sans:'Tajawal',system-ui,sans-serif;
 }
-
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;}
 html{
-  background-color:var(--bg);
+  min-height:100dvh;background-color:var(--bg);
   background-image:radial-gradient(900px 460px at 50% -10%, rgba(21,101,192,.07) 0%, transparent 62%);
   background-repeat:no-repeat;background-attachment:fixed;
 }
 body{
   background:transparent;color:var(--text);font-family:var(--sans);
-  min-height:100dvh;padding-bottom:calc(40px + env(safe-area-inset-bottom));
-  -webkit-font-smoothing:antialiased;
+  min-height:100dvh;-webkit-font-smoothing:antialiased;
   /* Tajawal swaps digits to Arabic-Indic forms while the page language is
      Arabic; turning off the localised forms keeps every number Western. */
   font-feature-settings:"locl" 0;
@@ -76,44 +62,9 @@ button{font-family:inherit;cursor:pointer;}
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;}
 }
 
-/* ============================================================
-   STICKY TOOLBAR — search plus both controls, pinned to the top
-   The row is forced to LTR so the language button stays physically on the
-   left and refresh on the right, whichever way the text runs.
-   ============================================================ */
-.toolbar{
-  /* parks just below the notch rather than under it */
-  position:sticky;top:env(safe-area-inset-top);z-index:60;
-  margin-inline:-16px;padding:12px 16px 0;
-  background:transparent;
-  /* the fill must snap, not fade — a fading panel lets a row of results show
-     through it while the transition runs */
-  transition:box-shadow .18s;
-}
-.toolbar.stuck{
-  background:var(--bg);
-  box-shadow:0 6px 14px rgba(21,101,192,.10);
-}
-/* Fills the notch strip while the page is scrolled, so rows don't slide
-   through the cut-out above the pinned bar. Left clear at rest so the header
-   glow isn't cut by a flat rectangle. */
-.notch{
-  position:fixed;top:0;inset-inline:0;z-index:70;pointer-events:none;
-  height:env(safe-area-inset-top);background:transparent;
-}
-body.stuck .notch{background:var(--bg);}
-/* Nothing of the phone's own shows through above the page: the app fills the
-   screen to the top edge, and only the content keeps clear of the cut-out. */
-html{min-height:100dvh;}
-.toolrow{display:flex;align-items:center;gap:9px;direction:ltr;}
-.toolrow #searchwrap{flex:1;min-width:0;}
-.searchbar{direction:rtl;}
-html[dir="ltr"] .searchbar{direction:ltr;}
-
-/* language switch */
+/* ---------- language switch ---------- */
 .langbtn{
-  flex:none;
-  display:flex;align-items:center;gap:6px;padding:9px 12px;
+  flex:none;display:flex;align-items:center;gap:6px;padding:9px 12px;
   border-radius:999px;border:1px solid var(--line-2);
   background:var(--tint);color:var(--gold);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
@@ -123,44 +74,20 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 .langbtn:active{transform:scale(.94);}
 .langbtn svg{flex:none;}
 .langbtn span{font-family:var(--cond);font-weight:700;font-size:14px;letter-spacing:.1em;line-height:1;}
-.langbtn span.ar{font-family:var(--sans);font-weight:800;font-size:12.5px;letter-spacing:0;}
-/* the copy on the lock screen sits in the card's own corner */
-#lang-gate{position:absolute;top:13px;left:13px;padding:6px 11px;}
-@media (max-width:359px){
-  .langbtn{padding:8px 9px;}
-  .toolrow{gap:7px;}
-}
 
-/* brand lockup — NCM wordmark above the app name */
-.brand{
-  display:flex;flex-direction:column;align-items:center;line-height:1;
-  transition:font-size .18s;
-}
-/* While there is something to read, the full mark steps aside and a small one
-   rides inside the pinned bar, so the app never stops saying what it is. */
-.topbar.compact{display:none;}
-.minibrand{
-  display:none;flex-direction:column;align-items:center;gap:3px;
-  padding-bottom:9px;
-}
-.toolbar.compact .minibrand{display:flex;}
-.minibrand .ncm{font-size:22px;}
-.minibrand .appname{font-size:11.5px;letter-spacing:.11em;text-indent:.11em;}
+/* ---------- brand lockup ---------- */
+.brand{display:flex;flex-direction:column;align-items:center;line-height:1;}
 .ncm{
   font-family:var(--sans),'Arial Black',system-ui;
-  font-weight:900;font-size:36px;line-height:1;
-  color:var(--brand-blue);
+  font-weight:900;font-size:36px;line-height:1;color:var(--brand-blue);
   /* one directional run, so the letters cannot be reordered in Arabic */
   direction:ltr;unicode-bidi:isolate;
 }
 .ncm i{font-style:normal;color:var(--brand-green);}
 .ncm b{font-weight:inherit;color:var(--brand-grey);}
-/* dimmed brand gold — picks up the gold glow behind the header instead of
-   sitting on it as a flat grey */
 .tagline{
   font-size:11.5px;letter-spacing:.17em;text-indent:.17em;
-  color:var(--brand-navy);margin-top:11px;
-  direction:ltr;unicode-bidi:isolate;
+  color:var(--brand-navy);margin-top:11px;direction:ltr;unicode-bidi:isolate;
 }
 .brand .hr{
   display:block;width:46px;height:1px;margin:12px auto 10px;
@@ -168,14 +95,15 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 }
 .appname{
   font-family:var(--cond);font-weight:700;font-size:20px;
-  letter-spacing:.13em;text-indent:.13em;line-height:1;
-  color:var(--gold);
+  letter-spacing:.13em;text-indent:.13em;line-height:1;color:var(--gold);
 }
 .brand.sm .ncm{font-size:31px;}
 .brand.sm .appname{font-size:18px;}
 
 /* ============================================================
-   LOGIN
+   GATE — one PIN for both systems. The database key is sealed
+   inside VAULT with that PIN, so a wrong code does not merely
+   hide rows: neither system can reach its data at all.
    ============================================================ */
 #gate{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
@@ -183,281 +111,123 @@ html[dir="ltr"] .searchbar{direction:ltr;}
   background:radial-gradient(560px 380px at 50% 30%, rgba(21,101,192,.07) 0%, transparent 70%), var(--bg);
 }
 .gate-card{
-  position:relative;
   width:100%;max-width:328px;text-align:center;
   border:1px solid var(--line);border-radius:20px;
   background:var(--panel);padding:38px 28px 30px;
   box-shadow:0 8px 26px rgba(21,101,192,.10);
 }
-.gate-label{font-size:12.5px;color:var(--muted);letter-spacing:.02em;margin:26px 0 15px;}
-.dots{display:flex;justify-content:center;gap:10px;margin-bottom:14px;}
-.dots i{width:9px;height:9px;border-radius:50%;background:var(--line-2);transition:.16s;}
-.dots i.on{background:var(--gold);}
 #pin{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;}
-.pinpad{
-  width:100%;padding:13px;border-radius:var(--r);cursor:text;
-  border:1px solid var(--line-2);background:var(--panel-2);
-  font-family:var(--mono);font-size:19px;color:var(--text);text-align:center;
-  letter-spacing:.55em;text-indent:.55em;transition:border-color .16s;
+
+/* One box per digit, and nothing above them: four empty boxes under the mark
+   say "type the code" without a caption having to. The real input is the
+   hidden field above — tapping anywhere on the row focuses it, which keeps the
+   phone's own keyboard in charge instead of four separate fields fighting over
+   it. */
+/* Forced LTR: a number is written left to right in both languages, so the
+   first digit typed has to land in the leftmost box. Left to the page's own
+   direction, an Arabic reading fills the row backwards and 1804 comes out
+   4081. */
+.pinboxes{display:flex;justify-content:center;gap:11px;cursor:text;direction:ltr;margin-top:30px;}
+.pinboxes i{
+  width:52px;height:62px;border-radius:15px;font-style:normal;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--line-2);background:var(--panel-2);
+  font-family:var(--mono);font-size:25px;font-weight:600;color:var(--text);
+  transition:border-color .16s,background .16s,box-shadow .16s;
 }
-.pinpad.focus{border-color:var(--gold);}
+.pinboxes i.on{border-color:var(--gold);background:var(--panel);}
+/* the box waiting for the next digit, so the row shows where you are */
+.pinboxes.focus i.next{border-color:var(--gold);box-shadow:0 0 0 3px rgba(21,101,192,.13);}
+@media (max-width:339px){
+  .pinboxes{gap:8px;}
+  .pinboxes i{width:46px;height:56px;font-size:22px;}
+}
 .gate-err{color:var(--danger);font-size:13px;min-height:20px;margin:16px 0 0;font-weight:700;}
 .gate-err.busy{color:var(--muted);}
 .shake{animation:shake .36s;}
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
 
 /* ============================================================
-   HEADER / SHELL
+   HOME — the two doors
    ============================================================ */
-.topbar{padding:calc(28px + env(safe-area-inset-top)) 20px 2px;text-align:center;}
-.shell{max-width:600px;margin:0 auto;padding:0 16px;}
+#home{
+  min-height:100dvh;display:flex;flex-direction:column;
+  padding:calc(26px + env(safe-area-inset-top)) 16px calc(26px + env(safe-area-inset-bottom));
+}
+/* Forced LTR so the language button keeps its corner whichever way the text
+   runs — the same fix both systems make for their own toolbars. */
+.home-top{
+  display:flex;align-items:center;direction:ltr;
+  max-width:600px;width:100%;margin:0 auto 22px;
+}
 
-/* tabs */
-/* Pinned like the counters: the tab the guard reaches for is in the same
-   place whichever language the interface is speaking. */
-.nav{display:flex;gap:6px;margin:11px 0 12px;direction:rtl;}
-html[dir="ltr"] .nav-btn{direction:ltr;}
-.nav-btn{
-  flex:1;min-width:0;white-space:nowrap;
-  padding:11px 6px;border-radius:var(--r);font-weight:700;font-size:13px;
-  color:var(--text-2);background:var(--panel-2);border:1px solid var(--line);
-  transition:background .16s,color .16s;
+/* There is no lock button on this screen on purpose. A guard who taps one by
+   accident is locked out of an app whose PIN he was never given. Locking is a
+   deliberate act instead: hold the mark for a second and a half. */
+.home-brand{margin:6px auto 4px;cursor:default;user-select:none;-webkit-user-select:none;}
+.home-brand.locking{opacity:.45;transition:opacity 1.4s linear;}
+.doors{
+  display:flex;flex-direction:column;gap:16px;
+  width:100%;max-width:480px;margin:34px auto 0;
 }
-.nav-btn:hover{background:var(--panel);color:var(--text);}
-.nav-btn[aria-selected="true"]{
-  color:#fff;border-color:transparent;font-weight:800;
-  background:var(--gold);
-  box-shadow:0 3px 10px rgba(21,101,192,.22);
+/* Each card carries the whole of its system's colour — the logo's own blue for
+   the staff, its own green for the permits — so the two are told apart before
+   a word is read. The shadow is tinted with the same colour rather than grey,
+   which keeps the card sitting on the page instead of cut out of it. */
+.door{
+  display:block;text-align:center;text-decoration:none;
+  padding:34px 22px;border-radius:22px;
+  background:var(--accent);color:#fff;
+  box-shadow:0 10px 26px var(--accent-shadow);
+  transition:transform .14s,box-shadow .2s,filter .16s;
 }
-.nav-btn .tag{display:none;}
-/* refresh sits at the opposite end of the same row */
-.fab{
-  flex:none;
-  width:40px;height:40px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid var(--line-2);background:var(--tint);color:var(--gold);
-  transition:background .16s,transform .12s;
+.door:hover{box-shadow:0 16px 38px var(--accent-shadow);filter:brightness(1.06);}
+.door:active{transform:scale(.985);}
+#door-emp{--accent:#1565c0;--accent-shadow:rgba(21,101,192,.34);}
+#door-per{--accent:#4ba548;--accent-shadow:rgba(75,165,72,.34);}
+
+/* The mark carries the logo's own three colours, so it needs a light ground to
+   sit on: the N's blue would vanish into the blue card and the C's green into
+   the green one. A white plate gives it that, and it reads as the company's
+   mark rather than a word recoloured to fit.
+
+   It also settles the word order. "موظفين NCM" and "NCM Employees" put the
+   mark on opposite ends; stacking it above the word means neither language
+   moves anything. */
+.door-mark{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:9px 17px;border-radius:13px;background:#fff;margin-bottom:15px;
+  box-shadow:0 3px 10px rgba(11,17,20,.12);
 }
-.fab:hover{background:#d9e6f7;}
-.fab:active{transform:scale(.92);}
-.fab[disabled]{opacity:.55;cursor:default;}
-.fab.spin svg{animation:spin .85s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-@media (max-width:413px){
-  .nav-btn{font-size:12.5px;padding:11px 3px;}
-  .nav-btn svg{display:none;}
+.door-mark .ncm{font-size:25px;}
+.door-title{
+  display:block;font-weight:800;font-size:21px;line-height:1.35;color:#fff;
 }
 @media (max-width:339px){
-  .nav-btn{font-size:11.5px;padding:11px 2px;}
+  .door{padding:29px 18px;}
+  .door-mark .ncm{font-size:22px;}
+  .door-title{font-size:19px;}
 }
 
-/* search */
-.searchbar{
-  display:flex;align-items:center;gap:12px;padding:15px 17px;border-radius:var(--r-lg);
-  background:var(--panel-2);border:1px solid var(--line-2);
-  transition:border-color .18s, box-shadow .18s;
+/* ---------- credit ----------
+   Always English, whichever language the interface is in: a name is not
+   translated, and it reads the same on every screen it appears on. */
+.credit{
+  margin-top:auto;padding-top:30px;text-align:center;
+  direction:ltr;line-height:1.55;
 }
-.searchbar:focus-within{
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(21,101,192,.10);
+/* The gate card is a plain block, so there is no free space for margin-top:auto
+   to eat; the signature just sits under the error line. */
+.gate-card .credit{margin-top:0;padding-top:24px;}
+.credit-by{
+  display:block;font-size:9px;letter-spacing:.24em;text-indent:.24em;
+  text-transform:uppercase;color:var(--brand-green);opacity:.722;
 }
-.searchbar:focus-within svg{color:var(--gold);}
-.searchbar svg{flex:none;color:var(--muted);}
-.searchgo{
-  flex:none;display:flex;align-items:center;justify-content:center;
-  border:none;background:none;padding:0;margin:0;color:inherit;
-}
-#q{
-  flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);
-  font-family:var(--sans);font-size:16px;font-weight:500;text-align:center;
-}
-#q::placeholder{color:var(--muted);}
-.clearbtn{
-  flex:none;width:25px;height:25px;border-radius:50%;border:none;color:var(--muted);
-  background:var(--neutral-bg);display:none;align-items:center;justify-content:center;
-}
-.clearbtn.on{display:flex;}
-
-/* section label */
-.sect{display:flex;align-items:center;gap:10px;margin:20px 2px 2px;}
-.sect-t{font-size:12.5px;color:var(--muted);}
-.sect-n{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--gold);}
-.sect-line{flex:1;height:1px;background:var(--line);}
-.sect.alert .sect-n{color:var(--danger);}
-.sect.warn .sect-n{color:var(--warning);}
-
-/* states */
-.state{text-align:center;padding:52px 22px;color:var(--muted);}
-.state svg{opacity:.5;margin-bottom:14px;}
-.state h3{margin:0 0 7px;font-size:15px;font-weight:800;color:var(--text-2);}
-.state p{margin:0;font-size:13px;line-height:1.9;}
-.state .keys{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
-.state .keys span{
-  font-size:12px;color:var(--text-2);border:1px solid var(--line);
-  border-radius:999px;padding:4px 13px;background:var(--panel-2);
-}
-.retry{
-  margin-top:16px;padding:10px 22px;border-radius:var(--r);border:1px solid var(--line-2);
-  background:var(--tint);color:var(--gold);font-weight:800;font-size:13.5px;
-}
-
-/* overview tiles */
-/* Pinned: the four counters keep the same corners in both languages. The
-   interface may flip, but the number the guard reaches for must not move. */
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;direction:rtl;}
-html[dir="ltr"] .tile{direction:ltr;}
-.tile{
-  display:flex;flex-direction:column;gap:7px;padding:13px 15px;
-  border-radius:var(--r);background:var(--panel-2);border:1px solid var(--line);
-  animation:rise .26s ease-out both;
-}
-.tile-k{font-size:11.5px;color:var(--muted);}
-.tile-v{font-size:23px;font-weight:600;color:var(--text);line-height:1;}
-.tile.mute .tile-v{color:var(--text-2);}
-.tile.warn{background:var(--warning-bg);border-color:var(--warning-br);}
-.tile.warn .tile-k,.tile.warn .tile-v{color:var(--warning);}
-.tile.bad{background:var(--danger-bg);border-color:var(--danger-br);}
-.tile.bad .tile-k,.tile.bad .tile-v{color:var(--danger);}
-.sk-tile{
-  height:70px;border-radius:var(--r);background:#e3ebf5;
-  position:relative;overflow:hidden;
-}
-.sk-tile::after{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);
-  animation:shimmer 1.5s infinite;
-}
-
-/* download control, under both photos */
-.dlbtn{
-  width:100%;padding:12px;border-radius:var(--r);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  border:1px solid var(--gold);background:var(--gold);
-  color:#fff;font-weight:800;font-size:13.5px;
-  transition:background .16s,color .16s,border-color .16s;
-}
-.dlbtn:hover{background:var(--gold-soft);}
-.dlbtn[disabled]{cursor:default;}
-.dlbtn.done{color:var(--success);border-color:var(--success-br);background:var(--success-bg);}
-.dlbtn.fail{color:var(--danger);border-color:var(--danger-br);background:var(--danger-bg);}
-
-/* skeleton */
-.sk{margin-top:14px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--panel-2);padding:20px 16px;}
-.sk i{display:block;border-radius:8px;background:#e3ebf5;position:relative;overflow:hidden;}
-.sk i::after{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);
-  animation:shimmer 1.5s infinite;
-}
-@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
-.sk .r1{height:16px;width:54%;margin:0 auto 10px;}
-.sk .r2{height:11px;width:34%;margin:0 auto 20px;}
-.sk .r3{height:52px;margin-bottom:16px;}
-.sk .r4{height:34px;margin-bottom:8px;}
-.sk .r5{height:140px;margin-top:14px;}
-
-/* ============================================================
-   EMPLOYEE CARD — one calm card
-   ============================================================ */
-.rec{
-  /* pinned: the interface may flip, but a record the guard has learned to read
-     must not rearrange itself around him */
-  direction:rtl;
-  margin-top:14px;border-radius:var(--r-lg);overflow:hidden;
-  border:1px solid var(--card-line);background:var(--card);
-  backdrop-filter:blur(14px) saturate(1.15);
-  -webkit-backdrop-filter:blur(14px) saturate(1.15);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 6px 18px rgba(21,101,192,.13);
-  animation:rise .26s ease-out both;
-}
-@keyframes rise{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
-.rec[data-s="ok"]  {--tone:var(--success);}
-.rec[data-s="warn"]{--tone:var(--warning);}
-.rec[data-s="bad"] {--tone:var(--danger);}
-.rec[data-s="mute"]{--tone:var(--neutral);}
-
-/* identity */
-.head{padding:22px 18px 18px;text-align:center;border-bottom:1px solid var(--card-line);}
-.code{
-  display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;
-  font-size:11px;font-weight:700;color:var(--gold);
-  background:var(--tint);border:1px solid var(--line-2);
-  border-radius:999px;padding:3px 12px;
-}
-.code em{font-style:normal;color:var(--muted);font-size:10.5px;}
-.code .num{font-size:12.5px;}
-.nm{font-size:20px;font-weight:800;line-height:1.42;margin:0;color:var(--text);letter-spacing:-.01em;}
-.nm-en{
-  font-family:var(--cond);font-weight:700;letter-spacing:.04em;font-size:19px;
-  color:var(--text-2);text-transform:uppercase;direction:ltr;margin:4px 0 0;line-height:1.3;
-}
-.pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
-.pill{
-  display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;
-  padding:5px 13px;border-radius:999px;color:var(--neutral);
-  background:var(--neutral-bg);border:1px solid var(--neutral-br);
-}
-.pill.ok  {background:var(--success-bg);color:var(--success);border-color:var(--success-br);}
-.pill.warn{background:var(--warning-bg);color:var(--warning);border-color:var(--warning-br);}
-.pill.bad {background:var(--danger-bg);color:var(--danger);border-color:var(--danger-br);}
-.pill.mute{background:var(--neutral-bg);color:var(--neutral);border-color:var(--neutral-br);}
-.ic{flex:none;width:13px;height:13px;}
-
-/* permit strip */
-.permit{
-  display:flex;align-items:center;justify-content:space-between;gap:14px;
-  padding:15px 18px;border-bottom:1px solid var(--card-line);
-  background:color-mix(in srgb, var(--tone) 16%, #ffffff);
-}
-.permit-k{font-size:12px;font-weight:700;color:var(--text);}
-.permit-s{font-size:14.5px;font-weight:800;color:var(--tone);margin-top:3px;}
-.permit-c{font-size:13px;color:var(--text);margin-top:5px;font-weight:700;}
-.permit-d{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--tone);line-height:1;letter-spacing:-.02em;}
-.permit-d.na{font-family:var(--sans);font-size:17px;font-weight:800;color:var(--neutral);}
-.track{position:relative;height:4px;border-radius:999px;margin-top:9px;overflow:hidden;background:var(--line);}
-.track span{position:absolute;inset-block:0;inset-inline-start:0;border-radius:999px;background:var(--tone);opacity:.85;}
-
-/* info list — grouped rows, no extra cards */
-.grp{padding:0 14px;}
-.grp-t{
-  display:block;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--text);
-  padding:15px 4px 8px;
-}
-.rows{margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
-/* every field sits in its own panel */
-.row{
-  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
-  padding:11px 14px;border-radius:var(--r-sm);
-  background:rgba(255,255,255,.82);border:1px solid #c7d3e0;
-}
-.row dt{flex:none;font-size:13px;font-weight:700;color:var(--text);margin:0;}
-.row dd{margin:0;font-size:14.5px;font-weight:800;color:var(--text);text-align:end;word-break:break-word;min-width:0;}
-.row dd.num{font-size:14.5px;font-weight:600;}
-.row dd.warn{color:var(--warning);}
-.row dd.bad{color:var(--danger);}
-
-/* photos — separate panels, only slightly inset */
-.shots{padding:0 14px 16px;margin-top:15px;display:flex;flex-direction:column;gap:9px;}
-.shot{
-  position:relative;margin:0;overflow:hidden;border-radius:var(--r);
-  background:#f7fafd;border:1px solid #cdd7e2;
-}
-.shot img{display:block;width:100%;height:auto;cursor:zoom-in;}
-.noshot{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-  aspect-ratio:16/10;background:var(--tint);color:var(--neutral);
-}
-.noshot span{font-size:13px;font-weight:700;}
-.noshot svg{opacity:.5;}
-
-/* lightbox */
-#zoom{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.94);}
-#zoom.on{display:flex;}
-#zoom img{max-width:100%;max-height:88dvh;border-radius:var(--r);}
-#zoom button{
-  position:absolute;top:calc(14px + env(safe-area-inset-top));inset-inline-end:14px;
-  width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2);
-  background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;
+.credit-name{
+  display:inline-block;margin-top:7px;padding:7px 15px;
+  border-radius:999px;background:var(--tint);border:1px solid var(--line-2);
+  font-family:var(--cond);font-weight:700;font-size:12.5px;
+  letter-spacing:.19em;text-indent:.19em;color:var(--brand-blue);
 }
 
 @media (min-width:620px){
@@ -468,125 +238,86 @@ html[dir="ltr"] .tile{direction:ltr;}
 </head>
 <body>
 
-<div class="notch" aria-hidden="true"></div>
-
-<!-- ================= LOGIN ================= -->
+<!-- ================= GATE ================= -->
 <div id="gate" role="dialog" aria-modal="true" aria-label="شاشة الدخول">
   <div class="gate-card">
-    <button class="langbtn" id="lang-gate" type="button" aria-label="Switch language">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
-      <span class="lang-t">EN</span>
-    </button>
     <div class="brand sm">
       <span class="ncm">N<i>C</i><b>M</b></span>
       <span class="tagline">NUCLEAR CONCRETE MIXES</span>
       <span class="hr"></span>
       <span class="appname">PERMISSION</span>
     </div>
-    <p class="gate-label">الرقم السري</p>
-    <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="الرقم السري">
-    <div class="pinpad" id="pinpad" role="button" tabindex="0" aria-label="اضغط لإدخال الرقم">••••</div>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="4" aria-label="الرقم السري">
+    <div class="pinboxes" id="pinboxes" role="button" tabindex="0" aria-label="اضغط لإدخال الرقم">
+      <i></i><i></i><i></i><i></i>
+    </div>
     <p class="gate-err" id="gate-err" role="alert" aria-live="assertive"></p>
+    <p class="credit">
+      <span class="credit-by">Designed by</span>
+      <span class="credit-name">KHALED SABRY</span>
+    </p>
   </div>
 </div>
 
-<!-- ================= APP ================= -->
-<div id="app" hidden>
-  <div class="topbar">
-    <div class="brand">
-      <span class="ncm">N<i>C</i><b>M</b></span>
-      <span class="tagline">NUCLEAR CONCRETE MIXES</span>
-      <span class="hr"></span>
-      <span class="appname">PERMISSION</span>
-    </div>
+<!-- ================= HOME ================= -->
+<div id="home" hidden>
+  <div class="home-top">
+    <button class="langbtn" id="lang-home" type="button" aria-label="Switch language">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span class="lang-t">EN</span>
+    </button>
   </div>
 
-  <div class="shell">
-    <!-- Sticks to the top edge, so the search box and both controls stay in
-         reach while the results scroll underneath. -->
-    <div class="toolbar" id="toolbar">
-      <div class="minibrand" aria-hidden="true">
-        <span class="ncm">N<i>C</i><b>M</b></span>
-        <span class="appname">PERMISSION</span>
-      </div>
-
-      <div class="toolrow">
-        <button class="langbtn" id="lang" type="button" aria-label="Switch language">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17" stroke="currentColor" stroke-width="1.5"/><path d="M12 3.4c2.2 2.4 3.3 5.3 3.3 8.6s-1.1 6.2-3.3 8.6c-2.2-2.4-3.3-5.3-3.3-8.6S9.8 5.8 12 3.4z" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span class="lang-t">EN</span>
-        </button>
-
-        <div id="searchwrap">
-          <div class="searchbar">
-            <button class="searchgo" id="searchgo" type="button" aria-label="بحث">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            </button>
-            <input id="q" type="text" placeholder="ابحث بالكود أو الرقم القومي أو الاسم" autocomplete="off" inputmode="search" aria-label="بحث عن موظف">
-            <button class="clearbtn" id="clear" aria-label="مسح البحث">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <button class="fab" id="refresh" type="button" aria-label="تحديث البيانات" title="تحديث">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-
-    <nav class="nav" role="tablist" aria-label="أقسام النظام">
-      <button class="nav-btn" role="tab" aria-selected="true" data-tab="search" id="tab-search">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="lb" id="lb-search">بحث</span>
-      </button>
-      <button class="nav-btn" role="tab" aria-selected="false" data-tab="banned" id="tab-banned">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M6.2 6.2l11.6 11.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="lb" id="lb-banned">الممنوعين</span><span class="tag num" id="n-banned" hidden></span>
-      </button>
-      <button class="nav-btn" role="tab" aria-selected="false" data-tab="expiring" id="tab-expiring">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M12 7.4V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="lb" id="lb-expiring">قرب الانتهاء</span><span class="tag num" id="n-exp" hidden></span>
-      </button>
-      <button class="nav-btn" role="tab" aria-selected="false" data-tab="expired" id="tab-expired">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M12 7.4V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8.6 8.6l6.8 6.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="lb" id="lb-expired">منتهية</span><span class="tag num" id="n-expired" hidden></span>
-      </button>
-    </nav>
-    </div>
-
-    <div id="out" role="region" aria-live="polite" aria-busy="false"></div>
+  <div class="brand home-brand" id="home-brand">
+    <span class="ncm">N<i>C</i><b>M</b></span>
+    <span class="tagline">NUCLEAR CONCRETE MIXES</span>
+    <span class="hr"></span>
+    <span class="appname">PERMISSION</span>
   </div>
-</div>
 
-<div id="zoom" role="dialog" aria-modal="true" aria-label="عرض الصورة">
-  <button id="zoom-x" aria-label="إغلاق">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-  </button>
-  <img id="zoom-img" alt="">
+  <div class="doors">
+    <a class="door" href="./employees/" id="door-emp">
+      <span class="door-mark" aria-hidden="true"><span class="ncm">N<i>C</i><b>M</b></span></span>
+      <span class="door-title" id="emp-title">موظفين</span>
+    </a>
+
+    <a class="door" href="./permits/" id="door-per">
+      <span class="door-mark" aria-hidden="true"><span class="ncm">N<i>C</i><b>M</b></span></span>
+      <span class="door-title" id="per-title">تصاريح</span>
+    </a>
+  </div>
+
+  <p class="credit">
+    <span class="credit-by">Designed by</span>
+    <span class="credit-name">KHALED SABRY</span>
+  </p>
 </div>
 
 <script>
 "use strict";
 
 /* ============================================================
-   CONFIG — unchanged backend contract
+   ACCESS
+   Bump ACCESS_VERSION to lock every device that is already
+   unlocked: the stored version stops matching, the cached key is
+   wiped, and everyone is asked for the PIN again. Bump CACHE in
+   service-worker.js in the same commit, otherwise devices keep
+   serving the cached page and never see it.
    ============================================================ */
-/* Bump ACCESS_VERSION to lock every device that is already unlocked: the
-   stored version stops matching, the cached key is wiped, and everyone is
-   asked for the PIN again. Bump CACHE_NAME in service-worker.js in the same
-   commit, otherwise devices keep serving the cached page and never see it. */
-const ACCESS_VERSION = "1";
+const ACCESS_VERSION = "3";
 const UNLOCK_KEY = "ncm_device_unlocked";   // holds the access version, never the PIN
 const AUTH_KEY   = "ncm_key";               // holds the decrypted API key
-const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
-const BUCKET = "employee-photos";
-const EXPIRY_WINDOW = 30;      // days that count as "expiring soon"
-const MAX_RESULTS   = 30;
+
+/* Both systems live one folder below this page, and the unlock cookie has to
+   be readable from either of them, so it is scoped to this folder rather than
+   to whichever one happened to write it. */
+const APP_ROOT = location.pathname.replace(/[^/]*$/, "");
 
 /* The database key is NOT stored in this file. It is sealed with the PIN
-   (PBKDF2-SHA256, 300k iterations → AES-256-GCM). A wrong PIN fails to
-   decrypt, so the app cannot reach the database at all — not "reaches it
-   and hides the rows". Changing the PIN means re-sealing this blob. */
+   (PBKDF2-SHA256, 300k iterations -> AES-256-GCM). A wrong PIN fails to
+   decrypt, so the employees system cannot reach the database at all — not
+   "reaches it and hides the rows". Changing the PIN means re-sealing this
+   blob; it is not enough to change a number in the code. */
 const VAULT = {
   salt: "1ZNV5xAf3NZ1xK1iZmAnSA==",
   iv:   "8Fn1FfSAB6PgT89a",
@@ -594,102 +325,166 @@ const VAULT = {
 };
 const KDF_ITERATIONS = 300000;
 
-let sb = null;                 // built only after the vault opens
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
-   LANGUAGE
-   Only the interface is translated. Stored values (names, job
-   titles, departments, addresses, ban reasons) are shown exactly
-   as they sit in the database — nothing is translated on the fly.
+   LANGUAGE — shares the key both systems already read, so the
+   choice made here carries into whichever one is opened.
    ============================================================ */
 const LANG_KEY = "ncm_lang";
 const I18N = {
   ar:{
-    dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
+    dir:'rtl', htmlLang:'ar', other:'EN',
     gateAria:'شاشة الدخول', pinLabel:'الرقم السري', pinAria:'اضغط لإدخال الرقم',
-    enter:'دخول', checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح',
-    statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
-    statExpiring:'قرب الانتهاء', statBanned:'الممنوعون',
-    download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
-    navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
-    tabExpiring:'قرب الانتهاء', tabExpired:'منتهية',
-    expiredList:'تصاريح منتهية', noExpired:'لا توجد تصاريح منتهية',
-    refresh:'تحديث البيانات', resultsAria:'نتائج',
-    searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
-    zoomAria:'عرض الصورة', closeAria:'إغلاق',
-    code:'الكود', noName:'اسم غير مسجل', resigned:'استقالة', present:'موجود',
-    photoAlt:'صورة الموظف', noPhoto:'لا يوجد صورة',
-    permitStatus:'حالة التصريح',
-    grpPersonal:'البيانات الشخصية', grpWork:'بيانات التوظيف', grpSecurity:'بيانات أمنية',
-    nationalId:'الرقم القومي', phone:'رقم الهاتف', address:'العنوان',
-    jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
-    banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
-    searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
-    noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
-    noBanned:'لا يوجد موظفون ممنوعون حاليًا',
-    noExpiring:'لا توجد تصاريح تنتهي خلال ' + EXPIRY_WINDOW + ' يوم',
-    loadFail:'تعذر تحميل البيانات', loadFailHint:'تحقق من الاتصال بالإنترنت وحاول مرة أخرى', retry:'إعادة المحاولة',
-    stBanned:'ممنوع', stValid:'ساري', stExpiring:'قرب الانتهاء',
-    stExpired:'تصريح منتهي', stNoPermit:'بدون تصريح', stNoDate:'بدون تاريخ'
+    checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح',
+    empTitle:'موظفين',
+    perTitle:'تصاريح',
+    lockConfirm:'قفل التطبيق؟ هيطلب الرقم السري تاني على الجهاز ده.'
   },
   en:{
-    dir:'ltr', htmlLang:'en', other:'AR', otherIsArabic:false,
+    dir:'ltr', htmlLang:'en', other:'AR',
     gateAria:'Login screen', pinLabel:'PIN Code', pinAria:'Tap to enter the PIN',
-    enter:'Enter', checking:'Checking', wrongPin:'Incorrect PIN',
-    statActive:'Active employees', statResigned:'Resignations',
-    statExpiring:'Expiring soon', statBanned:'Banned',
-    download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
-    navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
-    tabExpiring:'Expiring', tabExpired:'Expired',
-    expiredList:'Expired Permits', noExpired:'No expired permits',
-    refresh:'Refresh data', resultsAria:'Results',
-    searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
-    zoomAria:'Photo viewer', closeAria:'Close',
-    code:'CODE', noName:'Name not recorded', resigned:'RESIGNED', present:'ACTIVE',
-    photoAlt:'Employee photo', noPhoto:'No photo available',
-    permitStatus:'Permit Status',
-    grpPersonal:'PERSONAL DETAILS', grpWork:'EMPLOYMENT DETAILS', grpSecurity:'SECURITY DETAILS',
-    nationalId:'National ID', phone:'Phone', address:'Address',
-    jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
-    banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
-    searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
-    noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
-    noBanned:'No banned employees at the moment',
-    noExpiring:'No permits expiring within ' + EXPIRY_WINDOW + ' days',
-    loadFail:'Could not load data', loadFailHint:'Check your internet connection and try again', retry:'Try again',
-    stBanned:'Banned', stValid:'Valid', stExpiring:'Expiring Soon',
-    stExpired:'Expired', stNoPermit:'No Permit', stNoDate:'No Date'
+    checking:'Checking', wrongPin:'Incorrect PIN',
+    empTitle:'Employees',
+    perTitle:'Permits',
+    lockConfirm:'Lock the app? This device will be asked for the PIN again.'
   }
 };
 let lang = 'ar';
 try { const saved = localStorage.getItem(LANG_KEY); if(saved === 'en' || saved === 'ar') lang = saved; } catch(e){}
-function t(k){
-  const v = I18N[lang][k];
-  return v === undefined ? (I18N.ar[k] === undefined ? k : I18N.ar[k]) : v;
+function t(k){ const v = I18N[lang][k]; return v === undefined ? I18N.ar[k] : v; }
+
+function applyLang(){
+  const L = I18N[lang];
+  document.documentElement.lang = L.htmlLang;
+  document.documentElement.dir  = L.dir;
+  [].forEach.call(document.querySelectorAll('.lang-t'), el => el.textContent = L.other);
+  $('gate').setAttribute('aria-label', t('gateAria'));
+  $('pin').setAttribute('aria-label', t('pinLabel'));
+  $('pinboxes').setAttribute('aria-label', t('pinAria'));
+  $('emp-title').textContent = t('empTitle');
+  $('per-title').textContent = t('perTitle');
 }
-function isEN(){ return lang === 'en'; }
+function toggleLang(){
+  lang = (lang === 'ar') ? 'en' : 'ar';
+  try { localStorage.setItem(LANG_KEY, lang); } catch(e){}
+  applyLang();
+}
+$('lang-home').addEventListener('click', toggleLang);
+
+/* ============================================================
+   UNLOCK FLAG
+   Kept in two places on purpose. Phones evict localStorage on
+   their own — Android reclaims site data under storage pressure,
+   and the cleaner apps that ship on some handsets wipe it on a
+   schedule — which is why the PIN kept coming back on a device
+   that had already been unlocked. A cookie survives most of those
+   sweeps, localStorage survives the ones that clear cookies.
+   ============================================================ */
+function readFlag(){
+  let v = null;
+  try{ v = localStorage.getItem(UNLOCK_KEY); }catch(e){}
+  if(v) return v;
+  const hit = document.cookie.split('; ').find(c => c.startsWith(UNLOCK_KEY + '='));
+  return hit ? decodeURIComponent(hit.slice(UNLOCK_KEY.length + 1)) : null;
+}
+function writeFlag(){
+  try{ localStorage.setItem(UNLOCK_KEY, ACCESS_VERSION); }catch(e){}
+  // Ten years, scoped to this app's own folder on the shared github.io host.
+  document.cookie = UNLOCK_KEY + '=' + ACCESS_VERSION +
+    ';max-age=315360000;path=' + APP_ROOT + ';SameSite=Lax';
+}
+function clearFlag(){
+  try{ localStorage.removeItem(UNLOCK_KEY); localStorage.removeItem(AUTH_KEY); }catch(e){}
+  document.cookie = UNLOCK_KEY + '=;max-age=0;path=' + APP_ROOT;
+  idbSet(null);
+}
+
+/* ============================================================
+   A THIRD COPY OF THE KEY, IN INDEXEDDB
+   The flag lives in a cookie as well as localStorage, but the sealed key can
+   live in neither of those alone: a cookie is sent to the host on every single
+   request, and localStorage is the first thing a phone drops when it is short
+   of space. Losing the key means the PIN is asked for again on a device that
+   was already set up — and only Khaled knows it, so that is a trip back to him
+   every time. IndexedDB survives sweeps that clear the other two.
+   ============================================================ */
+const IDB_NAME = 'ncm_unlock', IDB_STORE = 'v';
+function idbOpen(){
+  return new Promise((resolve, reject) => {
+    let req;
+    try{ req = indexedDB.open(IDB_NAME, 1); }catch(e){ return reject(e); }
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+// Writing null clears the copy. Every failure is silent: this is a spare
+// wheel, and an app that cannot open IndexedDB still works from localStorage.
+async function idbSet(apiKey){
+  try{
+    const db = await idbOpen();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const st = tx.objectStore(IDB_STORE);
+      if(apiKey === null){ st.delete('key'); st.delete('version'); }
+      else { st.put(apiKey, 'key'); st.put(ACCESS_VERSION, 'version'); }
+      tx.oncomplete = resolve;
+      tx.onerror    = () => reject(tx.error);
+    });
+    db.close();
+  }catch(e){}
+}
+async function idbGet(){
+  try{
+    const db = await idbOpen();
+    const out = await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const st = tx.objectStore(IDB_STORE);
+      const k = st.get('key'), v = st.get('version');
+      tx.oncomplete = () => resolve({key: k.result, version: v.result});
+      tx.onerror    = () => reject(tx.error);
+    });
+    db.close();
+    // A key sealed under a revoked access version is no key at all.
+    return out.version === ACCESS_VERSION ? (out.key || null) : null;
+  }catch(e){ return null; }
+}
+
+/* Ask the browser to hold on to this device's unlock. Without this, a phone
+   that is low on space — or that has not opened the app for a while — may
+   quietly evict the saved key, and the guard is asked for the PIN again for no
+   reason he can see. Granted silently for an installed app. */
+async function keepUnlockStored(){
+  try{
+    if(!navigator.storage || !navigator.storage.persist) return false;
+    if(await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  }catch(e){ return false; }
+}
 
 /* ============================================================
    GATE
-   NOTE: this PIN lives in the client bundle. It deters casual
-   access only — anyone who reads the source can see it, and the
-   anon key still permits reads. Real access control needs
-   Supabase Auth + RLS policies keyed to a session (backend work).
    ============================================================ */
-const gate = $('gate'), app = $('app'), pin = $('pin');
-const pinpad = $('pinpad'), dots = $('dots'), gateErr = $('gate-err');
+const gate = $('gate'), home = $('home'), pin = $('pin');
+const pinboxes = $('pinboxes'), gateErr = $('gate-err');
 
-function paintDots(){
+/* The digit itself never appears: a box fills with a dot the moment it is
+   typed. The code is only ever entered while someone is standing there being
+   handed the phone, and it is the one thing on this screen worth hiding. The
+   box borders alone show how far along the entry is. */
+function paintBoxes(){
   const n = pin.value.length;
-  [].forEach.call(dots.children, (d, i) => d.classList.toggle('on', i < n));
-  pinpad.textContent = n ? '•'.repeat(n) : '••••';
+  [].forEach.call(pinboxes.children, (b, i) => {
+    b.classList.toggle('on', i < n);
+    b.classList.toggle('next', i === n);
+    b.textContent = i < n ? '•' : '';
+  });
 }
-function openApp(){
+function openHome(){
   gate.style.display = 'none';
-  app.hidden = false;
+  home.hidden = false;
   pin.blur();          // the PIN is done; let the keyboard go
-  renderIdle();
 }
 const b64d = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
@@ -704,20 +499,6 @@ async function unlockVault(entered){
     {name:'AES-GCM', iv:b64d(VAULT.iv)}, key, b64d(VAULT.data));
   return new TextDecoder().decode(plain);
 }
-function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
-
-/* Ask the browser to hold on to this device's unlock.
-   Without this, a phone that is low on space — or that has not opened the app
-   for a while — may quietly evict the saved key, and the guard is asked for
-   the PIN again for no reason he can see. Granted silently for an installed
-   app; harmless where it is not supported. */
-async function keepUnlockStored(){
-  try{
-    if(!navigator.storage || !navigator.storage.persist) return false;
-    if(await navigator.storage.persisted()) return true;
-    return await navigator.storage.persist();
-  }catch(e){ return false; }
-}
 
 let unlocking = false;
 async function submitPin(){
@@ -726,771 +507,102 @@ async function submitPin(){
   gateErr.classList.add('busy');
   gateErr.textContent = t('checking');
   try{
+    // 300k PBKDF2 rounds take a moment on a phone; the label says so.
     const apiKey = await unlockVault(pin.value);
-    try {
-      localStorage.setItem(AUTH_KEY, apiKey);
-      localStorage.setItem(UNLOCK_KEY, ACCESS_VERSION);
-    } catch(e){}
-    connect(apiKey);
+    try { localStorage.setItem(AUTH_KEY, apiKey); } catch(e){}
+    writeFlag();
+    idbSet(apiKey);              // the spare copy, for when the phone sweeps
     keepUnlockStored();          // the PIN was entered once; keep it that way
-    openApp();
+    openHome();
   }catch(err){
     gateErr.classList.remove('busy');
     gateErr.textContent = t('wrongPin');
-    gate.querySelector('.gate-card').classList.add('shake');
-    setTimeout(() => gate.querySelector('.gate-card').classList.remove('shake'), 400);
-    pin.value = ''; paintDots(); pin.focus();
+    const card = gate.querySelector('.gate-card');
+    card.classList.add('shake');
+    if(navigator.vibrate) navigator.vibrate(120);
+    setTimeout(() => card.classList.remove('shake'), 400);
+    pin.value = ''; paintBoxes(); pin.focus();
   }finally{
     unlocking = false;
   }
 }
-pinpad.addEventListener('click', () => pin.focus());
-pinpad.addEventListener('keydown', e => { if(e.key===' '||e.key==='Enter'){ e.preventDefault(); pin.focus(); }});
+pinboxes.addEventListener('click', () => pin.focus());
+pinboxes.addEventListener('keydown', e => { if(e.key===' '||e.key==='Enter'){ e.preventDefault(); pin.focus(); }});
 pin.addEventListener('input', () => {
-  gateErr.textContent = ''; paintDots();
-  if(pin.value.length === 4) submitPin();
+  // Anything that is not a digit never reaches a box.
+  pin.value = pin.value.replace(/\D/g, '').slice(0, 4);
+  gateErr.textContent = '';
+  paintBoxes();
+  if(pin.value.length === 4) submitPin();   // the fourth digit opens it
 });
-pin.addEventListener('focus', () => pinpad.classList.add('focus'));
-pin.addEventListener('blur',  () => pinpad.classList.remove('focus'));
+pin.addEventListener('focus', () => pinboxes.classList.add('focus'));
+pin.addEventListener('blur',  () => pinboxes.classList.remove('focus'));
 pin.addEventListener('keydown', e => { if(e.key==='Enter') submitPin(); });
 
-/* ============================================================
-   TEXT / SEARCH NORMALIZATION (display data is never mutated)
-   ============================================================ */
-function esc(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-// Strips characters that would break a PostgREST or() filter.
-function sanitize(t){
-  return String(t).replace(/[,()"']/g, ' ').replace(/\s+/g,' ').trim();
-}
-// Arabic letters have several written forms for the same sound. We can't
-// normalize the stored column, so instead we build an ilike pattern where
-// each variable letter becomes "_" (matches exactly one character) — that
-// makes ا/أ/إ/آ, ي/ى and ه/ة interchangeable at query time.
-function namePattern(term){
-  const cleaned = sanitize(term)
-    .replace(/[\u064B-\u0652\u0670]/g,'')  // harakat
-    .replace(/\u0640/g,'')                 // tatweel
-    .replace(/[%_]/g,' ')                  // user-typed wildcards
-    .replace(/\s+/g,' ')
-    .trim();
-  if(!cleaned) return null;
-  const body = cleaned
-    .replace(/[\u0622\u0623\u0625\u0627]/g,'_')  // آ أ إ ا
-    .replace(/[\u064A\u0649]/g,'_')              // ي ى
-    .replace(/[\u0647\u0629]/g,'_')              // ه ة
-    .replace(/ /g,'%');
-  return '%' + body + '%';
-}
-function digitsOnly(t){
-  // Arabic-Indic digits map onto ASCII so ٥٤٨ finds 548.
-  return String(t)
-    .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[\u06F0-\u06F9]/g, d => String(d.charCodeAt(0) - 0x06F0))
-    .replace(/\D/g,'');
-}
-function isNumericTerm(t){
-  const s = sanitize(t);
-  return s.length > 0 && /^[0-9\u0660-\u0669\u06F0-\u06F9\s-]+$/.test(s);
-}
-
-/* ============================================================
-   DATES — parsed manually; never handed to the browser parser,
-   which is locale/timezone dependent.
-   ============================================================ */
-function parseDate(v){
-  if(v === null || v === undefined) return null;
-  if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
-  const s = String(v).trim();
-  if(!s) return null;
-
-  let d, m, y, hit;
-  if((hit = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))){       // dd/mm/yyyy
-    d = +hit[1]; m = +hit[2]; y = +hit[3];
-  } else if((hit = s.match(/^(\d{4})[\-\/.](\d{1,2})[\-\/.](\d{1,2})/))){ // yyyy-mm-dd
-    y = +hit[1]; m = +hit[2]; d = +hit[3];
-  } else {
-    return null;
-  }
-  if(y < 1900 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) return null;
-  const dt = new Date(y, m - 1, d);
-  dt.setHours(0,0,0,0);
-  // Rejects impossible dates like 31/02 that would silently roll over.
-  if(dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-  return dt;
-}
-function fmtDate(v){
-  const dt = parseDate(v);
-  if(!dt) return null;
-  const p = n => String(n).padStart(2,'0');
-  return p(dt.getDate()) + '/' + p(dt.getMonth()+1) + '/' + dt.getFullYear();
-}
-function today0(){ const t = new Date(); t.setHours(0,0,0,0); return t; }
-// Whole-day difference computed from calendar values, so DST can't shift it.
-function daysLeft(v){
-  const dt = parseDate(v);
-  if(!dt) return null;
-  const a = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate());
-  const t = today0();
-  const b = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
-  return Math.round((a - b) / 86400000);
-}
-// Digits are wrapped so they always render in the Latin monospace face,
-// never in the Arabic-Indic forms the body font would otherwise reach for.
-function numHTML(n){ return '<span class="num">' + n + '</span>'; }
-
-function daysWord(n){
-  n = Math.abs(n);
-  if(isEN()) return n === 1 ? numHTML(1) + ' day' : numHTML(n) + ' days';
-  if(n === 1) return 'يوم واحد';
-  if(n === 2) return 'يومين';
-  if(n >= 3 && n <= 10) return numHTML(n) + ' أيام';
-  return numHTML(n) + ' يوم';
-}
-function countdownText(dl){
-  if(dl === null) return null;
-  if(isEN()){
-    if(dl === 0) return 'Expires today';
-    if(dl < 0)   return 'Expired ' + daysWord(dl) + ' ago';
-    return daysWord(dl) + ' left';
-  }
-  if(dl === 0)  return 'ينتهي اليوم';
-  if(dl < 0)    return 'منتهي منذ ' + daysWord(dl);
-  return 'متبقي ' + daysWord(dl);
-}
-
-/* ============================================================
-   STATUS — the permit DATE is authoritative over the stored label,
-   so a row marked "ساري" with a past date still reads as expired.
-   ============================================================ */
-// Any value in the resignation column counts, not just a readable date:
-// some rows carry "غير محدد", and those people have still left.
-function isResigned(emp){
-  return !!(emp && emp.resignation_end_date && String(emp.resignation_end_date).trim());
-}
-// Shows the date when there is one, otherwise the stored wording itself.
-function resignEnd(v){
-  if(v === null || v === undefined) return null;
-  const raw = String(v).trim();
-  if(!raw) return null;
-  const asDate = fmtDate(raw);
-  if(asDate) return {text:asDate, cls:'num warn'};
-  return {text: raw === 'غير محدد' ? t('notSpecified') : raw, cls:'warn'};
-}
-
-function statusOf(emp){
-  const raw = (emp && emp.permit_status ? String(emp.permit_status) : '').trim();
-  const dl  = daysLeft(emp && emp.permit_date);
-
-  // The raw values below are the ones stored in the database and are
-  // matched as-is in both languages; only the shown label changes.
-  if(raw === 'ممنوع') return {k:'bad', label:t('stBanned'), code:'BANNED'};
-
-  if(raw === 'ساري'){
-    if(dl === null)        return {k:'mute', label:t('stNoDate'),   code:'NO DATE'};
-    if(dl < 0)             return {k:'bad',  label:t('stExpired'),  code:'EXPIRED'};
-    if(dl <= EXPIRY_WINDOW)return {k:'warn', label:t('stExpiring'), code:'EXPIRING'};
-    return {k:'ok', label:t('stValid'), code:'VERIFIED'};
-  }
-  if(raw === 'منتهي الصلاحية') return {k:'bad', label:t('stExpired'), code:'EXPIRED'};
-  if(raw === 'بدون تصريح' || raw === '') return {k:'mute', label:t('stNoPermit'), code:'NO PERMIT'};
-  // Anything unexpected is surfaced as-is rather than silently relabelled.
-  return {k:'mute', label:raw, code:'UNKNOWN'};
-}
-
-/* ============================================================
-   RENDER
-   ============================================================ */
-const out = $('out'), q = $('q');
-
-function fmtPhone(v){
-  if(v === null || v === undefined) return null;
-  let s = digitsOnly(v);
-  if(!s) return null;
-  if(s.length === 10 && s[0] !== '0') s = '0' + s;   // stored values lost the leading zero
-  return s;
-}
-function photoURL(code, second){
-  return SUPABASE_URL + '/storage/v1/object/public/' + BUCKET + '/' +
-         encodeURIComponent(code) + (second ? '_2' : '') + '.jpg';
-}
-function NOSHOT(){
-  return '<div class="noshot">' +
-    '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10.5" r="1.9" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 17.5l4.7-4.2 3.6 3 3-2.4 3.7 3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-    '<span>' + esc(t('noPhoto')) + '</span>' +
-  '</div>';
-}
-
-const ICON_SAVE =
-  '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 4v10.5M7.6 10.6L12 15l4.4-4.4" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 17.5v1.2A1.3 1.3 0 0 0 5.8 20h12.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>';
-
-function shotHTML(code, second){
-  if(code === '') return '<figure class="shot">' + NOSHOT() + '</figure>';
-  return '<figure class="shot"><img src="' + photoURL(code, second) +
-         '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom></figure>';
-}
-// One control under both photos; it saves the pair.
-function downloadHTML(code){
-  if(code === '') return '';
-  return '<button class="dlbtn" type="button" data-dl="' + esc(code) + '">' +
-         ICON_SAVE + '<span>' + esc(t('download')) + '</span></button>';
-}
-// Renders a labelled block only when it actually has rows, so an employee
-// with no security notes never shows an empty "بيانات أمنية" heading.
-function group(title, rows){
-  if(!rows) return '';
-  return '<div class="grp"><span class="grp-t">' + title + '</span>' +
-         '<dl class="rows">' + rows + '</dl></div>';
-}
-
-function rowHTML(label, value, cls){
-  if(value === null || value === undefined || value === '') return '';
-  return '<div class="row"><dt>' + label + '</dt>' +
-         '<dd class="' + (cls || '') + '">' + esc(value) + '</dd></div>';
-}
-
-function statusIcon(k){
-  if(k === 'ok')   return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M5 12.6l4.4 4.4L19 7.4" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  if(k === 'warn') return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M12 7.6V13" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17" r="1.4" fill="currentColor"/></svg>';
-  if(k === 'bad')  return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
-  return '<svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2.4"/></svg>';
-}
-
-function recordHTML(emp){
-  const s        = statusOf(emp);
-  const code     = (emp.emp_code === null || emp.emp_code === undefined) ? '' : String(emp.emp_code).trim();
-  const resigned = isResigned(emp);
-  const rEnd     = resignEnd(emp.resignation_end_date);
-  const cat      = emp.category === 'blue' ? 'BLUE COLLAR' : emp.category === 'white' ? 'WHITE COLLAR' : null;
-  const dl       = daysLeft(emp.permit_date);
-  const pdate    = fmtDate(emp.permit_date);
-  const cd       = countdownText(dl);
-
-  const bar = (s.k === 'warn' && dl !== null && dl >= 0)
-    ? '<div class="track"><span style="width:' + Math.max(4, Math.round(dl / EXPIRY_WINDOW * 100)) + '%"></span></div>'
-    : '';
-
-  const names = '<h2 class="nm">' + esc(emp.full_name || t('noName')) + '</h2>' +
-    (emp.full_name_en ? '<p class="nm-en">' + esc(emp.full_name_en) + '</p>' : '');
-
-  return '<article class="rec" data-s="' + s.k + '">' +
-    '<div class="head">' +
-      (code ? '<span class="code"><em>' + esc(t('code')) + '</em><span class="num">' + esc(code) + '</span></span>' : '') +
-      names +
-      '<div class="pills">' +
-        '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
-        (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>'
-                  : (tab === 'banned' ? '<span class="pill ok">' + esc(t('present')) + '</span>' : '')) +
-        (cat ? '<span class="pill">' + cat + '</span>' : '') +
-      '</div>' +
-    '</div>' +
-
-    '<div class="permit">' +
-      '<div><div class="permit-k">' + esc(t('permitStatus')) + '</div>' +
-           '<div class="permit-s">' + esc(s.label) + '</div>' +
-           (cd ? '<div class="permit-c">' + cd + '</div>' : '') +
-           bar +
-      '</div>' +
-      (pdate ? '<div class="permit-d num">' + pdate + '</div>' : '<div class="permit-d na">—</div>') +
-    '</div>' +
-
-    group(t('grpPersonal'),
-      rowHTML(t('nationalId'), emp.national_id, 'num') +
-      rowHTML(t('phone'), fmtPhone(emp.phone), 'num') +
-      rowHTML(t('address'), emp.address)
-    ) +
-    group(t('grpWork'),
-      rowHTML(t('jobTitle'), emp.job_title) +
-      rowHTML(t('department'), emp.department) +
-      rowHTML(t('hireDate'), fmtDate(emp.hire_date), 'num')
-    ) +
-    group(t('grpSecurity'),
-      rowHTML(t('banReason'), emp.ban_reason, 'bad') +
-      rowHTML(t('resignEnd'), rEnd && rEnd.text, rEnd && rEnd.cls)
-    ) +
-
-    '<div class="shots">' + shotHTML(code, false) + shotHTML(code, true) +
-      downloadHTML(code) +
-    '</div>' +
-  '</article>';
-}
-
-/* ---------- view states ---------- */
-function setBusy(on){ out.setAttribute('aria-busy', on ? 'true' : 'false'); }
-
-function renderSkeleton(n){
-  setBusy(true);
-  let h = '';
-  for(let i = 0; i < (n || 1); i++){
-    h += '<div class="sk"><i class="r1"></i><i class="r2"></i><i class="r3"></i>' +
-         '<i class="r4"></i><i class="r4"></i><i class="r4"></i><i class="r5"></i></div>';
-  }
-  out.innerHTML = h;
-}
-/* ---------- overview tiles (shown whenever the search box is empty) ---------- */
-let statsCache = null;
-
-function tileHTML(label, value, tone){
-  return '<div class="tile' + (tone ? ' ' + tone : '') + '">' +
-           '<span class="tile-k">' + esc(label) + '</span>' +
-           '<span class="tile-v num">' + value + '</span>' +
-         '</div>';
-}
-function paintStats(s){
-  setBusy(false);
-  out.innerHTML =
-    '<div class="tiles">' +
-      tileHTML(t('statActive'),   s.active,   '') +
-      tileHTML(t('statResigned'), s.resigned, 'mute') +
-      tileHTML(t('statExpiring'), s.expiring, 'warn') +
-      tileHTML(t('statBanned'),   s.banned,   'bad') +
-    '</div>';
-}
-function renderIdle(){
-  setBusy(false);
-  setCompact(false);
-  if(tab !== 'search'){ out.innerHTML = ''; return; }
-  if(statsCache){ paintStats(statsCache); return; }
-  return loadStats();
-}
-function renderEmpty(msg, hint){
-  setBusy(false);
-  revealResults();
-  out.innerHTML =
-    '<div class="state">' +
-      '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-      '<h3>' + esc(msg) + '</h3>' +
-      (hint ? '<p>' + esc(hint) + '</p>' : '') +
-    '</div>';
-}
-function renderError(){
-  setBusy(false);
-  out.innerHTML =
-    '<div class="state">' +
-      '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 8v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="1.8"/></svg>' +
-      '<h3>' + esc(t('loadFail')) + '</h3>' +
-      '<p>' + esc(t('loadFailHint')) + '</p>' +
-      '<button class="retry" id="retry">' + esc(t('retry')) + '</button>' +
-    '</div>';
-  const r = $('retry');
-  if(r) r.addEventListener('click', () => runCurrent());
-}
-function renderList(rows, title, tone){
-  setBusy(false);
-  revealResults();
-  const head = title
-    ? '<div class="sect ' + (tone || '') + '"><span class="sect-t">' + title + '</span>' +
-      '<span class="sect-n">' + rows.length + '</span><span class="sect-line"></span></div>'
-    : '';
-  out.innerHTML = head + rows.map(recordHTML).join('');
-}
-
-/* ============================================================
-   QUERIES
-   Every fetch carries a token; only the newest one may paint,
-   so a slow early request can never overwrite a newer result.
-   ============================================================ */
-let token = 0;
-const FIELDS = '*';
-
-function friendlyFail(err, myToken){
-  if(myToken !== token) return;
-  console.error('[NCM]', err);
-  renderError();
-}
-
-async function runSearch(term){
-  const myToken = ++token;
-  const raw = sanitize(term);
-  if(!raw){ renderIdle(); return; }
-
-  renderSkeleton(1);
-  try{
-    let query = sb.from('employees').select(FIELDS);
-
-    if(isNumericTerm(raw)){
-      const d = digitsOnly(raw);
-      if(!d){ if(myToken===token) renderEmpty(t('noMatch')); return; }
-      // Numbers must match exactly — no partial/substring hits.
-      query = query.or('emp_code.eq.' + d + ',national_id.eq.' + d);
-    } else {
-      const pat = namePattern(raw);
-      if(!pat){ if(myToken===token) renderIdle(); return; }
-      query = query.or('full_name.ilike.' + pat + ',full_name_en.ilike.' + pat);
-    }
-
-    const { data, error } = await query.limit(MAX_RESULTS);
-    if(myToken !== token) return;              // a newer search already ran
-    if(error) return friendlyFail(error, myToken);
-
-    const rows = dedupe(data);
-    if(!rows.length){
-      renderEmpty(t('noMatch'), t('noMatchHint'));
-      return;
-    }
-    renderList(rows, rows.length > 1 ? t('searchResults') : '', '');
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-// One pass over a trimmed projection of the table; the counts have to be
-// computed here because permit dates are stored as dd/mm/yyyy text.
-async function loadStats(){
-  const myToken = ++token;
-  setBusy(true);
-  out.innerHTML = '<div class="tiles">' +
-    '<div class="sk-tile"></div><div class="sk-tile"></div>' +
-    '<div class="sk-tile"></div><div class="sk-tile"></div></div>';
-  try{
-    const { data, error } = await sb.from('employees')
-      .select('id,emp_code,national_id,permit_status,permit_date,resignation_end_date');
-    if(myToken !== token) return;
-    if(error) return friendlyFail(error, myToken);
-
-    let active = 0, resigned = 0, expiring = 0, banned = 0;
-    dedupe(data).forEach(r => {
-      if(isResigned(r)){ resigned++; return; }
-      active++;
-      const raw = (r.permit_status || '').trim();
-      if(raw === 'ممنوع'){ banned++; return; }
-      if(raw === 'ساري'){
-        const d = daysLeft(r.permit_date);
-        if(d !== null && d >= 0 && d <= EXPIRY_WINDOW) expiring++;
+/* Locking the app again is deliberate, not a button anyone can brush past:
+   hold the mark for a second and a half, then confirm. A guard who never had
+   the PIN cannot lock himself out by accident. */
+(function(){
+  const mark = $('home-brand');
+  let timer = null;
+  function start(){
+    if(timer) return;
+    mark.classList.add('locking');
+    timer = setTimeout(() => {
+      stop();
+      if(navigator.vibrate) navigator.vibrate(60);
+      if(confirm(t('lockConfirm'))){
+        clearFlag();
+        location.reload();
       }
-    });
-
-    statsCache = {active, resigned, expiring, banned};
-    setCount('n-banned', banned);
-    setCount('n-exp', expiring);
-    paintStats(statsCache);
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-async function loadBanned(){
-  const myToken = ++token;
-  renderSkeleton(2);
-  try{
-    const { data, error } = await sb.from('employees').select(FIELDS)
-      .eq('permit_status','ممنوع');
-    if(myToken !== token) return;
-    if(error) return friendlyFail(error, myToken);
-
-    // Resigned staff no longer pass the gate, so they are out of scope here.
-    const rows = dedupe(data)
-      .filter(r => !isResigned(r))
-      .sort(byCode);
-
-    setCount('n-banned', rows.length);
-    if(!rows.length){ renderEmpty(t('noBanned')); return; }
-    renderList(rows, t('bannedList'), 'alert');
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-// Permits already past their date, for people still on staff. Covers both
-// rows stored as "منتهي الصلاحية" and rows still marked "ساري" whose date
-// has passed — otherwise they would sit in no tab at all.
-async function loadExpired(){
-  const myToken = ++token;
-  renderSkeleton(2);
-  try{
-    const { data, error } = await sb.from('employees').select(FIELDS)
-      .in('permit_status', ['ساري','منتهي الصلاحية']);
-    if(myToken !== token) return;
-    if(error) return friendlyFail(error, myToken);
-
-    const rows = dedupe(data)
-      .filter(r => !isResigned(r))
-      .filter(r => statusOf(r).code === 'EXPIRED')
-      .map(r => ({ r, d: daysLeft(r.permit_date) }))
-      .sort((a,b) => {
-        if(a.d === null) return 1;
-        if(b.d === null) return -1;
-        return b.d - a.d || byCode(a.r, b.r);   // most recently expired first
-      })
-      .map(x => x.r);
-
-    setCount('n-expired', rows.length);
-    if(!rows.length){ renderEmpty(t('noExpired')); return; }
-    renderList(rows, t('expiredList'), 'alert');
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-async function loadExpiring(){
-  const myToken = ++token;
-  renderSkeleton(2);
-  try{
-    const { data, error } = await sb.from('employees').select(FIELDS)
-      .eq('permit_status','ساري');
-    if(myToken !== token) return;
-    if(error) return friendlyFail(error, myToken);
-
-    const rows = dedupe(data)
-      .filter(r => !isResigned(r))
-      .map(r => ({ r, d: daysLeft(r.permit_date) }))
-      .filter(x => x.d !== null && x.d >= 0 && x.d <= EXPIRY_WINDOW)
-      .sort((a,b) => a.d - b.d || byCode(a.r, b.r))   // soonest first
-      .map(x => x.r);
-
-    setCount('n-exp', rows.length);
-    if(!rows.length){ renderEmpty(t('noExpiring')); return; }
-    renderList(rows, t('expiringList'), 'warn');
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-function dedupe(data){
-  const seen = new Set(), rows = [];
-  (data || []).forEach(r => {
-    if(!r) return;
-    const key = (r.id !== undefined && r.id !== null) ? 'i' + r.id : 'c' + r.emp_code + '|' + r.national_id;
-    if(seen.has(key)) return;
-    seen.add(key); rows.push(r);
-  });
-  return rows;
-}
-function byCode(a, b){
-  const x = parseInt(digitsOnly(a.emp_code || ''), 10);
-  const y = parseInt(digitsOnly(b.emp_code || ''), 10);
-  if(isNaN(x) && isNaN(y)) return 0;
-  if(isNaN(x)) return 1;
-  if(isNaN(y)) return -1;
-  return x - y;
-}
-function setCount(id, n){
-  const el = $(id);
-  if(!el) return;
-  el.textContent = n;
-  el.hidden = false;
-}
-
-/* ============================================================
-   TABS / INPUT
-   ============================================================ */
-let tab = 'search', debounce = null;
-const navBtns = document.querySelectorAll('.nav-btn');
-const searchwrap = $('searchwrap'), refresh = $('refresh'), clearBtn = $('clear');
-
-function runCurrent(){
-  if(tab === 'banned')   return loadBanned();
-  if(tab === 'expiring') return loadExpiring();
-  if(tab === 'expired')  return loadExpired();
-  const term = sanitize(q.value);
-  if(term) return runSearch(term);
-  return Promise.resolve(renderIdle());
-}
-
-navBtns.forEach(btn => btn.addEventListener('click', () => {
-  if(btn.getAttribute('aria-selected') === 'true') return;
-  clearTimeout(debounce);
-  navBtns.forEach(b => b.setAttribute('aria-selected', String(b === btn)));
-  tab = btn.dataset.tab;
-  searchwrap.hidden = tab !== 'search';
-  runCurrent();
-}));
-
-q.addEventListener('input', () => {
-  clearTimeout(debounce);
-  const t = sanitize(q.value);
-  clearBtn.classList.toggle('on', q.value.length > 0);
-  if(!t){ ++token; renderIdle(); return; }   // invalidate any in-flight request
-  debounce = setTimeout(() => runSearch(t), 650);   // long enough to finish typing a code
-});
-q.addEventListener('keydown', e => {
-  if(e.key === 'Enter'){
-    clearTimeout(debounce);
-    q.blur();                                  // drop the keyboard off the result
-    const t = sanitize(q.value); if(t) runSearch(t);
+    }, 1500);
   }
-  if(e.key === 'Escape'){ q.value=''; clearBtn.classList.remove('on'); ++token; renderIdle(); }
-});
-$('searchgo').addEventListener('click', () => {
-  clearTimeout(debounce);
-  q.blur();                                    // same effect as the keyboard's search key
-  const term = sanitize(q.value);
-  if(term) runSearch(term);
-});
-clearBtn.addEventListener('click', () => {
-  q.value = ''; clearBtn.classList.remove('on');
-  ++token; renderIdle(); q.focus();
-});
-
-let refreshing = false;
-refresh.addEventListener('click', () => {
-  if(refreshing) return;                     // guards against double taps
-  refreshing = true;
-  statsCache = null;                         // a refresh must re-count too
-  refresh.classList.add('spin');
-  refresh.disabled = true;
-  Promise.resolve(runCurrent()).finally(() => {
-    refreshing = false;
-    refresh.classList.remove('spin');
-    refresh.disabled = false;
-  });
-});
-
-/* ============================================================
-   LANGUAGE SWITCH
-   Repaints every static label, flips the document direction, then
-   re-runs the current view so rendered records pick up the change.
-   ============================================================ */
-const langBtns = [].slice.call(document.querySelectorAll('.langbtn'));
-
-function setText(id, value){ const el = $(id); if(el) el.textContent = value; }
-function setAria(id, value){ const el = $(id); if(el) el.setAttribute('aria-label', value); }
-
-function applyLang(){
-  document.documentElement.lang = t('htmlLang');
-  document.documentElement.dir  = t('dir');
-
-  // both copies of the button always offer the *other* language
-  langBtns.forEach(btn => {
-    const label = btn.querySelector('.lang-t');
-    if(label){
-      label.textContent = t('other');
-      label.classList.toggle('ar', !!t('otherIsArabic'));
-    }
-    btn.setAttribute('aria-label', isEN() ? 'التحويل إلى العربية' : 'Switch to English');
-  });
-
-  // gate
-  setAria('gate', t('gateAria'));
-  const gl = document.querySelector('.gate-label');
-  if(gl) gl.textContent = t('pinLabel');
-  setAria('pin', t('pinLabel'));
-  setAria('pinpad', t('pinAria'));
-  gateErr.textContent = '';
-  gateErr.classList.remove('busy');
-
-  // tabs + toolbar
-  const nav = document.querySelector('.nav');
-  if(nav) nav.setAttribute('aria-label', t('navAria'));
-  setText('lb-search',   t('tabSearch'));
-  setText('lb-banned',   t('tabBanned'));
-  setText('lb-expiring', t('tabExpiring'));
-  setText('lb-expired',  t('tabExpired'));
-  setAria('refresh', t('refresh'));
-  refresh.title = t('refresh');
-
-  // search + viewer
-  q.placeholder = t('searchPh');
-  setAria('q', t('searchAria'));
-  setAria('clear', t('clearAria'));
-  setAria('out', t('resultsAria'));
-  setAria('zoom', t('zoomAria'));
-  setAria('zoom-x', t('closeAria'));
-}
-
-langBtns.forEach(btn => btn.addEventListener('click', () => {
-  lang = isEN() ? 'ar' : 'en';
-  try { localStorage.setItem(LANG_KEY, lang); } catch(e){}
-  applyLang();
-  if(!app.hidden) runCurrent();   // repaint whatever is on screen
-}));
-
-/* ---------- keep the toolbar useful while scrolling ---------- */
-const toolbar = $('toolbar');
-const topbar = document.querySelector('#app .topbar');
-
-function setCompact(on){
-  if(topbar) topbar.classList.toggle('compact', on);
-  toolbar.classList.toggle('compact', on);
-}
-function paintStuck(){
-  const on = window.scrollY > 6;
-  toolbar.classList.toggle('stuck', on);
-  document.body.classList.toggle('stuck', on);   // paints the notch strip too
-}
-window.addEventListener('scroll', paintStuck, {passive:true});
-paintStuck();
-
-// The mark shrinks rather than scrolling away, so the result rises into view
-// while the app still says what it is.
-function revealResults(){
-  setCompact(true);
-}
-
-/* ---------- save both photos ----------
-   The files live on another origin, where the download attribute is ignored,
-   so each is pulled as a blob and handed over from a local object URL. */
-async function grab(url, name){
-  const res = await fetch(url);
-  if(!res.ok) return false;                 // a missing second photo is normal
-  const obj = URL.createObjectURL(await res.blob());
-  const a = document.createElement('a');
-  a.href = obj;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(obj), 5000);
-  return true;
-}
-async function saveBoth(btn){
-  if(btn.disabled) return;
-  const code = btn.dataset.dl;
-  const label = btn.querySelector('span');
-  btn.disabled = true;
-  btn.classList.remove('done','fail');
-  label.textContent = t('downloading');
-  let saved = 0;
-  for(const second of [false, true]){
-    try{
-      if(await grab(photoURL(code, second), code + (second ? '_2' : '') + '.jpg')) saved++;
-    }catch(err){ console.error('[NCM] download', err); }
-    if(!second) await new Promise(r => setTimeout(r, 500));   // browsers throttle bursts
+  function stop(){
+    clearTimeout(timer); timer = null;
+    mark.classList.remove('locking');
   }
-  btn.classList.add(saved ? 'done' : 'fail');
-  label.textContent = saved ? t('downloaded') : t('downloadFail');
-  setTimeout(() => {
-    btn.classList.remove('done','fail');
-    label.textContent = t('download');
-    btn.disabled = false;
-  }, 2200);
-}
-out.addEventListener('click', e => {
-  const btn = e.target.closest('button[data-dl]');
-  if(!btn) return;
-  e.stopPropagation();
-  saveBoth(btn);
-});
-
-/* ---------- photo zoom ---------- */
-const zoom = $('zoom'), zoomImg = $('zoom-img');
-out.addEventListener('click', e => {
-  const img = e.target.closest('img[data-zoom]');
-  if(!img) return;
-  zoomImg.src = img.src;
-  zoom.classList.add('on');
-});
-function closeZoom(){ zoom.classList.remove('on'); zoomImg.removeAttribute('src'); }
-zoom.addEventListener('click', closeZoom);
-$('zoom-x').addEventListener('click', closeZoom);
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && zoom.classList.contains('on')) closeZoom(); });
-
-// A missing photo returns 400/404 from storage; swap in the placeholder.
-out.addEventListener('error', e => {
-  const img = e.target;
-  if(img && img.tagName === 'IMG' && img.hasAttribute('data-zoom')){
-    const fig = img.closest('.shot');
-    if(fig) fig.innerHTML = NOSHOT();
-  }
-}, true);
+  mark.addEventListener('pointerdown', start);
+  ['pointerup','pointerleave','pointercancel'].forEach(ev => mark.addEventListener(ev, stop));
+})();
 
 /* ---------- boot ---------- */
 applyLang();
 
-let storedKey = null;
-try {
-  // A device stays unlocked only while it holds the current access version.
-  if(localStorage.getItem(UNLOCK_KEY) === ACCESS_VERSION){
-    storedKey = localStorage.getItem(AUTH_KEY);
+/* A device stays unlocked only while it holds the current access version AND
+   still has the sealed key: the flag alone opens nothing, because the
+   employees system cannot query without the key.
+
+   localStorage is checked first and synchronously, so a device that is simply
+   fine goes straight to the two doors with no flash of the PIN screen. Only
+   when that copy is gone — the case this whole dance exists for — is the
+   IndexedDB spare consulted, and a brief flash there is a fair price for not
+   sending the guard back to Khaled. */
+function letIn(apiKey){
+  try { localStorage.setItem(AUTH_KEY, apiKey); } catch(e){}
+  writeFlag();                   // heal whichever copy was wiped
+  idbSet(apiKey);
+  keepUnlockStored();
+  openHome();
+}
+function askForPin(){
+  clearFlag();
+  setTimeout(() => pin.focus(), 120);
+}
+
+if(readFlag() === ACCESS_VERSION){
+  let storedKey = null;
+  try { storedKey = localStorage.getItem(AUTH_KEY); } catch(e){}
+  if(storedKey){
+    letIn(storedKey);
   }else{
-    localStorage.removeItem(AUTH_KEY);        // revoked: drop the cached key
-    localStorage.removeItem(UNLOCK_KEY);
+    idbGet().then(spare => { if(spare) letIn(spare); else askForPin(); });
   }
-} catch(e){}
-if(storedKey){ connect(storedKey); keepUnlockStored(); openApp(); }
-else setTimeout(() => pin.focus(), 120);
-paintDots();
+}else{
+  /* The cookie may have outlived a wiped localStorage, or the version was
+     revoked. Either way the spare is worth one look before asking. */
+  idbGet().then(spare => { if(spare) letIn(spare); else askForPin(); });
+}
+paintBoxes();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));

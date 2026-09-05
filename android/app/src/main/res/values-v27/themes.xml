@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Same theme as values/themes.xml, plus the one attribute that only exists
+      from API 27. Without it Android refuses to draw into the camera cut-out
+      and letterboxes that strip in black; with it the window reaches the top
+      edge and the page colour fills it. The activity still pads its content
+      clear of the cut-out, so nothing hides behind the camera.
+    -->
+    <style name="Theme.NCMPermission" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#EDF2F8</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#EDF2F8</item>
+        <item name="android:windowBackground">#EDF2F8</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

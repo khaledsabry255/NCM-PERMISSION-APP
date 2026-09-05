@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "NCM Permission"
+rootProject.name = "NCMPermission"
 include(":app")

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- The launcher hands straight over to the browser, so it shows nothing
-         of its own; a translucent window keeps that handover from flickering. -->
-    <style name="Theme.Launcher" parent="android:Theme.Translucent.NoTitleBar">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:backgroundDimEnabled">false</item>
-    </style>
-</resources>

@@ -1,9 +1,13 @@
 name: Build Android APK
 
-# Paused. The native app builds and signs correctly — Google's own apksigner
-# verifies it — but Khaled's phone refuses to install it, and the wrapper in
-# twa/ is the road being taken instead. Run by hand if that changes.
+# The app is a window onto the published site, so a change to the site needs no
+# build at all - only a change to the wrapper itself does.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 permissions:
@@ -30,29 +34,11 @@ jobs:
         with:
           gradle-version: '8.11.1'
 
-      # A stable key is what lets an update install over the copy already on a
-      # phone. Without one, every run signs with a fresh throwaway key and
-      # Android refuses the upgrade.
-      - name: Restore the signing key
-        env:
-          KEYSTORE_B64: ${{ secrets.NCM_KEYSTORE_B64 }}
-        run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/ncm.p12"
-            echo "NCM_KEYSTORE=$RUNNER_TEMP/ncm.p12" >> "$GITHUB_ENV"
-            echo "signing with the stored key"
-          else
-            echo "::warning::no stored signing key — this APK will not install over an existing one"
-          fi
-
       - name: Build release APK
         working-directory: android
-        env:
-          NCM_KEYSTORE_PASSWORD: ${{ secrets.NCM_KEYSTORE_PASSWORD }}
-          NCM_KEY_ALIAS: ncm
         run: gradle assembleRelease --no-daemon --stacktrace
 
-      - name: Collect APK
+      - name: Rename APK
         run: |
           mkdir -p out
           cp android/app/build/outputs/apk/release/*.apk out/NCM-Permission.apk
@@ -64,18 +50,15 @@ jobs:
           path: out/NCM-Permission.apk
           if-no-files-found: error
 
-      # A fixed "latest-apk" release keeps the download link stable, which is far
-      # easier on a phone than digging an artifact out of an Actions run.
-      # Only a correctly signed build may replace the download everyone uses:
-      # an APK signed by any other key cannot install over the one on a phone.
+      # Publishes to a fixed "latest-apk" release so the APK always has the same
+      # download link — easier than digging through Actions artifacts on a phone.
       - name: Publish to latest-apk release
-        if: env.NCM_KEYSTORE != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-apk
           name: Latest APK
           body: |
-            أحدث نسخة من تطبيق NCM Permission (أندرويد).
+            أحدث نسخة من تطبيق NCM Permission.
             اتبنت من commit ${{ github.sha }}.
           files: out/NCM-Permission.apk
           prerelease: true

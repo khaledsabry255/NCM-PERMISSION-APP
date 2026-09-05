@@ -1,31 +1,44 @@
 {
-  "name": "بحث التصاريح - NCM",
-  "short_name": "بحث التصاريح",
-  "description": "بحث سريع عن حالة تصريح الموظف",
+  "id": "ncm-permission",
+  "name": "NCM PERMISSION",
+  "short_name": "NCM PERMISSION",
+  "description": "بيانات الموظفين وتصاريح الأفراد والمركبات — NCM",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "fullscreen",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#edf2f8",
   "theme_color": "#edf2f8",
-  "dir": "rtl",
   "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "business",
+    "utilities",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ],
-  "display_override": [
-    "fullscreen",
-    "standalone"
   ]
 }

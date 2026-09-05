@@ -1,30 +1,32 @@
-# ── لا يُرفع أبداً: مفاتيح وبيانات حقيقية ──────────────────────────
-# مفتاح توقيع الـ APK — مكانه C:\Users\Security\.ncm-secrets
-*.keystore
-*.jks
-signing-key-info.txt
-*.zip
-
-# جداول الموظفين فيها أسماء وأرقام قومية حقيقية
-# مكانها "C:\Users\Security\Desktop\NCM DATA (خاص)" بره المشروع
+# The data is real: names, national IDs, addresses, ID-card photos. None of it
+# belongs in a public repository, so the file types it arrives in are refused
+# here as a second line of defence. The spreadsheets live outside the project,
+# in "NCM DATA (خاص)" on the Desktop.
 *.xlsx
+*.xlsm
 *.xls
 *.csv
+*.tsv
+*.docx
 
-# ملف التحقق بتاع أندرويد بيتنشر من ريبو khaledsabry255.github.io مش من هنا
-assetlinks.json
+# Signing keys and tokens live in C:\Users\Security\.ncm-secrets, never here.
+*.keystore
+*.jks
+*.p12
+*.zip
+*token*
+.env
 
-# ── مخرجات بناء أندرويد ──────────────────────────────────────────
+# Android build output
 android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
-android/.idea/
 *.apk
 *.aab
 
-# ── ملفات محلية للأدوات والنظام ──────────────────────────────────
-.claude/
+# Editor and OS litter
+.DS_Store
 Thumbs.db
 desktop.ini
-.DS_Store
+*.swp
