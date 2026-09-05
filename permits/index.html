@@ -254,7 +254,18 @@ body::before{
 
 /* Searching: the wordmark shrinks to make room for results, but it stays on
    screen — the app should never look like a different app mid-search. */
-body.search-mode .app-header{ padding:6px 16px 2px; }
+body.search-mode .app-header{
+  padding:6px 16px 2px;
+  position:sticky;
+  top:env(safe-area-inset-top);
+  z-index:101;
+  background:var(--page);
+}
+/* --hdr-h is measured and set in JS the moment the header collapses: hard-coding
+   it here would drift the first time the logo or its font changes size. */
+body.search-mode .controls-sticky{
+  top:calc(env(safe-area-inset-top) + var(--hdr-h, 39px));
+}
 body.search-mode .logo-mark .logo-ncm{ font-size:22px; }
 body.search-mode .logo-mark .logo-sub{ font-size:4.8px; letter-spacing:1.1px; margin-top:4px; }
 body.search-mode .system-status{ display:none; }
@@ -1321,6 +1332,7 @@ function syncPlaceholder(){
 function syncClear(){ mainClear.classList.toggle("show", mainInput.value.length > 0); }
 function updateSearchMode(){
   document.body.classList.toggle("search-mode", !!normalize(submitted[activeTab]));
+  measureHeader();
 }
 
 function runSearch(){
@@ -1392,6 +1404,17 @@ mainClear.addEventListener("click", ()=>{
 });
 syncPlaceholder();
 syncClear();
+
+/* The controls have to sit exactly below the collapsed header, and its height
+   depends on fonts that load late. Measuring beats guessing. */
+function measureHeader(){
+  const h = document.querySelector(".app-header");
+  if(!h) return;
+  const px = document.body.classList.contains("search-mode") ? h.offsetHeight : 0;
+  document.documentElement.style.setProperty("--hdr-h", px + "px");
+}
+window.addEventListener("resize", measureHeader);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(measureHeader);
 
 /* ======================= Status + language refresh ======================= */
 

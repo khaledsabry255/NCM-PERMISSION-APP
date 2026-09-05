@@ -1,7 +1,7 @@
 {
   "id": "ncm-permission",
-  "name": "NCM PERMISSION",
-  "short_name": "NCM PERMISSION",
+  "name": "NCM",
+  "short_name": "NCM",
   "description": "بيانات الموظفين وتصاريح الأفراد والمركبات — NCM",
   "start_url": "./index.html",
   "scope": "./",
@@ -33,12 +33,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "icons/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }

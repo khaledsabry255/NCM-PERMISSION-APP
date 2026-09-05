@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The interface is the web app itself, so only the launcher label lives here. -->
-    <string name="app_name">NCM PERMISSION</string>
+    <string name="app_name">NCM</string>
 </resources>
