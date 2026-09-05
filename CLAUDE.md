@@ -34,6 +34,7 @@ supabase.min.js       ← مكتبة Supabase (الموظفين)
 manifest.json         ← بيانات الـ PWA
 service-worker.js     ← الكاش
 android/              ← غلاف الـ APK — ملف Kotlin واحد بس
+tools/sheet-scripts/  ← سكربتات الشيت (مش جزء من الموقع)
 .github/workflows/    ← بناء الـ APK
 ```
 
@@ -43,6 +44,7 @@ android/              ← غلاف الـ APK — ملف Kotlin واحد بس
 | أي حاجة في نظام الموظفين | `employees/index.html` |
 | أي حاجة في نظام التصاريح | `permits/index.html` |
 | سلوك تطبيق الأندرويد نفسه | `android/…/MainActivity.kt` |
+| سكربت رفع الشيت | `tools/sheet-scripts/sync.py` |
 
 > 🚨 **النظامين متفصلين في ملفين عن قصد — متلزقهمش في ملف واحد.**
 > الاتنين بيعرّفوا `t()` و `runSearch()` و `digitsOnly()` و `ACCESS_VERSION` ومئات
@@ -165,6 +167,12 @@ android/              ← غلاف الـ APK — ملف Kotlin واحد بس
 |---|---|
 | جداول الإكسل | `C:\Users\Security\Desktop\NCM DATA (خاص)` |
 | مفتاح التوقيع + توكن GitHub | `C:\Users\Security\.ncm-secrets\` |
+
+> 🚨 **`tools/sheet-scripts/UploadFromDesktop.gs` مالوش كلمة سر جوّاه.** الريبو عام،
+> وأي قيمة في السطر ده أي حد يقدر يستخدمها ويكتب على الشيت. الحقيقية في
+> `.ncm-secretspps-script-upload-secret.txt` وبتتلصق في محرّر Apps Script باليد.
+> **دي كانت مكتوبة صراحةً في الريبو القديم ومكشوفة علناً** — اتشالت هنا في
+> 5 سبتمبر 2026 والمفروض تتغيّر.
 
 > 🚨 **التوكن مايتحطّش في رابط الـ remote.** ده حصل في الريبو القديم وكان بيظهر في
 > أي `git remote -v`. يتقرا من `.ncm-secrets` وقت الرفع بس.
