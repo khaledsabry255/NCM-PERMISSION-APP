@@ -3,8 +3,21 @@
 تطبيق واحد فيه نظامين: **الموظفين** (بيقرا من Supabase) و**التصاريح** (بيقرا من Google Sheet).
 شاشة PIN واحدة، وبعدها صفحة رئيسية فيها صندوقين.
 
-> 🚨 المشروع ده بديل لمشروعين قدام كانوا منفصلين: `NCM-PERMISSION-APP` (الموظفين)
-> و `PERMISSION-FROM-NCM` (التصاريح). فولدراتهم لسه على الديسكتوب كنسخة احتياطية.
+| | |
+|---|---|
+| **الريبو** | `khaledsabry255/NCM-PERMISSION-APP` — عام (Public) |
+| **الرابط** | https://khaledsabry255.github.io/NCM-PERMISSION-APP/ |
+| **الفولدر المحلي** | `C:\Users\Security\Desktop\NCM-PERMISSION` |
+| **الـ APK** | https://github.com/khaledsabry255/NCM-PERMISSION-APP/releases/download/latest-apk/NCM-Permission.apk |
+
+> ⚠️ **الفولدر اسمه `NCM-PERMISSION` والريبو اسمه `NCM-PERMISSION-APP`.** الفرق ده
+> مقصود ومتساب: خالد اتسأل في 5 سبتمبر 2026 وقال إن اسم الريبو مش مهم. متغيّرش
+> اسم الريبو — الرابط محفور جوّه كل APK اتوزّع، وتغييره = صفحة فاضية عند كل الناس.
+
+> 🚨 المشروع ده بديل لمشروعين قدام كانوا منفصلين: تطبيق الموظفين (اللي كان عايش في
+> نفس الريبو ده) وتطبيق التصاريح (`PERMISSION-FROM-NCM`). آخر حالة لتطبيق الموظفين
+> القديم محفوظة في فرع **`before-merge`** على GitHub، وفولدرات `NCM Permission App`
+> و `work sheet` لسه على الديسكتوب كنسخة احتياطية.
 > **متعدّلش فيهم** — الشغل كله هنا.
 
 ---
