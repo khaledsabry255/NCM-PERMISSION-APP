@@ -5,7 +5,7 @@
 // Bump CACHE with every upload, otherwise devices keep serving the copy they
 // already have and never see the new files — including a raised
 // ACCESS_VERSION, which is the only way to lock a device that is already in.
-const CACHE = 'ncm-unified-v2';
+const CACHE = 'ncm-unified-v3';
 const SHELL = [
   './',
   './index.html',
