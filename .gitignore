@@ -30,3 +30,9 @@ android/local.properties
 Thumbs.db
 desktop.ini
 *.swp
+
+# Khaled works inside "FOR WORK/": the live spreadsheets, the photo archive and
+# the daily-task scripts (with their Apps Script secret) were moved in here on
+# 5 Sep 2026 so everything he edits sits in one place. It is real data sitting
+# in a PUBLIC repository's working tree - nothing in it may EVER be committed.
+/FOR WORK/
