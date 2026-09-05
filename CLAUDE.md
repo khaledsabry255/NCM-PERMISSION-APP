@@ -205,7 +205,7 @@ tools/sheet-scripts/  ← سكربتات الشيت (مش جزء من الموق
 
 > 🚨 **`tools/sheet-scripts/UploadFromDesktop.gs` مالوش كلمة سر جوّاه.** الريبو عام،
 > وأي قيمة في السطر ده أي حد يقدر يستخدمها ويكتب على الشيت. الحقيقية في
-> `.ncm-secretspps-script-upload-secret.txt` وبتتلصق في محرّر Apps Script باليد.
+> `.ncm-secrets\apps-script-upload-secret.txt` وبتتلصق في محرّر Apps Script باليد.
 > **دي كانت مكتوبة صراحةً في الريبو القديم ومكشوفة علناً** — اتشالت هنا في
 > 5 سبتمبر 2026 والمفروض تتغيّر.
 
