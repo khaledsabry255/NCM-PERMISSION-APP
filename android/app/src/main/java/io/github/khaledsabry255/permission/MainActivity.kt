@@ -26,7 +26,7 @@ import androidx.core.view.WindowInsetsCompat
 // The merged app: one PIN, then a home screen with both systems behind it.
 // CHANGE THIS if the app is published under the other repository name — it is
 // baked into every APK, and a wrong value is a 404 on every phone.
-const val SITE = "https://khaledsabry255.github.io/NCM-PERMISSION/"
+const val SITE = "https://khaledsabry255.github.io/NCM-PERMISSION-APP/"
 private const val HOST = "khaledsabry255.github.io"
 
 /**
