@@ -1209,7 +1209,10 @@ async function loadStats(){
     '<div class="sk-tile"></div><div class="sk-tile"></div></div>';
   try{
     const { data, error } = await sb.from('employees')
-      .select('id,emp_code,national_id,job_title,department,permit_status,permit_date,resignation_end_date');
+      // Every column the counting loop below reads must be named here. Leave
+      // one out and it arrives undefined on every row, which does not fail —
+      // it quietly files all 370 people under the wrong heading.
+      .select('id,emp_code,national_id,job_title,department,category,permit_status,permit_date,resignation_end_date');
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
 
