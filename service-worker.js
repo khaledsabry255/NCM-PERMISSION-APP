@@ -5,7 +5,7 @@
 // Bump CACHE with every upload, otherwise devices keep serving the copy they
 // already have and never see the new files — including a raised
 // ACCESS_VERSION, which is the only way to lock a device that is already in.
-const CACHE = 'ncm-unified-v6';
+const CACHE = 'ncm-unified-v7';
 const SHELL = [
   './',
   './index.html',
@@ -42,13 +42,29 @@ self.addEventListener('activate', (e) => {
 
 // Network-first: always try for the latest version when online, and fall back
 // to the cached copy only when there is no connection at all.
+//
+// GitHub Pages answers every file with `Cache-Control: max-age=600`, and a
+// plain fetch() honours that — so for ten minutes after a page is loaded the
+// phone serves its own stored copy and never asks the server, no matter how
+// many times the app is closed and reopened. An upload appeared to not arrive
+// at all. `no-cache` makes the request revalidate: the ETag goes up, and the
+// server answers 304 (a few bytes) when nothing changed, or the new file when
+// it did. Nothing is refetched needlessly and nothing is ever served stale.
+function fromNetwork(req) {
+  try {
+    return fetch(req, { cache: 'no-cache' });
+  } catch (err) {
+    return fetch(req);          // an engine that rejects the option still works
+  }
+}
+
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;   // fonts, Supabase, the sheet
 
   e.respondWith(
-    fetch(e.request)
+    fromNetwork(e.request)
       .then((response) => {
         if (response && response.ok && response.type === 'basic') {
           const copy = response.clone();
