@@ -331,7 +331,22 @@ html[dir="ltr"] .tile{direction:ltr;}
   background:var(--tint);border:1px solid var(--line-2);
   border-radius:100px;padding:4px 10px;flex-shrink:0;
 }
-.dept .tiles{margin-top:9px;}
+/* Inside the box the jobs are split by collar, white above blue, with a
+   hairline between them so the two groups read apart at a glance. */
+.collar + .collar{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);}
+.collar-lab{display:flex;align-items:center;gap:8px;padding:9px 4px 0;}
+.collar-lab .cl-t{
+  /* WHITE / BLUE COLLAR stays Latin in both interfaces, exactly as the badge
+     on a record card does, so the run keeps its own direction. */
+  font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--brand-grey);
+  unicode-bidi:plaintext;
+}
+.collar-lab .cl-n{
+  font-size:11.5px;font-weight:700;color:var(--neutral);
+  background:var(--neutral-bg);border:1px solid var(--neutral-br);
+  border-radius:999px;padding:2px 9px;line-height:1.45;
+}
+.collar .tiles{margin-top:8px;}
 .tile-v{font-size:23px;font-weight:600;color:var(--text);line-height:1;}
 .tile.mute .tile-v{color:var(--text-2);}
 .tile.warn{background:var(--warning-bg);border-color:var(--warning-br);}
@@ -618,7 +633,7 @@ const I18N = {
     jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
     banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
-    byJob:'الأقسام', jobList:'وظيفة', deptList:'قسم', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', none:'لا يوجد',
+    byJob:'الأقسام', jobList:'وظيفة', deptList:'قسم', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
     listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
     noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
     noBanned:'لا يوجد موظفون ممنوعون حاليًا',
@@ -646,7 +661,7 @@ const I18N = {
     jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
     banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
-    byJob:'Departments', jobList:'Job', deptList:'Department', noJob:'No job recorded', noDept:'No department', none:'None',
+    byJob:'Departments', jobList:'Job', deptList:'Department', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
     listActive:'Active employees', listResigned:'Resignations',
     noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
     noBanned:'No banned employees at the moment',
@@ -747,11 +762,12 @@ function openDept(name){
   openGroup(r => worksHere(r) && (r.department || '').trim() === d,
             t('deptList') + ': ' + (d || t('noDept')), '');
 }
-function openJob(title, dep){
-  const d = dep || '';
+function openJob(title, dep, col){
+  const d = dep || '', c = col || '';
   openGroup(r => worksHere(r)
               && (r.job_title  || '').trim() === title
-              && (r.department || '').trim() === d,
+              && (r.department || '').trim() === d
+              && (r.category   || '').trim() === c,
             t('jobList') + ': ' + (title || t('noJob')) +
               ' — ' + (d || t('noDept')), '');
 }
@@ -1042,12 +1058,19 @@ function tileHTML(label, value, tone, key, wide){
            '<span class="tile-v num">' + value + '</span>' +
          '</button>';
 }
-function jobTileHTML(title, count, dep){
+function jobTileHTML(title, count, dep, col){
   return '<button type="button" class="tile job" data-job="' + esc(title) + '"' +
-           ' data-dep="' + esc(dep || '') + '">' +
+           ' data-dep="' + esc(dep || '') + '" data-col="' + esc(col || '') + '">' +
            '<span class="tile-k">' + esc(title || t('noJob')) + '</span>' +
            '<span class="tile-v num">' + count + '</span>' +
          '</button>';
+}
+/* The sheet stores the collar in lowercase; anything else is neither, and gets
+   its own group rather than being dropped from the board without a trace. */
+function collarLabel(key){
+  return key === 'white' ? 'WHITE COLLAR'
+       : key === 'blue'  ? 'BLUE COLLAR'
+       : t('noCollar');
 }
 /* The department's own head: its name, and how many of the present staff it
    holds. The figure is the sum of the tiles underneath it, never a separate
@@ -1073,9 +1096,17 @@ function paintStats(s){
             s.depts.map(d =>
               '<section class="dept">' +
                 deptHeadHTML(d.name, d.count) +
-                '<div class="tiles">' +
-                  d.jobs.map(j => jobTileHTML(j.title, j.count, d.name)).join('') +
-                '</div>' +
+                d.collars.map(c =>
+                  '<div class="collar">' +
+                    '<div class="collar-lab">' +
+                      '<span class="cl-t">' + esc(collarLabel(c.key)) + '</span>' +
+                      '<span class="cl-n num">' + c.count + '</span>' +
+                    '</div>' +
+                    '<div class="tiles">' +
+                      c.jobs.map(j => jobTileHTML(j.title, j.count, d.name, c.key)).join('') +
+                    '</div>' +
+                  '</div>'
+                ).join('') +
               '</section>'
             ).join('');
   }
@@ -1185,10 +1216,10 @@ async function loadStats(){
     let active = 0, resigned = 0, expiring = 0, expired = 0, banned = 0;
     // Jobs are counted for present staff only: a tile saying "12 drivers" that
     // opens a list half full of people who left would be worse than no tile.
-    // department -> Map(job title -> how many), filled from the very rows the
-    // figures come from. Grouped this way the board reads the way the site is
-    // organised, and the two job titles that genuinely sit in two departments
-    // appear under each one carrying its own honest number.
+    // department -> collar -> Map(job title -> how many), filled from the very
+    // rows the figures come from. Grouped this way the board reads the way the
+    // site is organised, and the two job titles that genuinely sit in two
+    // departments appear under each one carrying its own honest number.
     const deptJobs = new Map();
     dedupe(data).forEach(r => {
       if(isResigned(r)){ resigned++; return; }
@@ -1201,8 +1232,11 @@ async function loadStats(){
       if(worksHere(r)){
         const job = (r.job_title  || '').trim();
         const dep = (r.department || '').trim();
+        const col = (r.category   || '').trim();
         if(!deptJobs.has(dep)) deptJobs.set(dep, new Map());
-        const m = deptJobs.get(dep);
+        const byCol = deptJobs.get(dep);
+        if(!byCol.has(col)) byCol.set(col, new Map());
+        const m = byCol.get(col);
         m.set(job, (m.get(job) || 0) + 1);
       }
       // statusOf() decides, so a row marked 'ساري' with a date already gone
@@ -1212,15 +1246,23 @@ async function loadStats(){
       if(st === 'EXPIRING') expiring++;
     });
 
-    // Biggest department first, and inside it the biggest job first — the same
-    // order the flat list used, so nothing about the reading order changed
-    // except that the jobs now sit under the department they belong to.
+    // Biggest department first, white collar above blue inside it, and the
+    // biggest job first in each. Anything the sheet spells some other way
+    // lands after both rather than disappearing from the board unnoticed.
+    const COLLARS = ['white', 'blue'];
+    const collarRank = k => { const i = COLLARS.indexOf(k); return i === -1 ? COLLARS.length : i; };
+
     const depts = [...deptJobs.entries()]
-      .map(([name, m]) => {
-        const jobs = [...m.entries()]
-          .map(([title, count]) => ({title, count}))
-          .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'ar'));
-        return {name, jobs, count: jobs.reduce((sum, j) => sum + j.count, 0)};
+      .map(([name, byCol]) => {
+        const collars = [...byCol.entries()]
+          .map(([key, m]) => {
+            const jobs = [...m.entries()]
+              .map(([title, count]) => ({title, count}))
+              .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'ar'));
+            return {key, jobs, count: jobs.reduce((sum, j) => sum + j.count, 0)};
+          })
+          .sort((a, b) => collarRank(a.key) - collarRank(b.key));
+        return {name, collars, count: collars.reduce((sum, c) => sum + c.count, 0)};
       })
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar'));
 
@@ -1496,7 +1538,7 @@ out.addEventListener('click', e => {
   if(dh) return openDept(dh.dataset.dept);
   const tile = e.target.closest('button.tile');
   if(tile){
-    if(tile.dataset.job !== undefined) return openJob(tile.dataset.job, tile.dataset.dep);
+    if(tile.dataset.job !== undefined) return openJob(tile.dataset.job, tile.dataset.dep, tile.dataset.col);
     if(tile.dataset.group) return openBoardGroup(tile.dataset.group);
     return;
   }
