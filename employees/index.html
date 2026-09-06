@@ -685,12 +685,17 @@ function renderGroupList(rows, title, tone){
      to; the second press then leaves for the home screen, as before. */
   if(onBoard) history.pushState({ncm:'list'}, '');
   onBoard = false;
-  const head =
-    '<div class="sect ' + (tone || '') + '">' +
-      '<span class="sect-t">' + esc(title) + '</span>' +
-      '<span class="sect-n">' + rows.length + '</span>' +
-      '<span class="sect-line"></span>' +
-    '</div>';
+  /* No title means no header. A job opened from inside a department passes
+     none: the guard just walked through the department and the job to get
+     here, so naming them back at him is a line he has to read past to reach
+     the first card. */
+  const head = title
+    ? '<div class="sect ' + (tone || '') + '">' +
+        '<span class="sect-t">' + esc(title) + '</span>' +
+        '<span class="sect-n">' + rows.length + '</span>' +
+        '<span class="sect-line"></span>' +
+      '</div>'
+    : '';
   out.innerHTML = head + rows.map(recordHTML).join('');
   window.scrollTo({top: 0, behavior: 'auto'});
 }
@@ -761,12 +766,14 @@ function worksHere(r){
    figure on the tile and the length of this list still cannot disagree. */
 function openJob(title, dep, col){
   const d = dep || '', c = col || '';
+  // No title: the cards start straight away — see renderGroupList. The empty
+  // case still names the job, because there the words are the whole answer.
   openGroup(r => worksHere(r)
               && (r.job_title  || '').trim() === title
               && (r.department || '').trim() === d
               && (r.category   || '').trim() === c,
-            t('jobList') + ': ' + (title || t('noJob')) +
-              ' — ' + (d || t('noDept')), '');
+            '', '',
+            t('none') + ' — ' + (title || t('noJob')));
 }
 
 /* ============================================================
