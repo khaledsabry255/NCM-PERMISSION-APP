@@ -957,6 +957,12 @@ function recordHTML(emp){
   const cat      = emp.category === 'blue' ? 'BLUE COLLAR' : emp.category === 'white' ? 'WHITE COLLAR' : null;
   const dl       = daysLeft(emp.permit_date);
   const pdate    = fmtDate(emp.permit_date);
+  /* Nine rows carry "غير معروف" where the date belongs, deliberately. A dash
+     told the guard nothing was there; the sheet's own word tells him it was
+     looked at and is not known. Anything that is not a date is shown as
+     written — never invented, never blanked. */
+  const prawTxt  = (emp.permit_date === null || emp.permit_date === undefined)
+                     ? '' : String(emp.permit_date).trim();
   const cd       = countdownText(dl);
 
   const bar = (s.k === 'warn' && dl !== null && dl >= 0)
@@ -983,7 +989,9 @@ function recordHTML(emp){
            (cd ? '<div class="permit-c">' + cd + '</div>' : '') +
            bar +
       '</div>' +
-      (pdate ? '<div class="permit-d num">' + pdate + '</div>' : '<div class="permit-d na">—</div>') +
+      (pdate    ? '<div class="permit-d num">' + pdate + '</div>'
+       : prawTxt ? '<div class="permit-d na">' + esc(prawTxt) + '</div>'
+                 : '<div class="permit-d na">—</div>') +
     '</div>' +
 
     group(t('grpPersonal'),
