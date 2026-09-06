@@ -28,9 +28,9 @@
                                 rule that reads it follows automatically */
   --gold-soft:#1e75d6;
   --tint:#e6eef8;
-  --card:rgba(172,188,206,.6);   /* translucent, so the card reads as glass
-                                    over the page rather than a flat panel */
-  --card-line:#b3c2d4;
+  --card:rgba(182,213,247,.42);  /* the same light frost the tiles carry, so
+                                    a card and a tile read as one material */
+  --card-line:#c9d9ea;           /* the dividers inside the card */
   /* the printed logo green — on a light page it needs no adjusting */
   --brand-green:#4ba548;
   --brand-blue:#1565c0;
@@ -263,8 +263,8 @@ html[dir="ltr"] .tile{direction:ltr;}
 .tile{
   display:flex;flex-direction:column;gap:7px;padding:13px 15px;
   border-radius:var(--r);
-  background:rgba(255,255,255,.5);
-  border:1px solid rgba(255,255,255,.72);
+  background:rgba(255,255,255,.42);
+  border:1px solid rgba(255,255,255,.68);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 6px 16px rgba(31,78,121,.07);
   backdrop-filter:blur(12px) saturate(1.3);
   -webkit-backdrop-filter:blur(12px) saturate(1.3);
@@ -280,11 +280,16 @@ html[dir="ltr"] .tile{direction:ltr;}
 .tile:disabled{cursor:default;opacity:.6;box-shadow:none;transform:none;}
 /* The three toned sets keep their meaning through the glass — the tint is the
    same colour as before, carried at part strength instead of solid. */
-.tile.warn{background:rgba(252,235,213,.62);border-color:rgba(239,195,131,.62);}
-.tile.bad {background:rgba(251,227,227,.62);border-color:rgba(239,169,169,.62);}
+/* Three separate warnings, three separate weights of the same glass:
+   a mid yellow for a permit running out, a pale red for one already
+   gone, and a deep red for a man barred from the gate - the one a guard
+   must never mistake for either of the others. */
+.tile.warn{background:rgba(249,206,110,.62);border-color:rgba(222,163,48,.62);}
+.tile.bad {background:rgba(250,214,214,.62);border-color:rgba(237,160,160,.62);}
+.tile.ban {background:rgba(150,20,20,.72);border-color:rgba(110,12,12,.5);}
 /* Job tiles are the blue set: one colour for "who does what", so they read as
    a different question from the four status counts above them. */
-.tile.job{background:rgba(182,213,247,.46);border-color:rgba(255,255,255,.66);}
+.tile.job{background:rgba(182,213,247,.38);border-color:rgba(255,255,255,.62);}
 .tile.job .tile-k{color:var(--brand-navy);}
 .tile.job .tile-v{color:var(--brand-blue);}
 .tiles-head{
@@ -319,8 +324,12 @@ html[dir="ltr"] .tile{direction:ltr;}
 .collar .tiles{margin-top:8px;}
 .tile-v{font-size:23px;font-weight:700;color:var(--text);line-height:1;}
 .tile.mute .tile-v{color:var(--text-2);}
-.tile.warn .tile-k,.tile.warn .tile-v{color:var(--warning);}
-.tile.bad .tile-k,.tile.bad .tile-v{color:var(--danger);}
+.tile.warn .tile-k,.tile.warn .tile-v{color:#7a4703;}
+.tile.bad .tile-k,.tile.bad .tile-v{color:#a81f1f;}
+.tile.ban .tile-k{color:rgba(255,255,255,.86);}
+.tile.ban .tile-v{color:#fff;}
+.tile.ban{box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 6px 16px rgba(120,15,15,.22);}
+.tile.ban:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 8px 20px rgba(120,15,15,.3);}
 /* Five figures in a two-column grid leave one on its own; it takes the row. */
 .tile.wide{grid-column:1 / -1;}
 .sk-tile{
@@ -369,9 +378,9 @@ html[dir="ltr"] .tile{direction:ltr;}
      must not rearrange itself around him */
   direction:rtl;
   margin-top:14px;border-radius:var(--r-lg);overflow:hidden;
-  border:1px solid var(--card-line);background:var(--card);
-  backdrop-filter:blur(14px) saturate(1.15);
-  -webkit-backdrop-filter:blur(14px) saturate(1.15);
+  border:1px solid rgba(255,255,255,.68);background:var(--card);
+  backdrop-filter:blur(13px) saturate(1.25);
+  -webkit-backdrop-filter:blur(13px) saturate(1.25);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 6px 18px rgba(21,101,192,.13);
   animation:rise .26s ease-out both;
 }
@@ -1086,7 +1095,7 @@ function paintStats(s){
       tileHTML(t('statResigned'), s.resigned, 'mute', 'resigned') +
       tileHTML(t('statExpiring'), s.expiring, 'warn', 'expiring') +
       tileHTML(t('statExpired'),  s.expired,  'bad',  'expired') +
-      tileHTML(t('statBanned'),   s.banned,   'bad',  'banned', true) +
+      tileHTML(t('statBanned'),   s.banned,   'ban',  'banned', true) +
     '</div>';
   if(s.depts && s.depts.length){
     html += '<div class="tiles-head">' + esc(t('byJob')) + '</div>' +
