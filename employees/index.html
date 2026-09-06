@@ -183,25 +183,8 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 .topbar{padding:calc(28px + env(safe-area-inset-top)) 20px 2px;text-align:center;}
 .shell{max-width:600px;margin:0 auto;padding:0 16px;}
 
-/* tabs */
-/* Pinned like the counters: the tab the guard reaches for is in the same
-   place whichever language the interface is speaking. */
-.nav{display:flex;gap:6px;margin:11px 0 12px;direction:rtl;}
-html[dir="ltr"] .nav-btn{direction:ltr;}
-.nav-btn{
-  flex:1;min-width:0;white-space:nowrap;
-  padding:11px 6px;border-radius:var(--r);font-weight:800;font-size:14px;
-  color:var(--text-2);background:var(--panel-2);border:1px solid var(--line);
-  transition:background .16s,color .16s;
-}
-.nav-btn:hover{background:var(--panel);color:var(--text);}
-.nav-btn[aria-selected="true"]{
-  color:#fff;border-color:transparent;font-weight:800;
-  background:var(--gold);
-  box-shadow:0 3px 10px rgba(21,101,192,.22);
-}
-.nav-btn .tag{display:none;}
-/* refresh sits at the opposite end of the same row */
+/* Its own line under the search box, above the figures. */
+.refreshrow{display:flex;justify-content:center;margin:11px 0 4px;}
 .fab{
   flex:none;
   width:40px;height:40px;border-radius:50%;
@@ -215,14 +198,6 @@ html[dir="ltr"] .nav-btn{direction:ltr;}
 
 .fab.spin svg{animation:spin .85s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-@media (max-width:413px){
-  .nav-btn{font-size:13.5px;padding:11px 3px;}
-  .nav-btn svg{display:none;}
-}
-@media (max-width:339px){
-  .nav-btn{font-size:12.5px;padding:11px 2px;}
-}
-
 /* search */
 .searchbar{
   display:flex;align-items:center;gap:12px;padding:15px 17px;border-radius:var(--r-lg);
@@ -519,29 +494,16 @@ html[dir="ltr"] .tile{direction:ltr;}
           </div>
         </div>
 
+      </div>
+
+      <!-- The four tabs that used to sit here said the same thing as three of
+           the figures below them, so the refresh they shared the row with now
+           has this line to itself, between the search box and the figures. -->
+      <div class="refreshrow">
         <button class="fab" id="refresh" type="button" aria-label="تحديث البيانات" title="تحديث">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
-
-    <nav class="nav" role="tablist" aria-label="أقسام النظام">
-      <button class="nav-btn" role="tab" aria-selected="true" data-tab="search" id="tab-search">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.6-3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="lb" id="lb-search">بحث</span>
-      </button>
-      <button class="nav-btn" role="tab" aria-selected="false" data-tab="banned" id="tab-banned">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M6.2 6.2l11.6 11.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="lb" id="lb-banned">الممنوعين</span><span class="tag num" id="n-banned" hidden></span>
-      </button>
-      <button class="nav-btn" role="tab" aria-selected="false" data-tab="expiring" id="tab-expiring">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M12 7.4V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="lb" id="lb-expiring">قرب الانتهاء</span><span class="tag num" id="n-exp" hidden></span>
-      </button>
-      <button class="nav-btn" role="tab" aria-selected="false" data-tab="expired" id="tab-expired">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2"/><path d="M12 7.4V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8.6 8.6l6.8 6.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="lb" id="lb-expired">منتهية</span><span class="tag num" id="n-expired" hidden></span>
-      </button>
-    </nav>
     </div>
 
     <div id="out" role="region" aria-live="polite" aria-busy="false"></div>
@@ -596,7 +558,7 @@ const I18N = {
   ar:{
     dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
     statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
-    statExpiring:'قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
+    statExpiring:'تصاريح قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
     tabExpiring:'قرب الانتهاء', tabExpired:'منتهية',
@@ -604,7 +566,7 @@ const I18N = {
     refresh:'تحديث البيانات', resultsAria:'نتائج',
     searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
     zoomAria:'عرض الصورة', closeAria:'إغلاق',
-    code:'الكود', noName:'اسم غير مسجل', resigned:'استقالة', present:'موجود',
+    code:'الكود', noName:'اسم غير مسجل', resigned:'استقالة',
     photoAlt:'صورة الموظف', noPhoto:'لا يوجد صورة',
     permitStatus:'حالة التصريح',
     grpPersonal:'البيانات الشخصية', grpWork:'بيانات التوظيف', grpSecurity:'بيانات أمنية',
@@ -615,8 +577,6 @@ const I18N = {
     byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
     listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
     noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
-    noBanned:'لا يوجد موظفون ممنوعون حاليًا',
-    noExpiring:'لا توجد تصاريح تنتهي خلال ' + EXPIRY_WINDOW + ' يوم',
     loadFail:'تعذر تحميل البيانات', loadFailHint:'تحقق من الاتصال بالإنترنت وحاول مرة أخرى', retry:'إعادة المحاولة',
     stBanned:'ممنوع', stValid:'ساري', stExpiring:'قرب الانتهاء',
     stExpired:'تصريح منتهي', stNoPermit:'بدون تصريح', stNoDate:'بدون تاريخ'
@@ -624,7 +584,7 @@ const I18N = {
   en:{
     dir:'ltr', htmlLang:'en', other:'AR', otherIsArabic:false,
     statActive:'Active employees', statResigned:'Resignations',
-    statExpiring:'Expiring soon', statExpired:'Expired permits', statBanned:'Banned',
+    statExpiring:'Expiring permits', statExpired:'Expired permits', statBanned:'Banned',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
     tabExpiring:'Expiring', tabExpired:'Expired',
@@ -632,7 +592,7 @@ const I18N = {
     refresh:'Refresh data', resultsAria:'Results',
     searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
     zoomAria:'Photo viewer', closeAria:'Close',
-    code:'CODE', noName:'Name not recorded', resigned:'RESIGNED', present:'ACTIVE',
+    code:'CODE', noName:'Name not recorded', resigned:'RESIGNED',
     photoAlt:'Employee photo', noPhoto:'No photo available',
     permitStatus:'Permit Status',
     grpPersonal:'PERSONAL DETAILS', grpWork:'EMPLOYMENT DETAILS', grpSecurity:'SECURITY DETAILS',
@@ -643,8 +603,6 @@ const I18N = {
     byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
     listActive:'Active employees', listResigned:'Resignations',
     noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
-    noBanned:'No banned employees at the moment',
-    noExpiring:'No permits expiring within ' + EXPIRY_WINDOW + ' days',
     loadFail:'Could not load data', loadFailHint:'Check your internet connection and try again', retry:'Try again',
     stBanned:'Banned', stValid:'Valid', stExpiring:'Expiring Soon',
     stExpired:'Expired', stNoPermit:'No Permit', stNoDate:'No Date'
@@ -985,8 +943,7 @@ function recordHTML(emp){
       names +
       '<div class="pills">' +
         '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
-        (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>'
-                  : (tab === 'banned' ? '<span class="pill ok">' + esc(t('present')) + '</span>' : '')) +
+        (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>' : '') +
         (cat ? '<span class="pill">' + cat + '</span>' : '') +
       '</div>' +
     '</div>' +
@@ -1127,9 +1084,8 @@ function renderIdle(){
   onBoard = true;
   // The board is the outermost screen: whatever department we were inside, we
   // are not inside it any more. Anything that reaches for the board — the back
-  // button, switching tabs, clearing a search — leaves it the same way.
+  // button, or clearing a search — leaves it the same way.
   openDeptName = null;
-  if(tab !== 'search'){ out.innerHTML = ''; return; }
   if(statsCache){ paintStats(statsCache); return; }
   return loadStats();
 }
@@ -1283,77 +1239,7 @@ async function loadStats(){
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar'));
 
     statsCache = {active, resigned, expiring, expired, banned, depts};
-    setCount('n-banned', banned);
-    setCount('n-exp', expiring);
-    setCount('n-expired', expired);
     paintStats(statsCache);
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-async function loadBanned(){
-  const myToken = ++token;
-  renderSkeleton(2);
-  try{
-    const { data, error } = await sb.from('employees').select(FIELDS)
-      .eq('permit_status','ممنوع');
-    if(myToken !== token) return;
-    if(error) return friendlyFail(error, myToken);
-
-    // Resigned staff no longer pass the gate, so they are out of scope here.
-    const rows = dedupe(data)
-      .filter(r => !isResigned(r))
-      .sort(byCode);
-
-    setCount('n-banned', rows.length);
-    if(!rows.length){ renderEmpty(t('noBanned')); return; }
-    renderList(rows, t('bannedList'), 'alert');
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-// Permits already past their date, for people still on staff. Covers both
-// rows stored as "منتهي الصلاحية" and rows still marked "ساري" whose date
-// has passed — otherwise they would sit in no tab at all.
-async function loadExpired(){
-  const myToken = ++token;
-  renderSkeleton(2);
-  try{
-    const { data, error } = await sb.from('employees').select(FIELDS)
-      .in('permit_status', ['ساري','منتهي الصلاحية']);
-    if(myToken !== token) return;
-    if(error) return friendlyFail(error, myToken);
-
-    const rows = dedupe(data)
-      .filter(r => !isResigned(r))
-      .filter(r => statusOf(r).code === 'EXPIRED')
-      .map(r => ({ r, d: daysLeft(r.permit_date) }))
-      .sort((a,b) => byCode(a.r, b.r))   // by code, as asked, not by urgency
-      .map(x => x.r);
-
-    setCount('n-expired', rows.length);
-    if(!rows.length){ renderEmpty(t('noExpired')); return; }
-    renderList(rows, t('expiredList'), 'alert');
-  }catch(err){ friendlyFail(err, myToken); }
-}
-
-async function loadExpiring(){
-  const myToken = ++token;
-  renderSkeleton(2);
-  try{
-    const { data, error } = await sb.from('employees').select(FIELDS)
-      .eq('permit_status','ساري');
-    if(myToken !== token) return;
-    if(error) return friendlyFail(error, myToken);
-
-    const rows = dedupe(data)
-      .filter(r => !isResigned(r))
-      .map(r => ({ r, d: daysLeft(r.permit_date) }))
-      .filter(x => x.d !== null && x.d >= 0 && x.d <= EXPIRY_WINDOW)
-      .sort((a,b) => byCode(a.r, b.r))   // by code, as asked, not by urgency
-      .map(x => x.r);
-
-    setCount('n-exp', rows.length);
-    if(!rows.length){ renderEmpty(t('noExpiring')); return; }
-    renderList(rows, t('expiringList'), 'warn');
   }catch(err){ friendlyFail(err, myToken); }
 }
 
@@ -1375,37 +1261,21 @@ function byCode(a, b){
   if(isNaN(y)) return -1;
   return x - y;
 }
-function setCount(id, n){
-  const el = $(id);
-  if(!el) return;
-  el.textContent = n;
-  el.hidden = false;
-}
 
 /* ============================================================
-   TABS / INPUT
+   SEARCH / INPUT
    ============================================================ */
-let tab = 'search', debounce = null;
-const navBtns = document.querySelectorAll('.nav-btn');
-const searchwrap = $('searchwrap'), refresh = $('refresh'), clearBtn = $('clear');
+let debounce = null;
+const refresh = $('refresh'), clearBtn = $('clear');
 
+/* There is one screen now: search when something is typed, the figures when
+   nothing is. The banned / expiring / expired tabs said the same as three of
+   those figures, and the figures open the same people. */
 function runCurrent(){
-  if(tab === 'banned')   return loadBanned();
-  if(tab === 'expiring') return loadExpiring();
-  if(tab === 'expired')  return loadExpired();
   const term = sanitize(q.value);
   if(term) return runSearch(term);
   return Promise.resolve(renderIdle());
 }
-
-navBtns.forEach(btn => btn.addEventListener('click', () => {
-  if(btn.getAttribute('aria-selected') === 'true') return;
-  clearTimeout(debounce);
-  navBtns.forEach(b => b.setAttribute('aria-selected', String(b === btn)));
-  tab = btn.dataset.tab;
-  searchwrap.hidden = tab !== 'search';
-  runCurrent();
-}));
 
 q.addEventListener('input', () => {
   clearTimeout(debounce);
