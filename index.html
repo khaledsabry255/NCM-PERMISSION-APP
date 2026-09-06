@@ -29,10 +29,10 @@
   --brand-green:#4ba548;
   --brand-blue:#1565c0;
   --brand-navy:#1f4e79;
-  --brand-grey:#5a646c;
+  --brand-grey:#4a5a6b;
   --danger:#c22f2f;
   --text:#0b1114;
-  --muted:#474d54;
+  --muted:#3b4a5c;
   --line:#e2e9f2;
   --line-2:#c0d3ec;
   --r:14px;
@@ -48,7 +48,7 @@ html{
   background-repeat:no-repeat;background-attachment:fixed;
 }
 body{
-  background:transparent;color:var(--text);font-family:var(--sans);
+  background:transparent;color:var(--text);font-family:var(--sans);font-weight:500;
   min-height:100dvh;-webkit-font-smoothing:antialiased;
   /* Tajawal swaps digits to Arabic-Indic forms while the page language is
      Arabic; turning off the localised forms keeps every number Western. */
@@ -73,7 +73,7 @@ button{font-family:inherit;cursor:pointer;}
 .langbtn:hover{background:#d9e6f7;}
 .langbtn:active{transform:scale(.94);}
 .langbtn svg{flex:none;}
-.langbtn span{font-family:var(--cond);font-weight:700;font-size:14px;letter-spacing:.1em;line-height:1;}
+.langbtn span{font-family:var(--cond);font-weight:800;font-size:15px;letter-spacing:.1em;line-height:1;}
 
 /* ---------- brand lockup ---------- */
 .brand{display:flex;flex-direction:column;align-items:center;line-height:1;}
@@ -132,7 +132,7 @@ button{font-family:inherit;cursor:pointer;}
   width:52px;height:62px;border-radius:15px;font-style:normal;
   display:flex;align-items:center;justify-content:center;
   border:1.5px solid var(--line-2);background:var(--panel-2);
-  font-family:var(--mono);font-size:25px;font-weight:600;color:var(--text);
+  font-family:var(--mono);font-size:25px;font-weight:700;color:var(--text);
   transition:border-color .16s,background .16s,box-shadow .16s;
 }
 .pinboxes i.on{border-color:var(--gold);background:var(--panel);}
@@ -142,7 +142,7 @@ button{font-family:inherit;cursor:pointer;}
   .pinboxes{gap:8px;}
   .pinboxes i{width:46px;height:56px;font-size:22px;}
 }
-.gate-err{color:var(--danger);font-size:13px;min-height:20px;margin:16px 0 0;font-weight:700;}
+.gate-err{color:var(--danger);font-size:14px;min-height:20px;margin:16px 0 0;font-weight:800;}
 .gate-err.busy{color:var(--muted);}
 .shake{animation:shake .36s;}
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
