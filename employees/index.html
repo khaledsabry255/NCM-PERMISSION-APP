@@ -306,18 +306,19 @@ html[dir="ltr"] .tile{direction:ltr;}
 }
 
 .tile-k{font-size:11.5px;color:var(--muted);}
-/* A box per department holding its own jobs as boxes. The outer box cannot be
-   a button — buttons do not nest — so its head is the button instead: tapping
-   the department opens everyone in it, tapping a job inside opens that job. */
+/* A box per department, shut until it is tapped. Twelve departments open at
+   once was a very long page on a phone; closed, the whole site fits on one
+   screen and a tap opens the one you want. The outer box cannot be a button —
+   buttons do not nest — so its head is the button instead. */
 .dept{
-  margin-top:14px;padding:10px 10px 12px;
+  margin-top:10px;padding:10px;
   background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r-lg);
   animation:rise .26s ease-out both;
 }
 .dept-head{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   width:100%;font:inherit;color:inherit;text-align:start;
-  padding:3px 5px 9px;border:none;border-bottom:1px solid var(--line);
+  padding:4px 5px;border:none;border-bottom:1px solid transparent;
   background:none;border-radius:0;
   /* Department names stay Arabic even in the English interface, where this
      system flips to LTR, so the row takes direction from its own text. */
@@ -325,16 +326,21 @@ html[dir="ltr"] .tile{direction:ltr;}
   transition:opacity .12s;
 }
 .dept-head:active{opacity:.6;}
+.dept-head[aria-expanded="true"]{padding-bottom:9px;border-bottom-color:var(--line);}
 .dept-head .dept-name{font-size:13px;font-weight:800;color:var(--brand-navy);}
+.dept-side{display:flex;align-items:center;gap:9px;flex-shrink:0;}
 .dept-head .dept-n{
   font-size:13px;font-weight:700;color:var(--brand-blue);line-height:1;
   background:var(--tint);border:1px solid var(--line-2);
-  border-radius:100px;padding:4px 10px;flex-shrink:0;
+  border-radius:100px;padding:4px 10px;
 }
+.dept-caret{flex:none;color:var(--brand-grey);transition:transform .18s;}
+.dept-head[aria-expanded="true"] .dept-caret{transform:rotate(180deg);}
+.dept-body[hidden]{display:none;}
 /* Inside the box the jobs are split by collar, white above blue, with a
    hairline between them so the two groups read apart at a glance. */
 .collar + .collar{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);}
-.collar-lab{display:flex;align-items:center;gap:8px;padding:9px 4px 0;}
+.collar-lab{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 4px 0;}
 .collar-lab .cl-t{
   /* WHITE / BLUE COLLAR stays Latin in both interfaces, exactly as the badge
      on a record card does, so the run keeps its own direction. */
@@ -633,7 +639,7 @@ const I18N = {
     jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
     banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
-    byJob:'الأقسام', jobList:'وظيفة', deptList:'قسم', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
+    byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
     listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
     noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
     noBanned:'لا يوجد موظفون ممنوعون حاليًا',
@@ -661,7 +667,7 @@ const I18N = {
     jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
     banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
-    byJob:'Departments', jobList:'Job', deptList:'Department', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
+    byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
     listActive:'Active employees', listResigned:'Resignations',
     noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
     noBanned:'No banned employees at the moment',
@@ -688,6 +694,37 @@ function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
    handful on screen and the rest as they are scrolled to.
    ============================================================ */
 let onBoard = true;        // false while a tile's list is open
+let openDeptName = null;   // the one department box currently open, or null
+
+/* Three places the phone's back button has to walk back through, and each one
+   only swaps what is on screen — so each needs its own history entry or back
+   would leave the system entirely:
+
+       the board, every department shut
+         └─ one department open
+              └─ a job's list of people
+
+   Opening the first department pushes an entry; switching straight to another
+   department stays on that same level and pushes nothing; tapping the open one
+   shut walks the entry back off, so the button and the screen never disagree
+   about how deep we are. */
+function paintDeptOpen(){
+  [].forEach.call(out.querySelectorAll('section.dept'), sec => {
+    const head = sec.querySelector('.dept-head');
+    const body = sec.querySelector('.dept-body');
+    if(!head || !body) return;
+    const on = head.dataset.dept === openDeptName;
+    head.setAttribute('aria-expanded', on ? 'true' : 'false');
+    body.hidden = !on;
+  });
+}
+function setDeptOpen(name){
+  const was = openDeptName;
+  openDeptName = (name === was) ? null : name;
+  paintDeptOpen();
+  if(!was && openDeptName)      history.pushState({ncm:'dept'}, '');
+  else if(was && !openDeptName) history.back();
+}
 
 function renderGroupList(rows, title, tone){
   setBusy(false);
@@ -708,7 +745,11 @@ function renderGroupList(rows, title, tone){
   window.scrollTo({top: 0, behavior: 'auto'});
 }
 window.addEventListener('popstate', () => {
-  if(!onBoard) renderIdle();     // back on the phone walks back to the figures
+  // A list was open: back to the figures, with the department it came from
+  // still open — that is the screen the guard actually left.
+  if(!onBoard) return renderIdle();
+  // Otherwise a department box was open: shut it and stay on the board.
+  if(openDeptName){ openDeptName = null; paintDeptOpen(); }
 });
 
 /* One query, filtered here rather than in four different server-side shapes:
@@ -757,11 +798,6 @@ function worksHere(r){
    board groups them — and two job titles genuinely span two departments. The
    filter carries the department for the same reason the count does, so the
    figure on the tile and the length of this list still cannot disagree. */
-function openDept(name){
-  const d = name || '';
-  openGroup(r => worksHere(r) && (r.department || '').trim() === d,
-            t('deptList') + ': ' + (d || t('noDept')), '');
-}
 function openJob(title, dep, col){
   const d = dep || '', c = col || '';
   openGroup(r => worksHere(r)
@@ -1076,9 +1112,15 @@ function collarLabel(key){
    holds. The figure is the sum of the tiles underneath it, never a separate
    count that could drift away from them. */
 function deptHeadHTML(name, count){
-  return '<button type="button" class="dept-head" data-dept="' + esc(name || '') + '">' +
+  return '<button type="button" class="dept-head" aria-expanded="false"' +
+           ' data-dept="' + esc(name || '') + '">' +
            '<span class="dept-name">' + esc(name || t('noDept')) + '</span>' +
-           '<span class="dept-n num">' + count + '</span>' +
+           '<span class="dept-side">' +
+             '<span class="dept-n num">' + count + '</span>' +
+             '<svg class="dept-caret" width="15" height="15" viewBox="0 0 24 24" fill="none" ' +
+               'stroke="currentColor" stroke-width="2.6" stroke-linecap="round" ' +
+               'stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>' +
+           '</span>' +
          '</button>';
 }
 function paintStats(s){
@@ -1096,21 +1138,26 @@ function paintStats(s){
             s.depts.map(d =>
               '<section class="dept">' +
                 deptHeadHTML(d.name, d.count) +
-                d.collars.map(c =>
-                  '<div class="collar">' +
-                    '<div class="collar-lab">' +
-                      '<span class="cl-t">' + esc(collarLabel(c.key)) + '</span>' +
-                      '<span class="cl-n num">' + c.count + '</span>' +
-                    '</div>' +
-                    '<div class="tiles">' +
-                      c.jobs.map(j => jobTileHTML(j.title, j.count, d.name, c.key)).join('') +
-                    '</div>' +
-                  '</div>'
-                ).join('') +
+                '<div class="dept-body" hidden>' +
+                  d.collars.map(c =>
+                    '<div class="collar">' +
+                      '<div class="collar-lab">' +
+                        '<span class="cl-t">' + esc(collarLabel(c.key)) + '</span>' +
+                        '<span class="cl-n num">' + c.count + '</span>' +
+                      '</div>' +
+                      '<div class="tiles">' +
+                        c.jobs.map(j => jobTileHTML(j.title, j.count, d.name, c.key)).join('') +
+                      '</div>' +
+                    '</div>'
+                  ).join('') +
+                '</div>' +
               '</section>'
             ).join('');
   }
   out.innerHTML = html;
+  // Every box is built shut, so whichever one the guard had open is put back —
+  // otherwise walking back from a job's list would lose his place on the board.
+  paintDeptOpen();
 }
 function renderIdle(){
   setBusy(false);
@@ -1538,7 +1585,7 @@ out.addEventListener('click', e => {
 /* ---------- the board's tiles ---------- */
 out.addEventListener('click', e => {
   const dh = e.target.closest('button.dept-head');
-  if(dh) return openDept(dh.dataset.dept);
+  if(dh) return setDeptOpen(dh.dataset.dept);
   const tile = e.target.closest('button.tile');
   if(tile){
     if(tile.dataset.job !== undefined) return openJob(tile.dataset.job, tile.dataset.dep, tile.dataset.col);
