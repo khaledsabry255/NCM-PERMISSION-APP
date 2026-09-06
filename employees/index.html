@@ -558,6 +558,7 @@ const I18N = {
   ar:{
     dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
     statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
+    noExpiring:'لا يوجد تصريح ينتهي خلال ' + EXPIRY_WINDOW + ' يوم',
     statExpiring:'تصاريح قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
@@ -584,6 +585,7 @@ const I18N = {
   en:{
     dir:'ltr', htmlLang:'en', other:'AR', otherIsArabic:false,
     statActive:'Active employees', statResigned:'Resignations',
+    noExpiring:'No permit expires within ' + EXPIRY_WINDOW + ' days',
     statExpiring:'Expiring permits', statExpired:'Expired permits', statBanned:'Banned',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
@@ -626,6 +628,22 @@ function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
    ============================================================ */
 let onBoard = true;        // false while a job's list of people is open
 let openDeptName = null;   // the department we are inside, or null on the board
+let searching = false;     // true while search results are on screen
+
+/* A search result is a screen like any other, so it gets a history entry too —
+   without one the back button walked straight out of the system, which is the
+   one thing it must never do. Leaving the results by hand (the clear button,
+   Escape, deleting the last character) goes back through history rather than
+   redrawing, or the entry would be left behind and the next back press would
+   spend it doing nothing and the one after that would leave. */
+function enterSearch(){
+  if(!searching){ history.pushState({ncm:'search'}, ''); searching = true; }
+  onBoard = false;
+}
+function leaveSearch(){
+  if(searching) return history.back();
+  ++token; renderIdle();
+}
 
 /* Three screens share this one page, and each only swaps what is on screen —
    so each needs its own history entry, or the phone's back button would leave
@@ -654,6 +672,13 @@ function renderGroupList(rows, title, tone){
   window.scrollTo({top: 0, behavior: 'auto'});
 }
 window.addEventListener('popstate', () => {
+  // Out of a search: back to whatever was on screen when it started.
+  if(searching){
+    searching = false;
+    q.value = ''; clearBtn.classList.remove('on');
+    ++token;                                  // drop any request still in flight
+    return openDeptName ? paintDept() : renderIdle();
+  }
   // Coming back out of a list: to the department it was opened from, or to the
   // board if it was opened from there.
   if(!onBoard) return openDeptName ? paintDept() : renderIdle();
@@ -663,7 +688,10 @@ window.addEventListener('popstate', () => {
 
 /* One query, filtered here rather than in four different server-side shapes:
    the whole table is 725 rows, and every tile needs the same columns anyway. */
-async function openGroup(pick, title, tone){
+/* `empty` lets a group say what is missing rather than just "none" - a
+   guard reading "no permit runs out in the next 30 days" knows the app
+   looked, where a bare "none" could as easily mean it did not. */
+async function openGroup(pick, title, tone, empty){
   const myToken = ++token;
   renderSkeleton(2);
   try{
@@ -674,7 +702,7 @@ async function openGroup(pick, title, tone){
     if(!rows.length){
       if(onBoard) history.pushState({ncm:'list'}, '');
       onBoard = false;
-      return renderEmpty(t('none'), title);
+      return renderEmpty(empty || t('none'), title);
     }
     renderGroupList(rows, title, tone);
   }catch(err){ friendlyFail(err, myToken); }
@@ -686,7 +714,8 @@ const GROUPS = {
   banned:   () => [r => !isResigned(r) && (r.permit_status || '').trim() === 'ممنوع',
                                                                'bannedList',   'alert'],
   expiring: () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRING',
-                                                               'expiringList', 'warn'],
+                                                               'expiringList', 'warn',
+                                                               t('noExpiring')],
   expired:  () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRED',
                                                                'expiredList',  'alert']
 };
@@ -694,8 +723,8 @@ const GROUPS = {
 function openBoardGroup(key){
   const g = GROUPS[key];
   if(!g) return;
-  const [pick, titleKey, tone] = g();
-  openGroup(pick, t(titleKey), tone);
+  const [pick, titleKey, tone, empty] = g();
+  openGroup(pick, t(titleKey), tone, empty);
 }
 /* The one rule for who belongs to a job: on the payroll and not barred.
    loadStats counts with it and openJob lists with it, so the number on a tile
@@ -1086,6 +1115,7 @@ function renderIdle(){
   // are not inside it any more. Anything that reaches for the board — the back
   // button, or clearing a search — leaves it the same way.
   openDeptName = null;
+  searching = false;
   if(statsCache){ paintStats(statsCache); return; }
   return loadStats();
 }
@@ -1138,7 +1168,7 @@ function friendlyFail(err, myToken){
 async function runSearch(term){
   const myToken = ++token;
   const raw = sanitize(term);
-  if(!raw){ renderIdle(); return; }
+  if(!raw){ leaveSearch(); return; }
 
   renderSkeleton(1);
   try{
@@ -1146,12 +1176,12 @@ async function runSearch(term){
 
     if(isNumericTerm(raw)){
       const d = digitsOnly(raw);
-      if(!d){ if(myToken===token) renderEmpty(t('noMatch')); return; }
+      if(!d){ if(myToken===token){ enterSearch(); renderEmpty(t('noMatch')); } return; }
       // Numbers must match exactly — no partial/substring hits.
       query = query.or('emp_code.eq.' + d + ',national_id.eq.' + d);
     } else {
       const pat = namePattern(raw);
-      if(!pat){ if(myToken===token) renderIdle(); return; }
+      if(!pat){ if(myToken===token) leaveSearch(); return; }
       query = query.or('full_name.ilike.' + pat + ',full_name_en.ilike.' + pat);
     }
 
@@ -1160,6 +1190,7 @@ async function runSearch(term){
     if(error) return friendlyFail(error, myToken);
 
     const rows = dedupe(data);
+    enterSearch();
     if(!rows.length){
       renderEmpty(t('noMatch'), t('noMatchHint'));
       return;
@@ -1281,7 +1312,7 @@ q.addEventListener('input', () => {
   clearTimeout(debounce);
   const t = sanitize(q.value);
   clearBtn.classList.toggle('on', q.value.length > 0);
-  if(!t){ ++token; renderIdle(); return; }   // invalidate any in-flight request
+  if(!t){ leaveSearch(); return; }           // walks back, invalidating in flight
   debounce = setTimeout(() => runSearch(t), 650);   // long enough to finish typing a code
 });
 q.addEventListener('keydown', e => {
@@ -1290,7 +1321,7 @@ q.addEventListener('keydown', e => {
     q.blur();                                  // drop the keyboard off the result
     const t = sanitize(q.value); if(t) runSearch(t);
   }
-  if(e.key === 'Escape'){ q.value=''; clearBtn.classList.remove('on'); ++token; renderIdle(); }
+  if(e.key === 'Escape'){ q.value=''; clearBtn.classList.remove('on'); leaveSearch(); }
 });
 $('searchgo').addEventListener('click', () => {
   clearTimeout(debounce);
@@ -1300,7 +1331,7 @@ $('searchgo').addEventListener('click', () => {
 });
 clearBtn.addEventListener('click', () => {
   q.value = ''; clearBtn.classList.remove('on');
-  ++token; renderIdle(); q.focus();
+  leaveSearch(); q.focus();
 });
 
 let refreshing = false;
