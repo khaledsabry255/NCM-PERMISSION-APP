@@ -961,6 +961,12 @@ function statusOf(emp){
   if(raw === 'ممنوع') return {k:'bad', label:t('stBanned'), code:'BANNED'};
 
   if(raw === 'ساري'){
+    // Foreign staff carry this exact wording where a date would go — not a
+    // missing date but a decision that the permit runs until they resign,
+    // so it reads as any other valid permit rather than the muted "no date".
+    const pd = (emp && emp.permit_date !== null && emp.permit_date !== undefined)
+                 ? String(emp.permit_date).trim() : '';
+    if(pd === 'ساري حتى الاستقالة') return {k:'ok', label:t('stValid'), code:'VERIFIED'};
     if(dl === null)        return {k:'mute', label:t('stNoDate'),   code:'NO DATE'};
     if(dl < 0)             return {k:'bad',  label:t('stExpired'),  code:'EXPIRED'};
     if(dl <= EXPIRY_WINDOW)return {k:'warn', label:t('stExpiring'), code:'EXPIRING'};
