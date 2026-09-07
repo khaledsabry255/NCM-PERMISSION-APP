@@ -211,7 +211,12 @@ body::before{
 /* Pinned to the top-left of the column, level with the mark. Desktop only:
    a phone has a back button of its own, and this page is always RTL, so
    the arrow always points right. */
-.backbtn{ display:none; background:var(--card); color:var(--blue); }
+/* Written against html so it outranks .fab and .refresh-btn, which both
+   say display:flex. A plain .backbtn ties with them on specificity and
+   loses to whichever is written last - which is exactly how this button
+   reached the phone the first time. */
+html:not(.desk) .backbtn{ display:none; }
+.backbtn{ background:var(--card); color:var(--blue); }
 .backbtn svg{ transform:scaleX(-1); }
 html.desk .backbtn{
   display:flex; position:fixed; z-index:120;

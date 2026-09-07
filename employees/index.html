@@ -191,7 +191,11 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 /* Pinned to the top-left corner of the column, level with the mark, and it
    stays there while the page scrolls. Hidden until the script decides this
    is a desktop - a phone has a back button of its own. */
-.backbtn{display:none;}
+/* Written against html so it outranks .fab and .refresh-btn, which both
+   say display:flex. A plain .backbtn ties with them on specificity and
+   loses to whichever is written last - which is exactly how this button
+   reached the phone the first time. */
+html:not(.desk) .backbtn{display:none;}
 .backbtn svg{transform:scaleX(-1);}          /* the page is RTL: back points right */
 html[dir="ltr"] .backbtn svg{transform:none;}
 html.desk .backbtn{
