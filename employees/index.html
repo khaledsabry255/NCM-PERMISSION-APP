@@ -330,6 +330,38 @@ html[dir="ltr"] .tile{direction:ltr;}
 .tile.ban .tile-v{color:#fff;}
 .tile.ban{box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 6px 16px rgba(120,15,15,.22);}
 .tile.ban:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 8px 20px rgba(120,15,15,.3);}
+/* A tile with something in it breathes in its own colour: a ring that swells
+   out of the edge and fades. Only the two that mean a permit needs acting on
+   ever carry it, and the reduced-motion rule at the top stops it dead for
+   anyone who has asked the phone for stillness. */
+.tile.pulse{animation:rise .26s ease-out both, tilePulse 1.9s ease-in-out .35s infinite;}
+.tile.warn.pulse{--pulse:rgba(214,150,26,.55);}
+.tile.bad.pulse {--pulse:rgba(206,70,70,.45);}
+@keyframes tilePulse{
+  0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 6px 16px rgba(31,78,121,.07), 0 0 0 0 var(--pulse);}
+  55%    {box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 6px 16px rgba(31,78,121,.07), 0 0 0 6px var(--pulse);}
+}
+/* The renewal warning, above everything else on the board. */
+.alertbar{
+  display:flex;align-items:center;gap:12px;margin:12px 0 0;padding:12px 14px;
+  border-radius:var(--r);direction:rtl;
+  background:rgba(249,206,110,.66);border:1px solid rgba(222,163,48,.7);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 16px rgba(160,110,10,.14);
+  backdrop-filter:blur(12px) saturate(1.3);
+  -webkit-backdrop-filter:blur(12px) saturate(1.3);
+  animation:rise .26s ease-out both;
+}
+.ab-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.ab-h{font-size:13.5px;font-weight:800;color:#6b3d02;}
+.ab-b{font-size:12.5px;font-weight:700;color:#7a4703;}
+.ab-ok{
+  flex:none;font:inherit;font-size:12.5px;font-weight:800;
+  padding:9px 15px;border-radius:999px;cursor:pointer;
+  color:#fff;background:#8a5200;border:1px solid #6b3d02;
+  transition:background .16s,transform .12s;
+}
+.ab-ok:hover{background:#6b3d02;}
+.ab-ok:active{transform:scale(.96);}
 /* Five figures in a two-column grid leave one on its own; it takes the row. */
 .tile.wide{grid-column:1 / -1;}
 .sk-tile{
@@ -582,6 +614,8 @@ const I18N = {
     dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
     statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
     noExpiring:'لا يوجد تصريح ينتهي خلال ' + EXPIRY_WINDOW + ' يوم',
+    statForeign:'الأجانب', noForeign:'لا يوجد موظفون أجانب',
+    alertRenew:'تصاريح محتاجة تجديد', alertDone:'تم التجديد',
     statExpiring:'تصاريح قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
@@ -609,6 +643,8 @@ const I18N = {
     dir:'ltr', htmlLang:'en', other:'AR', otherIsArabic:false,
     statActive:'Active employees', statResigned:'Resignations',
     noExpiring:'No permit expires within ' + EXPIRY_WINDOW + ' days',
+    statForeign:'Foreign staff', noForeign:'No foreign staff',
+    alertRenew:'Permits needing renewal', alertDone:'Renewed',
     statExpiring:'Expiring permits', statExpired:'Expired permits', statBanned:'Banned',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
@@ -745,7 +781,9 @@ const GROUPS = {
                                                                'expiringList', 'warn',
                                                                t('noExpiring')],
   expired:  () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRED',
-                                                               'expiredList',  'alert']
+                                                               'expiredList',  'alert'],
+  foreign:  () => [r => worksHere(r) && isForeign(r),          'statForeign',  '',
+                                                               t('noForeign')]
 };
 
 function openBoardGroup(key){
@@ -757,6 +795,14 @@ function openBoardGroup(key){
 /* The one rule for who belongs to a job: on the payroll and not barred.
    loadStats counts with it and openJob lists with it, so the number on a tile
    and the people behind it can never disagree. */
+/* A foreign worker carries a passport number where an Egyptian carries a
+   14-digit national id. That is the whole rule - no list of codes to keep
+   up to date, and a new hire lands in the right place on his first day. */
+function isForeign(r){
+  const id = (r && r.national_id !== null && r.national_id !== undefined)
+               ? String(r.national_id).trim() : '';
+  return !(id.length === 14 && /^[0-9]+$/.test(id));
+}
 function worksHere(r){
   return !isResigned(r) && (r.permit_status || '').trim() !== 'ممنوع';
 }
@@ -1062,9 +1108,10 @@ let statsCache = null;
 
 /* Every tile opens, including one reading zero: pressing it and being told
    "none" is an answer, and a dead button is not. */
-function tileHTML(label, value, tone, key, wide){
+function tileHTML(label, value, tone, key, wide, pulse){
   return '<button type="button" class="tile' + (tone ? ' ' + tone : '') +
-           (wide ? ' wide' : '') + '" data-group="' + esc(key) + '">' +
+           (wide ? ' wide' : '') + (pulse ? ' pulse' : '') +
+           '" data-group="' + esc(key) + '">' +
            '<span class="tile-k">' + esc(label) + '</span>' +
            '<span class="tile-v num">' + value + '</span>' +
          '</button>';
@@ -1094,14 +1141,38 @@ function deptTileHTML(name, count){
            '<span class="tile-v num">' + count + '</span>' +
          '</button>';
 }
+/* The renewal warning nags on every open until it is acknowledged, and the
+   acknowledgement is the exact set of people it named. So "renewed" quiets
+   it for good - and the moment one more permit falls into the window, the
+   set differs and it speaks up again by itself. */
+const ALERT_KEY = 'ncm_emp_renewal_ack';
+function alertAck(){ try{ return localStorage.getItem(ALERT_KEY) || ''; }catch(e){ return ''; } }
+function setAlertAck(sig){ try{ localStorage.setItem(ALERT_KEY, sig); }catch(e){} }
+function alertBarHTML(s){
+  const sig = (s.alertCodes || []).join(',');
+  if(!sig || sig === alertAck()) return '';
+  const bits = [];
+  if(s.expiring) bits.push(esc(t('statExpiring')) + ' <span class="num">' + s.expiring + '</span>');
+  if(s.expired)  bits.push(esc(t('statExpired'))  + ' <span class="num">' + s.expired  + '</span>');
+  return '<div class="alertbar">' +
+           '<div class="ab-txt">' +
+             '<span class="ab-h">' + esc(t('alertRenew')) + '</span>' +
+             '<span class="ab-b">' + bits.join(' · ') + '</span>' +
+           '</div>' +
+           '<button type="button" class="ab-ok" id="alert-done" data-sig="' + esc(sig) + '">' +
+             esc(t('alertDone')) +
+           '</button>' +
+         '</div>';
+}
 function paintStats(s){
   setBusy(false);
   let html =
+    alertBarHTML(s) +
     '<div class="tiles">' +
       tileHTML(t('statActive'),   s.active,   '',     'active') +
       tileHTML(t('statResigned'), s.resigned, 'mute', 'resigned') +
-      tileHTML(t('statExpiring'), s.expiring, 'warn', 'expiring') +
-      tileHTML(t('statExpired'),  s.expired,  'bad',  'expired') +
+      tileHTML(t('statExpiring'), s.expiring, 'warn', 'expiring', false, s.expiring > 0) +
+      tileHTML(t('statExpired'),  s.expired,  'bad',  'expired',  false, s.expired  > 0) +
       tileHTML(t('statBanned'),   s.banned,   'ban',  'banned', true) +
     '</div>';
   if(s.depts && s.depts.length){
@@ -1110,6 +1181,11 @@ function paintStats(s){
               s.depts.map(d => deptTileHTML(d.name, d.count)).join('') +
             '</div>';
   }
+  // One box of its own under the departments: foreign staff sit in every
+  // department, so they are the one group the grid above cannot show.
+  html += '<div class="tiles">' +
+            tileHTML(t('statForeign'), s.foreign || 0, 'job wide', 'foreign') +
+          '</div>';
   out.innerHTML = html;
 }
 
@@ -1262,6 +1338,10 @@ async function loadStats(){
     // site is organised, and the two job titles that genuinely sit in two
     // departments appear under each one carrying its own honest number.
     const deptJobs = new Map();
+    let foreign = 0;
+    // Everyone the renewal warning is about, so dismissing it can be tied
+    // to these exact people rather than to a date.
+    const alertCodes = [];
     dedupe(data).forEach(r => {
       if(isResigned(r)){ resigned++; return; }
       active++;
@@ -1271,6 +1351,7 @@ async function loadStats(){
       // the people behind it cannot drift apart. Anyone who resigns or is
       // barred drops out of both the moment the figures are read again.
       if(worksHere(r)){
+        if(isForeign(r)) foreign++;
         const job = (r.job_title  || '').trim();
         const dep = (r.department || '').trim();
         const col = (r.category   || '').trim();
@@ -1283,8 +1364,8 @@ async function loadStats(){
       // statusOf() decides, so a row marked 'ساري' with a date already gone
       // counts as expired here exactly as it does on the card.
       const st = statusOf(r).code;
-      if(st === 'EXPIRED')  expired++;
-      if(st === 'EXPIRING') expiring++;
+      if(st === 'EXPIRED'){  expired++;  alertCodes.push(String(r.emp_code)); }
+      if(st === 'EXPIRING'){ expiring++; alertCodes.push(String(r.emp_code)); }
     });
 
     // Biggest department first, white collar above blue inside it, and the
@@ -1307,7 +1388,8 @@ async function loadStats(){
       })
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar'));
 
-    statsCache = {active, resigned, expiring, expired, banned, depts};
+    alertCodes.sort();
+    statsCache = {active, resigned, expiring, expired, banned, foreign, depts, alertCodes};
     paintStats(statsCache);
   }catch(err){ friendlyFail(err, myToken); }
 }
@@ -1489,6 +1571,13 @@ out.addEventListener('click', e => {
 
 /* ---------- the board's tiles ---------- */
 out.addEventListener('click', e => {
+  const done = e.target.closest('#alert-done');
+  if(done){
+    setAlertAck(done.dataset.sig || '');
+    const bar = done.closest('.alertbar');
+    if(bar) bar.remove();
+    return;
+  }
   const tile = e.target.closest('button.tile');
   if(tile){
     if(tile.dataset.job !== undefined) return openJob(tile.dataset.job, tile.dataset.dep, tile.dataset.col);
