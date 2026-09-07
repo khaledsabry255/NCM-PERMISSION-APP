@@ -187,7 +187,16 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 .shell{max-width:600px;margin:0 auto;padding:0 16px;}
 
 /* Its own line under the search box, above the figures. */
-.refreshrow{display:flex;justify-content:center;margin:11px 0 4px;}
+.refreshrow{display:flex;justify-content:center;gap:9px;margin:11px 0 4px;}
+/* A phone carries a back button of its own. A desktop window opened in app
+   mode carries none, so one appears here — and only where there is a mouse,
+   so the phone never grows a button it does not need. */
+.backbtn{display:none;}
+.backbtn svg{transform:scaleX(-1);}          /* the page is RTL: back points right */
+html[dir="ltr"] .backbtn svg{transform:none;}
+@media (hover:hover) and (pointer:fine){
+  .backbtn{display:flex;}
+}
 .fab{
   flex:none;
   width:40px;height:40px;border-radius:50%;
@@ -534,6 +543,9 @@ html[dir="ltr"] .tile{direction:ltr;}
            the figures below them, so the refresh they shared the row with now
            has this line to itself, between the search box and the figures. -->
       <div class="refreshrow">
+        <button class="fab backbtn" id="goback" type="button" aria-label="رجوع" title="رجوع">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+        </button>
         <button class="fab" id="refresh" type="button" aria-label="تحديث البيانات" title="تحديث">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -1402,6 +1414,8 @@ clearBtn.addEventListener('click', () => {
   q.value = ''; clearBtn.classList.remove('on');
   leaveSearch(); q.focus();
 });
+
+$('goback').addEventListener('click', () => history.back());
 
 let refreshing = false;
 refresh.addEventListener('click', () => {
