@@ -624,6 +624,7 @@ const I18N = {
     statForeign:'الأجانب', noForeign:'لا يوجد موظفون أجانب',
     statExpiring:'تصاريح قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
+    dlUpdateApp:'حدّث التطبيق عشان التحميل يشتغل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
     tabExpiring:'قرب الانتهاء', tabExpired:'منتهية',
     expiredList:'تصاريح منتهية', noExpired:'لا توجد تصاريح منتهية',
@@ -652,6 +653,7 @@ const I18N = {
     statForeign:'Foreign staff', noForeign:'No foreign staff',
     statExpiring:'Expiring permits', statExpired:'Expired permits', statBanned:'Banned',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
+    dlUpdateApp:'Update the app to download',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
     tabExpiring:'Expiring', tabExpired:'Expired',
     expiredList:'Expired Permits', noExpired:'No expired permits',
@@ -1511,8 +1513,26 @@ function revealResults(){
 
 /* ---------- save both photos ----------
    The files live on another origin, where the download attribute is ignored,
-   so each is pulled as a blob and handed over from a local object URL. */
+   so in a browser each is pulled as a blob and handed over from a local
+   object URL.
+
+   On the phone the app is an Android WebView, which ignores <a download> and
+   blob: links outright - the button used to do nothing there and then say
+   "saved". APK 4.1 and later expose NCMAndroid.download, which hands the
+   photo's own address to Android's download manager. An older APK has no
+   bridge, and the button says to update rather than pretending. */
+const IN_WEBVIEW = /; wv\)/.test(navigator.userAgent);
+function androidBridge(){
+  const b = window.NCMAndroid;
+  return b && typeof b.download === 'function' ? b : null;
+}
 async function grab(url, name){
+  const bridge = androidBridge();
+  if(bridge){
+    const head = await fetch(url, {method:'HEAD'});
+    if(!head.ok) return false;               // a missing second photo is normal
+    return bridge.download(url, name) === true;
+  }
   const res = await fetch(url);
   if(!res.ok) return false;                 // a missing second photo is normal
   const obj = URL.createObjectURL(await res.blob());
@@ -1529,6 +1549,11 @@ async function saveBoth(btn){
   if(btn.disabled) return;
   const code = btn.dataset.dl;
   const label = btn.querySelector('span');
+  if(IN_WEBVIEW && !androidBridge()){
+    btn.classList.add('fail');
+    label.textContent = t('dlUpdateApp');
+    return;
+  }
   btn.disabled = true;
   btn.classList.remove('done','fail');
   label.textContent = t('downloading');
