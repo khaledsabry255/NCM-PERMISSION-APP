@@ -1,14 +1,19 @@
 package io.github.khaledsabry255.permission
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.view.WindowManager
 import android.view.ViewGroup
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -28,6 +33,10 @@ import androidx.core.view.WindowInsetsCompat
 // baked into every APK, and a wrong value is a 404 on every phone.
 const val SITE = "https://khaledsabry255.github.io/NCM-PERMISSION-APP/"
 private const val HOST = "khaledsabry255.github.io"
+
+/** The only place the download bridge will fetch from: the employee photos. */
+private const val PHOTO_HOST = "ljcalgumlodehoulbwtp.supabase.co"
+private const val PHOTO_PATH = "/storage/v1/object/public/employee-photos/"
 
 /**
  * The app is a full-screen window onto the web app rather than a second
@@ -95,6 +104,8 @@ class MainActivity : ComponentActivity() {
 
         web.webChromeClient = WebChromeClient()
         web.webViewClient = Client()
+        // Registered before the first load so the page finds it on its first run.
+        web.addJavascriptInterface(Bridge(), "NCMAndroid")
 
         // The unlock flag and the language both live in localStorage, so a
         // restored WebView must not start over on the lock screen.
@@ -144,6 +155,57 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         web.destroy()
         super.onDestroy()
+    }
+
+    /**
+     * The page's "download" button hands a photo's address to this. WebView
+     * ignores <a download> and blob: links outright, so without it the button
+     * did nothing on the phone — and then said the photo was saved. Android's
+     * own download manager fetches the file into Downloads and posts the usual
+     * notification when it lands.
+     *
+     * Anything the page can call, any page loaded in this WebView can call, so
+     * it fetches from the employee-photo bucket and nowhere else, and only ever
+     * writes a .jpg under a name it has cleaned itself.
+     */
+    private inner class Bridge {
+        @JavascriptInterface
+        fun download(url: String?, fileName: String?): Boolean {
+            val uri = Uri.parse(url ?: return false)
+            if (uri.scheme != "https") return false
+            if (!uri.host.equals(PHOTO_HOST, ignoreCase = true)) return false
+            if (!(uri.path ?: "").startsWith(PHOTO_PATH)) return false
+
+            val clean = (fileName ?: return false).replace(Regex("[^A-Za-z0-9._-]"), "_")
+            if (!clean.endsWith(".jpg") || clean.length > 64) return false
+            val name = "NCM-$clean"
+
+            return try {
+                val request = DownloadManager.Request(uri)
+                    .setTitle(name)
+                    .setMimeType("image/jpeg")
+                    .setNotificationVisibility(
+                        DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                    )
+                    .setAllowedOverMetered(true)
+                    .setAllowedOverRoaming(true)
+                // From Android 10 the download manager may write into the shared
+                // Downloads folder on the app's behalf with no storage permission.
+                // Before that it would need one, so older phones keep the file in
+                // the app's own folder instead — the notification still opens it.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
+                } else {
+                    request.setDestinationInExternalFilesDir(
+                        this@MainActivity, Environment.DIRECTORY_DOWNLOADS, name
+                    )
+                }
+                (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 
     private inner class Client : WebViewClient() {

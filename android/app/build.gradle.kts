@@ -15,8 +15,8 @@ android {
         applicationId = "io.github.khaledsabry255.permission"
         minSdk = 24
         targetSdk = 35
-        versionCode = 17
-        versionName = "4.0"
+        versionCode = 18
+        versionName = "4.1"
         resourceConfigurations += listOf("en", "ar")
     }
 

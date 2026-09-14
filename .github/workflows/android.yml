@@ -55,15 +55,23 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      # Publishes to a fixed "latest-apk" release so the APK always has the same
-      # download link — easier than digging through Actions artifacts on a phone.
-      - name: Publish to latest-apk release
+      # NOT the download link the phones use. This build is signed with the
+      # runner's debug key, which is generated fresh on every runner — so every
+      # build carries a different key, and Android refuses to install one over
+      # another: the only way past is to uninstall, which wipes the saved PIN.
+      #
+      # The APK the phones install lives on "latest-apk" and is signed by hand
+      # with the permanent key (.ncm-secrets\ncm-android-signing.p12, SHA-256
+      # caa0f998…). The GitHub token cannot write Actions secrets, so the key
+      # cannot live here. This step only parks the build where it can be picked
+      # up, re-signed, and published to latest-apk from the desktop.
+      - name: Publish to ci-build release (re-sign before distributing)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest-apk
-          name: Latest APK
+          tag_name: ci-build
+          name: CI build — not for phones until re-signed
           body: |
-            أحدث نسخة من تطبيق NCM Permission.
-            اتبنت من commit ${{ github.sha }}.
+            بناء تلقائي من commit ${{ github.sha }} — متوقّع بمفتاح debug عشوائي.
+            **متتثبتش على الموبايلات.** لازم يتوقّع بالمفتاح الدائم ويترفع على latest-apk.
           files: out/NCM-Permission.apk
           prerelease: true
