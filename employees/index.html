@@ -962,6 +962,13 @@ function statusOf(emp){
   // matched as-is in both languages; only the shown label changes.
   if(raw === 'ممنوع') return {k:'bad', label:t('stBanned'), code:'BANNED'};
 
+  // Someone who left has a permit that is either still running or over: no
+  // "expiring soon" to chase, no "no date" or "no permit" to puzzle over.
+  if(isResigned(emp)){
+    if(raw === 'ساري' && dl !== null && dl >= 0) return {k:'ok', label:t('stValid'), code:'VERIFIED'};
+    return {k:'bad', label:t('stExpired'), code:'EXPIRED'};
+  }
+
   if(raw === 'ساري'){
     // Foreign staff carry this exact wording where a date would go — not a
     // missing date but a decision that the permit runs until they resign,
