@@ -850,9 +850,48 @@ const SHEET_ID = "1ZceJtmQMpW7Ky3Ysgz0mDcmE6Uxr600OuO2KOMHJnWE";
 // and the old gid then silently falls back to the first sheet (individuals) —
 // which is exactly what broke vehicle search. Tab names survive a re-import.
 // (The trailing space in the individuals tab name is part of the real name.)
-const GVIZ_BASE = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:csv&sheet=";
-const INDIVIDUALS_CSV_URL = GVIZ_BASE + encodeURIComponent("تصاريح أفراد ");
-const VEHICLES_CSV_URL    = GVIZ_BASE + encodeURIComponent("تصاريح مركبات");
+const SHEET_BASE = "https://docs.google.com/spreadsheets/d/" + SHEET_ID;
+const GVIZ_BASE = SHEET_BASE + "/gviz/tq?tqx=out:csv&sheet=";
+const INDIVIDUALS_TAB = "تصاريح أفراد ";
+const VEHICLES_TAB    = "تصاريح مركبات";
+
+/* The data comes from the sheet's CSV export, not gviz. gviz gives every column
+   one type and blanks the cells that don't fit it: the permit column is mostly
+   real dates, so its 318 text cells (منع, تجديد, مؤقت, ...) reached the app
+   empty and showed as "pending" (found 2026-09-16). The export hands over
+   exactly what the sheet shows.
+   The export only takes a gid, and every upload replaces the tabs, so the gid
+   changes each time. The sheet's htmlview page lists name -> gid; it is read
+   fresh on every load. If that ever fails, gviz by name is still better than
+   nothing. */
+let tabGidsPromise = null;
+function loadTabGids(){
+  if(!tabGidsPromise){
+    tabGidsPromise = fetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
+      .then(r => r.ok ? r.text() : Promise.reject(new Error("htmlview " + r.status)))
+      .then(html => {
+        const map = new Map();
+        const re = /items\.push\(\{name: "((?:[^"\\]|\\.)*)"[\s\S]*?gid: "(\d+)"/g;
+        let m;
+        while((m = re.exec(html))){
+          try{
+            map.set(JSON.parse('"' + m[1].replace(/\\x([0-9a-fA-F]{2})/g, "\\u00$1") + '"'), m[2]);
+          }catch(e){}
+        }
+        return map;
+      });
+    tabGidsPromise.catch(() => { tabGidsPromise = null; });
+  }
+  return tabGidsPromise;
+}
+
+async function tabCsvUrl(name){
+  try{
+    const gids = await loadTabGids();
+    if(gids.has(name)) return SHEET_BASE + "/export?format=csv&gid=" + gids.get(name);
+  }catch(e){ console.warn("tab gids unavailable, falling back to gviz", e); }
+  return GVIZ_BASE + encodeURIComponent(name);
+}
 
 /* ======================= Helpers ======================= */
 
@@ -877,11 +916,13 @@ const TEMP_WORDS = ["مؤقت"];
 const QUESTION_MARKS_ONLY = /^[؟?]+$/;
 const LEADING_DATE = /^(\d{1,2})([-\/])(\d{1,2})[-\/](\d{4})/;
 
-/* The sheet hands us two different date shapes:
-     "18-11-2025"  text cells typed by hand      -> day first
-     "11/30/2025"  real date cells, which gviz exports in US order -> month first
-   Reading a slash date as day-first turns 11/30/2025 into month 30, which JS
-   rolls forward into 2028 and paints an expired permit green. */
+/* Dates arrive day-first: "18-11-2025" typed by hand, and "30/11/2025" from
+   real date cells, which the upload gives an explicit dd/mm/yyyy format.
+   Before that format was set (until 2026-09-16) Google showed and exported
+   real dates month-first, so a permit ending 5 March read as 3 May. A slash
+   date whose second number is over 12 is still read month-first, because
+   day-first is impossible there - otherwise JS rolls month 30 into 2028 and
+   paints an expired permit green. */
 function parseDateParts(s){
   const m = normalize(s).match(LEADING_DATE);
   if(!m) return null;
@@ -997,7 +1038,7 @@ const IND_COL = { NAME:2, JOB:3, ID:4, ADDR:5, NOTE:6, SENDER:7, PERMIT:8, DAY:9
 async function initIndividuals(){
   const statusEl = document.getElementById("ind-status");
   try{
-    const rows = await loadCSVRaw(INDIVIDUALS_CSV_URL);
+    const rows = await loadCSVRaw(await tabCsvUrl(INDIVIDUALS_TAB));
     const headerRow = rows[0] || [];
     const dataRows = rows.slice(1);
 
@@ -1230,7 +1271,7 @@ const VEH_COL = { PLATE:2, TYPE:3, OWNER:4, PERMIT:5, DAY:6, MAIL_TYPE:7 };
 async function initVehicles(){
   const statusEl = document.getElementById("veh-status");
   try{
-    const rows = await loadCSVRaw(VEHICLES_CSV_URL);
+    const rows = await loadCSVRaw(await tabCsvUrl(VEHICLES_TAB));
     const dataRows = rows.slice(1);
 
     vehiclesGroups = new Map();
@@ -1485,6 +1526,7 @@ async function reloadData(){
   individualsGroups = null;
   vehiclesGroups = null;
   window.__individualsByName = new Map();
+  tabGidsPromise = null;   // an upload since the last load gave the tabs new gids
   setSystemStatus("updating");
   try{
     const results = await Promise.all([initIndividuals(), initVehicles()]);
