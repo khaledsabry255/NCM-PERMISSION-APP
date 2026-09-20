@@ -677,8 +677,8 @@ const I18N = {
     noResultInd:q=>`مفيش نتيجة مطابقة لـ <b>${q}</b>. تأكد إن الرقم القومى أو الاسم مكتوب زي ما هو بالظبط في الشيت.`,
     noResultVeh:q=>`مفيش نتيجة مطابقة لرقم السيارة <b>${q}</b>. تأكد إنه مكتوب زي ما هو بالظبط في الشيت.`,
     noPlateContains:q=>`مفيش أي سيارة رقمها فيه <b>${q}</b>.`,
-    truncatedName:"فيه نتايج كتير مطابقة، ظاهر أول 50 بس. اكتب جزء أطول من الاسم عشان تضيّق البحث.",
-    truncatedPlate:"فيه نتايج كتير مطابقة، ظاهر أول 50 بس. اكتب رقم أطول عشان تضيّق البحث.",
+    truncatedName:n=>`دول أول 50 من ${n} نتيجة مطابقة. اكتب جزء أطول من الاسم عشان تضيّق البحث.`,
+    truncatedPlate:n=>`دول أول 50 من ${n} نتيجة مطابقة. اكتب رقم أطول عشان تضيّق البحث.`,
     permitCount:n=>`${n} ${n===1 ? "تصريح" : "تصاريح"}`,
     noName:"بدون اسم",
     noId:"غير مسجل",
@@ -714,8 +714,8 @@ const I18N = {
     noResultInd:q=>`No match found for <b>${q}</b>. Make sure the national ID or name is written exactly as it appears in the sheet.`,
     noResultVeh:q=>`No match found for plate <b>${q}</b>. Make sure it is written exactly as it appears in the sheet.`,
     noPlateContains:q=>`No vehicle has a plate containing <b>${q}</b>.`,
-    truncatedName:"Too many matches — showing the first 50 only. Type more of the name to narrow it down.",
-    truncatedPlate:"Too many matches — showing the first 50 only. Type a longer number to narrow it down.",
+    truncatedName:n=>`These are the first 50 of ${n} matches. Type more of the name to narrow it down.`,
+    truncatedPlate:n=>`These are the first 50 of ${n} matches. Type a longer number to narrow it down.`,
     permitCount:n=>`${n} ${n===1 ? "permit" : "permits"}`,
     noName:"No name",
     noId:"Not registered",
@@ -911,6 +911,28 @@ function normalize(s){
 
 function digitsOnly(s){ return normalize(s).replace(/[^\d]/g,""); }
 
+/* Arabic writes the same word several ways, and this sheet is typed by hand:
+   مصطفى/مصطفي, عطية/عطيه, أحمد/احمد, and عبد الفتاح run together as عبدالفتاح.
+   68 people in it are already written two different ways across their own
+   permits — so a guard typing the other spelling was told "لا يوجد" about a man
+   whose card was sitting right there.
+
+   Plates have it worse: 484 of them carry أ and three carry ا, and the letters
+   are half the plate, so the wrong alef meant the car could not be found at all.
+
+   Everything is folded to one shape for MATCHING ONLY. What the card shows is
+   still exactly what the sheet says, letter for letter. */
+function foldArabic(s){
+  return normalize(s)
+    .replace(/[ً-ْٰ]/g,"")   // harakat
+    .replace(/ـ/g,"")                  // tatweel
+    .replace(/[أإآ]/g,"ا")
+    .replace(/[ىئ]/g,"ي")
+    .replace(/ة/g,"ه")
+    .replace(/ؤ/g,"و")
+    .replace(/\s+/g,"");
+}
+
 const BAN_WORDS = ["منع"];
 const RENEW_WORDS = ["عايز تجديد","الرخصه منتهيه","غيرت لوحات","تجديد"];
 const TEMP_WORDS = ["مؤقت"];
@@ -1078,12 +1100,14 @@ async function initIndividuals(){
       });
     });
 
+    // Keyed by the folded name, so the spelling the guard happens to type is
+    // the one that finds him.
     window.__individualsByName = new Map();
     individualsGroups.forEach((g)=>{
-      const nameKey = normalize(g.name);
-      if(!nameKey) return;
-      if(!window.__individualsByName.has(nameKey)) window.__individualsByName.set(nameKey, []);
-      window.__individualsByName.get(nameKey).push(g);
+      g.nameFold = foldArabic(g.name);
+      if(!g.nameFold) return;
+      if(!window.__individualsByName.has(g.nameFold)) window.__individualsByName.set(g.nameFold, []);
+      window.__individualsByName.get(g.nameFold).push(g);
     });
 
     statusEl.textContent = "";
@@ -1192,21 +1216,22 @@ function searchIndividuals(query){
   }
 
   let matches = [];
-  let truncated = false;
+  let totalFound = 0;     // how many matched in all, when only the first 50 are drawn
   const qDigits = digitsOnly(q);
   if(qDigits.length >= 8){
     const byId = individualsGroups.get("ID:"+qDigits);
     if(byId) matches.push(byId);
   }
-  if(matches.length === 0){
-    if(window.__individualsByName.has(q)){
-      matches = window.__individualsByName.get(q);
+  const qFold = foldArabic(q);
+  if(matches.length === 0 && qFold){
+    if(window.__individualsByName.has(qFold)){
+      matches = window.__individualsByName.get(qFold);
     }else{
       const found = [];
       individualsGroups.forEach(g=>{
-        if(g.name && normalize(g.name).includes(q)) found.push(g);
+        if(g.nameFold && g.nameFold.includes(qFold)) found.push(g);
       });
-      if(found.length > 50){ truncated = true; matches = found.slice(0, 50); }
+      if(found.length > 50){ totalFound = found.length; matches = found.slice(0, 50); }
       else matches = found;
     }
   }
@@ -1220,10 +1245,10 @@ function searchIndividuals(query){
     return;
   }
 
-  if(truncated){
+  if(totalFound){
     const note = document.createElement("div");
     note.className = "status-line";
-    note.textContent = t("truncatedName");
+    note.textContent = t("truncatedName", totalFound);
     resultsEl.appendChild(note);
   }
 
@@ -1281,7 +1306,10 @@ async function initVehicles(){
       if(!cols || cols.length < 3) return;
       const plateVal = normalize(cols[VEH_COL.PLATE]);
       if(!plateVal) return;
-      const key = plateVal.replace(/\s+/g,"");
+      /* Folded, so ا and أ are one letter here. Five cars in the sheet are
+         typed both ways and used to sit in two separate cards, each showing
+         half the car's history. */
+      const key = foldArabic(plateVal);
       if(!vehiclesGroups.has(key)){
         vehiclesGroups.set(key, {plate:plateVal, records:[]});
       }
@@ -1337,7 +1365,7 @@ function renderVehicleCard(g, resultsEl){
 }
 
 function searchVehicles(query){
-  const qRaw = normalize(query).replace(/\s+/g,"");
+  const qRaw = foldArabic(query);
   const resultsEl = document.getElementById("veh-results");
   const hintEl = document.getElementById("veh-hint");
   resultsEl.innerHTML = "";
@@ -1381,7 +1409,7 @@ function searchVehicles(query){
   if(found.length > 50){
     const note = document.createElement("div");
     note.className = "status-line";
-    note.textContent = t("truncatedPlate");
+    note.textContent = t("truncatedPlate", found.length);
     resultsEl.appendChild(note);
     list = found.slice(0, 50);
   }
