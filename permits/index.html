@@ -846,9 +846,10 @@ applyStaticI18n();
 <script>
 /* ======================= CONFIG ======================= */
 const SHEET_ID = "1ZceJtmQMpW7Ky3Ysgz0mDcmE6Uxr600OuO2KOMHJnWE";
-// Read tabs by NAME, not gid. Importing or replacing a tab changes its gid,
-// and the old gid then silently falls back to the first sheet (individuals) —
-// which is exactly what broke vehicle search. Tab names survive a re-import.
+// Tabs are found by NAME and read by gid, and the gid is looked up fresh on
+// every load (see loadTabGids below). Importing or replacing a tab changes its
+// gid, and a gid written down once then silently falls back to the first sheet
+// — which is exactly what broke vehicle search. Tab names survive a re-import.
 // (The trailing space in the individuals tab name is part of the real name.)
 const SHEET_BASE = "https://docs.google.com/spreadsheets/d/" + SHEET_ID;
 const GVIZ_BASE = SHEET_BASE + "/gviz/tq?tqx=out:csv&sheet=";

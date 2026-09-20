@@ -758,7 +758,7 @@ window.addEventListener('popstate', () => {
 });
 
 /* One query, filtered here rather than in four different server-side shapes:
-   the whole table is 725 rows, and every tile needs the same columns anyway. */
+   the whole table is read in one go and every tile needs the same columns. */
 /* `empty` lets a group say what is missing rather than just "none" - a
    guard reading "no permit runs out in the next 30 days" knows the app
    looked, where a bare "none" could as easily mean it did not. */
@@ -766,7 +766,7 @@ async function openGroup(pick, title, tone, empty){
   const myToken = ++token;
   renderSkeleton(2);
   try{
-    const { data, error } = await sb.from('employees').select(FIELDS);
+    const { data, error } = await fetchAll(FIELDS);
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
     const rows = dedupe(data).filter(pick).sort(byCode);
@@ -1269,6 +1269,30 @@ function renderList(rows, title, tone){
 let token = 0;
 const FIELDS = '*';
 
+/* Supabase answers a plain select with the first 1000 rows and says nothing
+   about the rest. The table only ever grows - every resignation adds a row and
+   none are taken away - so the day it passes a thousand, the tiles would count
+   part of the staff and the lists would stop in the middle, with no error and
+   nothing on screen to say so. Reading it a page at a time takes that day off
+   the calendar. Ordering by id is what makes the pages line up: without a sort
+   the database is free to hand back the same row twice and miss another. */
+const PAGE_SIZE = 1000;
+async function fetchAll(columns){
+  const rows = [];
+  for(let from = 0; ; from += PAGE_SIZE){
+    const { data, error } = await sb.from('employees')
+      .select(columns)
+      .order('id', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if(error) return { data: null, error };
+    const page = data || [];
+    rows.push(...page);
+    // A short page is the last page. A full one might be the whole table or
+    // the server's ceiling, and there is no telling which without asking again.
+    if(page.length < PAGE_SIZE) return { data: rows, error: null };
+  }
+}
+
 function friendlyFail(err, myToken){
   if(myToken !== token) return;
   console.error('[NCM]', err);
@@ -1318,11 +1342,11 @@ async function loadStats(){
     '<div class="sk-tile"></div><div class="sk-tile"></div>' +
     '<div class="sk-tile"></div><div class="sk-tile"></div></div>';
   try{
-    const { data, error } = await sb.from('employees')
-      // Every column the counting loop below reads must be named here. Leave
-      // one out and it arrives undefined on every row, which does not fail —
-      // it quietly files all 370 people under the wrong heading.
-      .select('id,emp_code,national_id,job_title,department,category,permit_status,permit_date,resignation_end_date');
+    // Every column the counting loop below reads must be named here. Leave
+    // one out and it arrives undefined on every row, which does not fail —
+    // it quietly files all 370 people under the wrong heading.
+    const { data, error } = await fetchAll(
+      'id,emp_code,national_id,job_title,department,category,permit_status,permit_date,resignation_end_date');
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
 
