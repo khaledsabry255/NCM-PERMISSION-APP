@@ -153,6 +153,10 @@ FOR WORK/سكربتات/ncm-employee-sync/   ← sync.py + backup.py + photos.py
 > `employees/index.html` بتقرا صفحة صفحة `.order('id').range(...)` لحد ما ترجع
 > صفحة ناقصة. **الترتيب بـ id مش زينة** — من غيره الصفحات بتتداخل وصف يتكرر وصف
 > يضيع. أي قراءة جديدة للجدول كله تعدّي على `fetchAll` مش على `select` مباشر.
+>
+> **ونفس الحكاية في `FOR WORK\سكربتات\ncm-employee-sync\sync.py`** وهناك أخطر:
+> السكربت بيقارن الشيت بالجدول، فلو قرا 1000 صف بس، كل صف بعدهم يبقى «جديد»
+> ويتكتب **نسخة تانية منه**. بيقرا بـ `read_table()` صفحة صفحة عشان كده.
 
 ### التصاريح — Google Sheet
 `1ZceJtmQMpW7Ky3Ysgz0mDcmE6Uxr600OuO2KOMHJnWE`. التطبيق بيقرا **`export?format=csv&gid=`**،

@@ -250,6 +250,13 @@ html.desk .backbtn{
 .sect-line{flex:1;height:1px;background:var(--line);}
 .sect.alert .sect-n{color:var(--danger);}
 .sect.warn .sect-n{color:var(--warning);}
+/* Said out loud when a search matched more people than the page shows, so a
+   guard reading thirty cards knows there are more behind them. */
+.cut{
+  margin:8px 2px 0;font-size:13px;font-weight:700;line-height:1.8;
+  color:var(--text-2);background:var(--tint);border:1px solid var(--line);
+  border-radius:var(--r);padding:9px 13px;
+}
 
 /* states */
 .state{text-align:center;padding:52px 22px;color:var(--muted);}
@@ -642,6 +649,7 @@ const I18N = {
     byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
     listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
     noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
+    cutHead:'دول أول %1 من %2 موظف مطابق', cutHint:'كمّل الاسم أو ابحث بالكود أو بالرقم القومي',
     loadFail:'تعذر تحميل البيانات', loadFailHint:'تحقق من الاتصال بالإنترنت وحاول مرة أخرى', retry:'إعادة المحاولة',
     stBanned:'ممنوع', stValid:'ساري', stExpiring:'قرب الانتهاء',
     stExpired:'تصريح منتهي', stNoPermit:'بدون تصريح', stNoDate:'بدون تاريخ'
@@ -671,6 +679,7 @@ const I18N = {
     byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
     listActive:'Active employees', listResigned:'Resignations',
     noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
+    cutHead:'These are the first %1 of %2 matching employees', cutHint:'type more of the name, or search by code or national ID',
     loadFail:'Could not load data', loadFailHint:'Check your internet connection and try again', retry:'Try again',
     stBanned:'Banned', stValid:'Valid', stExpiring:'Expiring Soon',
     stExpired:'Expired', stNoPermit:'No Permit', stNoDate:'No Date'
@@ -788,7 +797,8 @@ const GROUPS = {
                                                                'expiringList', 'warn',
                                                                t('noExpiring')],
   expired:  () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRED',
-                                                               'expiredList',  'alert'],
+                                                               'expiredList',  'alert',
+                                                               t('noExpired')],
   foreign:  () => [r => worksHere(r) && isForeign(r),          'statForeign',  '',
                                                                t('noForeign')]
 };
@@ -1251,14 +1261,24 @@ function renderError(){
   const r = $('retry');
   if(r) r.addEventListener('click', () => runCurrent());
 }
-function renderList(rows, title, tone){
+/* `total` is how many people actually matched, which is not always how many
+   are on screen: a search for a common first name matches hundreds and only
+   the first MAX_RESULTS are drawn. Thirty cards with nothing said would read
+   as the whole answer, and the man being looked for could be number 31. */
+function renderList(rows, title, tone, total){
   setBusy(false);
   revealResults();
   const head = title
     ? '<div class="sect ' + (tone || '') + '"><span class="sect-t">' + title + '</span>' +
       '<span class="sect-n">' + rows.length + '</span><span class="sect-line"></span></div>'
     : '';
-  out.innerHTML = head + rows.map(recordHTML).join('');
+  const cut = (typeof total === 'number' && total > rows.length)
+    ? '<p class="cut">' +
+        esc(t('cutHead').replace('%1', rows.length).replace('%2', total)) +
+        ' — ' + esc(t('cutHint')) +
+      '</p>'
+    : '';
+  out.innerHTML = head + cut + rows.map(recordHTML).join('');
 }
 
 /* ============================================================
@@ -1306,7 +1326,9 @@ async function runSearch(term){
 
   renderSkeleton(1);
   try{
-    let query = sb.from('employees').select(FIELDS);
+    // The count comes back with the rows, so the page can say how many were
+    // left out rather than quietly showing the first thirty as if they were all.
+    let query = sb.from('employees').select(FIELDS, { count: 'exact' });
 
     if(isNumericTerm(raw)){
       const d = digitsOnly(raw);
@@ -1319,7 +1341,7 @@ async function runSearch(term){
       query = query.or('full_name.ilike.' + pat + ',full_name_en.ilike.' + pat);
     }
 
-    const { data, error } = await query.limit(MAX_RESULTS);
+    const { data, error, count } = await query.limit(MAX_RESULTS);
     if(myToken !== token) return;              // a newer search already ran
     if(error) return friendlyFail(error, myToken);
 
@@ -1329,7 +1351,7 @@ async function runSearch(term){
       renderEmpty(t('noMatch'), t('noMatchHint'));
       return;
     }
-    renderList(rows, rows.length > 1 ? t('searchResults') : '', '');
+    renderList(rows, rows.length > 1 ? t('searchResults') : '', '', count);
   }catch(err){ friendlyFail(err, myToken); }
 }
 
