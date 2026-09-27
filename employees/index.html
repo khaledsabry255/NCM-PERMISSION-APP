@@ -448,6 +448,8 @@ html[dir="ltr"] .tile{direction:ltr;}
 .pill.warn{background:var(--warning-bg);color:var(--warning);border-color:var(--warning-br);}
 .pill.bad {background:var(--danger-bg);color:var(--danger);border-color:var(--danger-br);}
 .pill.mute{background:var(--neutral-bg);color:var(--neutral);border-color:var(--neutral-br);}
+.pill.blue {background:var(--gold);color:#fff;border-color:var(--gold);}
+.pill.white{background:#fff;color:var(--text);border-color:var(--line-2);}
 .ic{flex:none;width:13px;height:13px;}
 
 /* permit strip */
@@ -1085,7 +1087,7 @@ function recordHTML(emp){
       '<div class="pills">' +
         '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
         (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>' : '') +
-        (cat ? '<span class="pill">' + cat + '</span>' : '') +
+        (cat ? '<span class="pill ' + emp.category + '">' + cat + '</span>' : '') +
       '</div>' +
     '</div>' +
 
