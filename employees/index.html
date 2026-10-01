@@ -188,21 +188,6 @@ html[dir="ltr"] .searchbar{direction:ltr;}
 
 /* Its own line under the search box, above the figures. */
 .refreshrow{display:flex;justify-content:center;margin:11px 0 4px;}
-/* Pinned to the top-left corner of the column, level with the mark, and it
-   stays there while the page scrolls. Hidden until the script decides this
-   is a desktop - a phone has a back button of its own. */
-/* Written against html so it outranks .fab and .refresh-btn, which both
-   say display:flex. A plain .backbtn ties with them on specificity and
-   loses to whichever is written last - which is exactly how this button
-   reached the phone the first time. */
-html:not(.desk) .backbtn{display:none;}
-.backbtn svg{transform:scaleX(-1);}          /* the page is RTL: back points right */
-html[dir="ltr"] .backbtn svg{transform:none;}
-html.desk .backbtn{
-  display:flex;position:fixed;z-index:80;
-  top:calc(env(safe-area-inset-top) + 26px);
-  left:max(14px, calc(50vw - 300px + 14px));   /* the column is 600 wide */
-}
 .fab{
   flex:none;
   width:40px;height:40px;border-radius:50%;
@@ -521,9 +506,6 @@ html[dir="ltr"] .tile{direction:ltr;}
 
 <!-- ================= APP ================= -->
 <div id="app">
-  <button class="fab backbtn" id="goback" type="button" aria-label="رجوع" title="رجوع">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
-  </button>
   <div class="topbar">
     <div class="brand">
       <span class="ncm">N<i>C</i><b>M</b></span>
@@ -607,15 +589,6 @@ const MAX_RESULTS   = 30;
    all — not "reaches it and hides the rows". */
 let sb = null;                 // built only once the shell hands the key over
 const $ = (id) => document.getElementById(id);
-
-/* The back button is for a desktop window, which has none of its own. The
-   first attempt gated it on (hover:hover) and (pointer:fine) - and Android
-   WebView answers yes to both, so it turned up on the phone beside a back
-   button that was already there. The user agent is the one thing that does
-   not lie about which of the two this is. */
-if(!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
-  document.documentElement.classList.add('desk');
-}
 
 
 /* ============================================================
@@ -1493,8 +1466,6 @@ clearBtn.addEventListener('click', () => {
   q.value = ''; clearBtn.classList.remove('on');
   leaveSearch(); q.focus();
 });
-
-$('goback').addEventListener('click', () => history.back());
 
 let refreshing = false;
 refresh.addEventListener('click', () => {
