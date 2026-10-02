@@ -618,7 +618,7 @@ const I18N = {
     permitStatus:'حالة التصريح',
     grpPersonal:'البيانات الشخصية', grpWork:'بيانات التوظيف', grpSecurity:'بيانات أمنية',
     nationalId:'الرقم القومي', phone:'رقم الهاتف', address:'العنوان',
-    jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
+    jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين', letterNo:'رقم الخطاب',
     banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
     byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
@@ -648,7 +648,7 @@ const I18N = {
     permitStatus:'Permit Status',
     grpPersonal:'PERSONAL DETAILS', grpWork:'EMPLOYMENT DETAILS', grpSecurity:'SECURITY DETAILS',
     nationalId:'National ID', phone:'Phone', address:'Address',
-    jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
+    jobTitle:'Job Title', department:'Department', hireDate:'Hire Date', letterNo:'Letter Number',
     banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
     byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
@@ -1083,7 +1083,10 @@ function recordHTML(emp){
     group(t('grpWork'),
       rowHTML(t('jobTitle'), emp.job_title) +
       rowHTML(t('department'), emp.department) +
-      rowHTML(t('hireDate'), fmtDate(emp.hire_date), 'num')
+      rowHTML(t('hireDate'), fmtDate(emp.hire_date), 'num') +
+      // The ASE letter behind the man's site permit. Foreign staff have none,
+      // and an empty value draws no row at all.
+      rowHTML(t('letterNo'), emp.letter_number, 'num')
     ) +
     group(t('grpSecurity'),
       rowHTML(t('banReason'), emp.ban_reason, 'bad') +
