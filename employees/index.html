@@ -467,6 +467,12 @@ html[dir="ltr"] .tile{direction:ltr;}
 .row dt{flex:none;font-size:14px;font-weight:800;color:var(--text);margin:0;}
 .row dd{margin:0;font-size:15.5px;font-weight:800;color:var(--text);text-align:end;word-break:break-word;min-width:0;}
 .row dd.num{font-size:15.5px;font-weight:700;}
+/* English text in an Arabic card: the direction comes from the text itself, so
+   "TITAN2 (NCM)" keeps its closing bracket at the end. The side is spelled
+   out, because `end` would follow the text's own direction and push a second
+   line away from where every other value sits. */
+.row dd.ltr{unicode-bidi:plaintext;text-align:left;}
+html[dir="ltr"] .row dd.ltr{text-align:right;}
 .row dd.warn{color:var(--warning);}
 .row dd.bad{color:var(--danger);}
 
@@ -619,7 +625,7 @@ const I18N = {
     grpPersonal:'البيانات الشخصية', grpWork:'بيانات التوظيف', grpSecurity:'بيانات أمنية',
     nationalId:'الرقم القومي', phone:'رقم الهاتف', address:'العنوان',
     jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
-    letterNo:'رقم الخطاب', letterDate:'تاريخ الخطاب', letterCompany:'الشركة',
+    letterNo:'رقم الخطاب', letterDate:'تاريخ الخطاب', letterCompany:'الشركة', letterNote:'ملاحظات',
     banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
     byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
@@ -650,7 +656,7 @@ const I18N = {
     grpPersonal:'PERSONAL DETAILS', grpWork:'EMPLOYMENT DETAILS', grpSecurity:'SECURITY DETAILS',
     nationalId:'National ID', phone:'Phone', address:'Address',
     jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
-    letterNo:'Letter Number', letterDate:'Letter Date', letterCompany:'Company',
+    letterNo:'Letter Number', letterDate:'Letter Date', letterCompany:'Company', letterNote:'Notes',
     banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
     byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
@@ -1087,15 +1093,18 @@ function recordHTML(emp){
       rowHTML(t('department'), emp.department) +
       rowHTML(t('hireDate'), fmtDate(emp.hire_date), 'num')
     ) +
-    // The ASE letter behind the man's site permit - its number, its date and
-    // the company it was issued under - sits here, under the employment
-    // details, by Khaled's choice. Foreign staff have none, and an empty value
-    // draws no row at all. A date the sheet wrote some other way is shown as
-    // written rather than dropped.
+    // The ASE letter behind the man's site permit - its number, its date, the
+    // company it was issued under and the note ASE keeps beside it - sits
+    // here, under the employment details, by Khaled's choice. Foreign staff
+    // have none, and an empty value draws no row at all. A date the sheet
+    // wrote some other way is shown as written rather than dropped.
+    // The company and the note are English text inside an Arabic card; `ltr`
+    // keeps a closing bracket or a slash where it was typed.
     group(t('grpSecurity'),
       rowHTML(t('letterNo'), emp.letter_number, 'num') +
       rowHTML(t('letterDate'), fmtDate(emp.letter_date) || emp.letter_date, 'num') +
-      rowHTML(t('letterCompany'), emp.letter_company) +
+      rowHTML(t('letterCompany'), emp.letter_company, 'ltr') +
+      rowHTML(t('letterNote'), emp.letter_note, 'ltr') +
       rowHTML(t('banReason'), emp.ban_reason, 'bad') +
       rowHTML(t('resignEnd'), rEnd && rEnd.text, rEnd && rEnd.cls)
     ) +
