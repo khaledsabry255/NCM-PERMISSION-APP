@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NCM PERMISSION — بحث متكرر</title>
+<link rel="manifest" href="../manifest.json">
+<link rel="icon" href="../icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#edf2f8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="../supabase.min.js"></script>
+<script src="../lib/papaparse.min.js"></script>
+<style>
+/* ============================================================
+   THE LIST SEARCH — the third system.
+   A whole list in one go: a national id, a code or a name on each line (or a
+   plate on each line), answered a line at a time out of BOTH sources at once -
+   the employees table and the permits sheet. What it DOES is the search of the
+   desk system (Khaled's NCM SYSTEM): the same way of reading the list and the
+   same rules for who a line finds. What it LOOKS like is this app and nothing
+   else - the desk's wide table of fifteen columns is no use on a phone, so
+   each answer is a short row and the rest is in the card behind it.
+
+   It is a file of its own on purpose, like the other two systems: it borrows
+   their rules by copying them, and shares no name with either.
+   The colours and the type are the employees system's.
+   ============================================================ */
+:root{
+  --bg:#edf2f8;
+  --panel:#ffffff;
+  --panel-2:#f3f7fb;
+  --blue:#1565c0;
+  --blue-soft:#1e75d6;
+  --tint:#e6eef8;
+  --card:rgba(182,213,247,.42);
+  --card-line:#c9d9ea;
+  --brand-green:#4ba548;
+  --brand-blue:#1565c0;
+  --navy:#1f4e79;
+  --brand-grey:#4a5a6b;
+  --ok:#12874f;    --ok-bg:#dff3e7;    --ok-br:#8fd3ae;
+  --warn:#b96e08;  --warn-bg:#fcebd5;  --warn-br:#efc383;
+  --bad:#c22f2f;   --bad-bg:#fbe3e3;   --bad-br:#efa9a9;
+  --ban:#a31515;
+  --mute:#4a5a6b;  --mute-bg:#edf0f3;  --mute-br:#cbd3db;
+  /* this system's own colour on the home screen: a mid yellow */
+  --sun:#f2bf3f;   --sun-deep:#d99c14;
+  --text:#0b1114;
+  --text-2:#2a3238;
+  --muted:#3b4a5c;
+  --line:#e2e9f2;
+  --line-2:#c0d3ec;
+  --r-sm:10px;
+  --r:14px;
+  --r-lg:18px;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --cond:'Barlow Condensed',sans-serif;
+  --sans:'Tajawal',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+html{
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(900px 460px at 50% -10%, rgba(21,101,192,.09) 0%, transparent 62%),
+    radial-gradient(680px 420px at 12% 42%, rgba(242,191,63,.10) 0%, transparent 64%),
+    radial-gradient(760px 520px at 92% 88%, rgba(21,101,192,.07) 0%, transparent 66%);
+  background-repeat:no-repeat;background-attachment:fixed;
+  min-height:100dvh;
+}
+body{
+  background:transparent;color:var(--text);font-family:var(--sans);font-weight:500;
+  min-height:100dvh;padding-bottom:calc(40px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+  /* Tajawal swaps digits to Arabic-Indic forms while the page language is
+     Arabic; turning off the localised forms keeps every number Western. */
+  font-feature-settings:"locl" 0;
+  font-variant-numeric:lining-nums;
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed;display:inline-block;}
+button{font-family:inherit;cursor:pointer;}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px;}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;}
+}
+
+/* ---------- shell ---------- */
+.topbar{padding:calc(24px + env(safe-area-inset-top)) 20px 2px;text-align:center;}
+.shell{max-width:760px;margin:0 auto;padding:0 14px;}
+.brand{display:flex;flex-direction:column;align-items:center;line-height:1;}
+.ncm{
+  font-family:var(--sans),'Arial Black',system-ui;font-weight:900;font-size:32px;line-height:1;
+  color:var(--brand-blue);direction:ltr;unicode-bidi:isolate;
+}
+.ncm i{font-style:normal;color:var(--brand-green);}
+.ncm b{font-weight:inherit;color:var(--brand-grey);}
+.tagline{font-size:10.5px;letter-spacing:.17em;text-indent:.17em;color:var(--navy);margin-top:9px;direction:ltr;unicode-bidi:isolate;}
+.brand .hr{display:block;width:46px;height:1px;margin:10px auto 8px;background:linear-gradient(90deg,transparent,var(--line-2),transparent);}
+.appname{font-family:var(--cond);font-weight:700;font-size:18px;letter-spacing:.13em;text-indent:.13em;line-height:1;color:var(--blue);}
+.pagename{
+  display:inline-block;margin-top:11px;padding:5px 16px;border-radius:999px;
+  background:var(--sun);border:1px solid var(--sun-deep);color:#3b2a04;
+  font-size:13.5px;font-weight:800;
+}
+
+/* ---------- the list box ---------- */
+.multi-box{position:relative;display:flex;flex-direction:column;gap:10px;margin-top:14px;animation:fadeUp .4s ease-out backwards;}
+/* --mono ends in the generic "monospace", which answers for Arabic before
+   Tajawal ever gets asked — so the stack is spelled out here instead. */
+.multi-ta{
+  display:block;width:100%;min-height:132px;max-height:38vh;resize:none;padding:11px 15px;text-align:center;
+  border-radius:var(--r-lg);border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);
+  font-family:'IBM Plex Mono','Tajawal','Segoe UI',Tahoma,sans-serif;
+  font-size:16px;font-weight:600;line-height:1.9;outline:none;
+  /* each line takes its own direction: a number reads left to right, a name right to left */
+  unicode-bidi:plaintext;
+  transition:border-color .18s,box-shadow .18s;
+}
+.multi-ta:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.10);}
+.multi-ta::placeholder{font-family:var(--sans);font-weight:500;color:var(--muted);}
+/* Two rows on a phone: which sheet and how many lines, then the two buttons
+   and the history arrow. Every piece has a width of its own rather than its
+   word's, so «بحث» and "Search" do not shuffle the row. */
+.multi-bar{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:999px;overflow:hidden;background:var(--panel-2);}
+.seg button{border:none;background:none;width:86px;padding:8px 0;font-size:13.5px;font-weight:800;color:var(--muted);transition:background .14s,color .14s;}
+.seg button.on{background:var(--blue);color:#fff;}
+.multi-n{width:92px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);}
+.rowbreak{flex-basis:100%;height:0;}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 16px;border-radius:var(--r);border:1px solid var(--line-2);
+  background:var(--tint);color:var(--blue);font-size:14.5px;font-weight:800;
+  transition:background .16s,transform .12s,filter .16s;
+}
+.btn:active{transform:scale(.96);}
+.btn.primary{flex:1;min-width:150px;padding-block:13px;font-size:15.5px;background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(21,101,192,.24);}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:var(--r-sm);}
+.btn[disabled]{opacity:.55;cursor:default;}
+.fab{
+  flex:none;width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line-2);background:var(--tint);color:var(--blue);
+  transition:background .16s,transform .12s;
+}
+.fab:active{transform:scale(.92);}
+.fab.spin svg{animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+/* the history: a small arrow in the bar, and a list that opens over the answers — so opening it moves nothing */
+.hist-btn svg{transition:transform .18s;}
+.hist-btn.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+.hist-btn.on svg{transform:rotate(180deg);}
+.hist{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;display:flex;flex-direction:column;gap:2px;max-height:340px;overflow-y:auto;padding:6px;
+  border:1px solid var(--line-2);border-radius:16px;background:var(--panel);box-shadow:0 14px 32px rgba(14,76,147,.20);
+}
+.hist[hidden]{display:none;}
+.hist-row{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:11px;background:none;font:inherit;text-align:start;}
+.hist-row:active{background:var(--tint);}
+.hist-row .pill{flex:none;}
+.hist-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;color:var(--text);unicode-bidi:plaintext;}
+.hist-t b{color:var(--blue);}
+.hist-at{flex:none;font-size:12px;color:var(--muted);}
+.hist-empty{padding:14px;text-align:center;color:var(--muted);font-weight:700;font-size:13.5px;}
+.hist-clear{flex:none;margin-top:4px;padding:10px;border:0;border-top:1px solid var(--line);background:none;color:var(--bad);font:inherit;font-size:13px;font-weight:800;}
+
+/* ---------- what the search is reading from ---------- */
+.src{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:12px;}
+.src .pill{font-size:12px;}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none;}
+.pill.wait .dot{animation:blink 1.1s infinite;}
+@keyframes blink{50%{opacity:.3;}}
+
+/* ---------- pills ---------- */
+.pill{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;line-height:1.5;
+  padding:3px 11px;border-radius:999px;white-space:nowrap;
+  color:var(--mute);background:var(--mute-bg);border:1px solid var(--mute-br);
+}
+.pill.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-br);}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-br);}
+.pill.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad-br);}
+.pill.ban{background:var(--ban);color:#fff;border-color:var(--ban);}
+.pill.blue{background:var(--blue);color:#fff;border-color:var(--blue);}
+.pill.white{background:#fff;color:var(--text);border-color:var(--line-2);}
+.pill.link{background:var(--tint);color:var(--blue);border-color:var(--line-2);}
+button.pill{font-family:inherit;}
+
+/* ---------- answers ---------- */
+#mres{margin-top:14px;}
+.note{
+  margin-bottom:10px;padding:11px 15px;border-radius:var(--r);font-size:13.5px;font-weight:700;line-height:1.9;
+  background:var(--tint);border:1px solid var(--line-2);color:var(--text-2);text-align:center;
+}
+.note.warn{background:var(--warn-bg);border-color:var(--warn-br);color:#7a4703;}
+/* ---------- the answers ----------
+   One short row per answer, in the glass the rest of the app is made of: who
+   it is and where his permit stands, at a size a thumb can read and press. A
+   phone has no room for a table of fifteen columns and is not asked to show
+   one - everything a row leaves out is in the card that opens behind it. */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}}
+.sum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-bottom:12px;animation:fadeUp .36s ease-out backwards;}
+.mlist{display:flex;flex-direction:column;gap:9px;}
+.mrow{
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:12px 13px;border-radius:var(--r);text-align:start;
+  border:1px solid rgba(255,255,255,.68);background:var(--card);color:var(--text);font-family:var(--sans);
+  -webkit-backdrop-filter:blur(12px) saturate(1.25);backdrop-filter:blur(12px) saturate(1.25);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 5px 14px rgba(21,101,192,.10);
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),filter .16s;
+  /* the rows come in one after another, like every other box in the app */
+  animation:rowIn .44s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;
+}
+@keyframes rowIn{from{opacity:0;transform:translateY(14px) scale(.97);}}
+button.mrow:active{transform:scale(.975);filter:brightness(.97);}
+.mrow-n{
+  flex:none;min-width:27px;height:27px;padding:0 6px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--panel);border:1px solid var(--line-2);
+  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);
+}
+.mrow-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.mrow-name{font-size:15.5px;font-weight:800;line-height:1.45;word-break:break-word;}
+.mrow-sub{font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.55;word-break:break-word;}
+.mrow-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;}
+.mrow-tags .pill{font-size:11.5px;padding:2px 9px;}
+.mrow-end{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-width:44%;}
+.mrow-end .pill{font-size:12.5px;padding:4px 11px;white-space:normal;text-align:center;line-height:1.45;}
+.typed{font-size:11.5px;font-weight:500;color:var(--muted);unicode-bidi:plaintext;}
+.mrow.miss{background:rgba(251,227,227,.78);border-color:var(--bad-br);box-shadow:none;}
+.mrow.miss .mrow-end{max-width:none;}
+.mrow.miss .mrow-end .pill{white-space:nowrap;}
+.mrow.miss .mrow-name{color:var(--bad);font-family:'IBM Plex Mono','Tajawal','Segoe UI',Tahoma,sans-serif;font-size:15px;unicode-bidi:plaintext;}
+.mrow.more{justify-content:center;background:var(--panel-2);border:1px dashed var(--line-2);box-shadow:none;
+  font-size:13px;font-weight:700;color:var(--muted);text-align:center;line-height:1.7;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);animation:fadeUp .4s ease-out backwards;}
+.empty svg{opacity:.5;margin-bottom:12px;}
+.empty h3{margin:0 0 6px;font-size:16px;font-weight:800;color:var(--text-2);}
+.empty p{margin:0;font-size:14px;line-height:1.9;}
+
+/* ---------- the card behind a row ---------- */
+#veil{position:fixed;inset:0;z-index:90;background:rgba(11,17,20,.34);opacity:0;pointer-events:none;transition:opacity .18s;}
+#veil.on{opacity:1;pointer-events:auto;}
+/* comes up from the bottom edge and takes most of the screen; the page behind stays where it was */
+#drawer{
+  position:fixed;z-index:100;left:0;right:0;bottom:0;max-height:88dvh;
+  display:flex;flex-direction:column;
+  background:var(--bg);border-radius:22px 22px 0 0;box-shadow:0 -14px 40px rgba(11,17,20,.24);
+  transform:translateY(104%);transition:transform .24s cubic-bezier(.2,.8,.2,1);
+}
+#drawer.on{transform:none;}
+.dr-head{flex:none;display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line);}
+.dr-title{flex:1;min-width:0;margin:0;font-size:15.5px;font-weight:800;color:var(--navy);}
+.dr-body{flex:1;min-height:0;overflow-y:auto;padding:12px 14px calc(22px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;}
+.dr-sec{margin:18px 4px 8px;font-size:13px;font-weight:800;color:var(--navy);}
+.dr-sec b{color:var(--blue);font-family:var(--mono);}
+.rec{
+  border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px;
+  border:1px solid rgba(255,255,255,.68);background:var(--card);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 6px 18px rgba(21,101,192,.13);
+}
+.rec .head{padding:18px 16px 14px;text-align:center;border-bottom:1px solid var(--card-line);}
+.code{
+  display:inline-flex;align-items:center;gap:7px;margin-bottom:9px;padding:3px 12px;border-radius:999px;
+  background:var(--panel-2);border:1px solid var(--line-2);font-size:13px;font-weight:700;color:var(--muted);
+}
+.code .num{color:var(--blue);font-weight:700;font-size:15px;}
+.nm{font-size:19px;font-weight:800;line-height:1.42;margin:0;color:var(--text);}
+.nm-en{margin:4px 0 0;font-family:var(--cond);font-size:16.5px;font-weight:700;letter-spacing:.03em;color:var(--text-2);text-transform:uppercase;direction:ltr;}
+.pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:11px;}
+.permit{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid var(--card-line);}
+.permit.ok{background:rgba(223,243,231,.85);}
+.permit.warn{background:rgba(252,235,213,.9);}
+.permit.bad{background:rgba(251,227,227,.9);}
+.permit.ban{background:rgba(163,21,21,.92);color:#fff;}
+.permit.mute{background:rgba(237,240,243,.9);}
+.permit-k{font-size:13px;font-weight:800;}
+.permit-v{font-size:17px;font-weight:800;unicode-bidi:plaintext;text-align:end;}
+.permit-x{font-size:12px;font-weight:700;opacity:.82;margin-top:2px;text-align:end;}
+.grp{padding:10px 14px 4px;}
+.grp-t{display:block;font-size:12.5px;font-weight:800;color:var(--text-2);margin:0 2px 7px;}
+.rows{margin:0;}
+.row{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:7px;
+  padding:10px 13px;border-radius:12px;background:rgba(255,255,255,.82);border:1px solid var(--card-line);
+}
+.row dt{flex:none;font-size:13px;font-weight:800;color:var(--text-2);}
+.row dd{margin:0;font-size:14.5px;font-weight:800;color:var(--text);text-align:left;word-break:break-word;min-width:0;unicode-bidi:plaintext;}
+.row dd.num{font-weight:700;}
+.row dd.bad{color:var(--bad);}
+.shots{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;}
+.shots img{display:block;width:100%;border-radius:12px;border:1px solid var(--card-line);background:var(--tint);}
+.rec-pad{height:8px;}
+
+/* ---------- credit ---------- */
+.credit{padding-top:28px;text-align:center;direction:ltr;line-height:1.55;}
+.credit-by{display:block;font-size:9px;letter-spacing:.24em;text-indent:.24em;text-transform:uppercase;color:var(--brand-green);opacity:.72;}
+.credit-name{
+  display:inline-block;margin-top:7px;padding:7px 15px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--tint);
+  font-family:var(--cond);font-weight:700;font-size:13.5px;letter-spacing:.14em;text-indent:.14em;color:var(--blue);
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <span class="ncm">N<i>C</i><b>M</b></span>
+      <span class="tagline">NUCLEAR CONCRETE MIXES</span>
+      <span class="hr"></span>
+      <span class="appname">PERMISSION</span>
+      <span class="pagename" id="pagename">بحث متكرر</span>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="multi-box">
+      <textarea class="multi-ta" id="mt" rows="4" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+      <div class="multi-bar">
+        <div class="seg" id="seg">
+          <button type="button" data-mmode="ind" class="on">أفراد</button>
+          <button type="button" data-mmode="veh">مركبات</button>
+        </div>
+        <span class="multi-n" id="mt-n"></span>
+        <button type="button" class="fab" id="refresh" aria-label="تحديث البيانات" title="تحديث">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 4v6h6M20 20v-6h-6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 15a8 8 0 0 0 13.9 3.2M18.5 9A8 8 0 0 0 4.6 5.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="rowbreak"></span>
+        <button type="button" class="btn primary" id="go">بحث</button>
+        <button type="button" class="btn" id="clear">مسح</button>
+        <button type="button" class="fab hist-btn" id="hist-btn" aria-haspopup="true" aria-expanded="false" aria-label="سجل البحث" title="سجل البحث">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="hist" id="hist" hidden></div>
+    </div>
+
+    <div class="src" id="src" aria-live="polite"></div>
+    <div id="mres" role="region" aria-live="polite"></div>
+
+    <p class="credit">
+      <span class="credit-by">Designed by</span>
+      <span class="credit-name">KHALED SABRY</span>
+    </p>
+  </div>
+</div>
+
+<div id="veil"></div>
+<aside id="drawer" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="dr-head">
+    <h2 class="dr-title" id="dr-title"></h2>
+    <button type="button" class="fab" id="dr-x" aria-label="إغلاق">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+</aside>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+/* Bump ACCESS_VERSION to lock every device that is already unlocked. It has to
+   be the same number in all four files: the shell at the app root, the
+   employees system, the permits system, and this one. */
+const ACCESS_VERSION = "3";   // must match the shell at the app root
+const UNLOCK_KEY = "ncm_device_unlocked";
+const AUTH_KEY   = "ncm_key";
+const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
+const BUCKET = "employee-photos";
+const EXPIRY_WINDOW = 30;                 // days that count as "expiring soon" — the app's number
+const SHEET_ID = "1ZceJtmQMpW7Ky3Ysgz0mDcmE6Uxr600OuO2KOMHJnWE";
+const SHEET_BASE = "https://docs.google.com/spreadsheets/d/" + SHEET_ID;
+const GVIZ_BASE = SHEET_BASE + "/gviz/tq?tqx=out:csv&sheet=";
+const INDIVIDUALS_TAB = "تصاريح أفراد ";   // the trailing space is part of the tab's real name
+const VEHICLES_TAB    = "تصاريح مركبات";
+
+const $ = id => document.getElementById(id);
+function esc(s){
+  return String(s === null || s === undefined ? "" : s)
+    .replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+
+/* ============================================================
+   LANGUAGE — read from the home screen's choice, never changed here.
+   The page stays right-to-left in both, as the permits system does: the
+   table's columns keep their order whichever language names them.
+   ============================================================ */
+const I18N = {
+  ar:{
+    page:"بحث متكرر", segPeople:"أفراد", segVehicles:"مركبات", search:"بحث", clear:"مسح", lines:n => "سطور: " + n,
+    phPeople:"رقم قومي أو كود أو اسم\nكل واحد في سطر", phPlates:"رقم سيارة\nكل واحد في سطر",
+    ariaNids:"الأرقام القومية، رقم في كل سطر", ariaPlates:"أرقام السيارات، رقم في كل سطر",
+    refresh:"تحديث البيانات", histAria:"سجل البحث", histEmpty:"السجل فاضي", histClear:"مسح السجل", close:"إغلاق",
+    srcEmp:"الموظفين", srcInd:"تصاريح الأفراد", srcVeh:"تصاريح المركبات", loading:"جاري تحميل البيانات", stillLoading:"البيانات لسه بتحمّل، استنى ثانية وجرّب تاني.",
+    hint:"اكتب القايمة أو الصقها", hintSub:"كل واحد في سطر — وبيتبحث في الموظفين والتصاريح مع بعض",
+    sumAsked:"مطلوب", sumFound:"موجود", sumMiss:"مش موجود", sumDup:"متكرر في القايمة",
+    searchLacks:x => x + " مش متحمّل دلوقتي — النتايج دي من غيره، و«مش موجود» مش أكيدة", and:" و",
+    missRow:"مش موجود في الشيت", moreNames:(term, n) => "«" + term + "» — " + n + " كمان · اكتب اسم كمان معاه",
+    moreRow:(term, n) => "«" + term + "» — " + n + " نتيجة كمان", typed:"المكتوب: ",
+    colName:"الاسم", colJob:"الوظيفة", colNid:"الرقم القومي", address:"العنوان", colPermit:"التصريح",
+    colSent:"تاريخ الإرسال", colMail:"نوع الإرسال", letterNo:"رقم الخطاب", letterDate:"تاريخ الخطاب", colCompany:"الشركة",
+    sender:"المرسل", notes:"ملاحظات", aseNote:"ملاحظة", colCount:"تصاريح", colEmp:"موظف NCM",
+    colPlate:"رقم السيارة", colType:"النوع", colOwner:"تابعه",
+    cOk:"ساري", cSoon:"قرب الانتهاء", cExpired:"منتهي", cBan:"منع", cRenew:"تجديد", cTemp:"مؤقت",
+    cPending:"في انتظار الرد", cUndet:"غير محدد", permitUndet:"غير محدد موقفه حتى الآن",
+    stBanned:"ممنوع", stValid:"ساري", stExpired:"تصريح منتهي", stExpiring:"قرب الانتهاء", stNoDate:"بدون تاريخ", stNoPermit:"بدون تصريح",
+    resigned:"استقالة", codeN:c => "كود " + c, codeLabel:"الكود", noName:"اسم غير مسجل", noNameShort:"بدون اسم",
+    drEmp:c => "موظف — كود " + c, drInd:"تصاريح فرد", drVeh:"تصاريح مركبة", hisPermits:"سجله في شيت التصاريح",
+    foreignNoLink:"أجنبي — مالوش رقم قومي يتربط بيه.", nidNotInSheet:"رقمه القومي مش موجود في «تصاريح أفراد».",
+    nidNotReg:"رقم قومي غير مسجل", nPermits:n => n + (n === 1 ? " تصريح" : " تصاريح"), empLink:c => "موظف NCM — كود " + c,
+    nameForms:"الاسم مكتوب بأكتر من شكل", permitsNewest:"التصاريح — الأحدث فوق", permitNofM:(a, b) => "تصريح " + a + " من " + b,
+    permitStatus:"حالة التصريح", permit:"تصريح", daysLeft:n => "متبقي " + n + " يوم", daysAgo:n => "منتهي منذ " + n + " يوم", today:"ينتهي اليوم",
+    grpPersonal:"البيانات الشخصية", grpWork:"بيانات التوظيف", grpSecurity:"بيانات أمنية",
+    passport:"رقم الجواز", phone:"رقم الهاتف", department:"القسم", hireDate:"تاريخ التعيين", companyName:"اسم الشركة",
+    letterNote:"ملاحظات", banReason:"سبب المنع", resignEnd:"انتهاء الاستقالة", foreignPill:"أجنبي", photoAlt:"صورة البطاقة"
+  },
+  en:{
+    page:"List search", segPeople:"People", segVehicles:"Vehicles", search:"Search", clear:"Clear", lines:n => "Lines: " + n,
+    phPeople:"National ID, code or name\nOne per line", phPlates:"Plate number\nOne per line",
+    ariaNids:"National IDs, one per line", ariaPlates:"Plate numbers, one per line",
+    refresh:"Refresh data", histAria:"Search history", histEmpty:"No history yet", histClear:"Clear history", close:"Close",
+    srcEmp:"Employees", srcInd:"Individual permits", srcVeh:"Vehicle permits", loading:"Loading data", stillLoading:"Data is still loading — wait a moment and try again.",
+    hint:"Type the list or paste it", hintSub:"One per line — searched in employees and permits together",
+    sumAsked:"Asked", sumFound:"Found", sumMiss:"Not found", sumDup:"Repeated in the list",
+    searchLacks:x => x + " is not loaded right now — these answers are without it, and a “Not found” is not certain", and:" and ",
+    missRow:"Not in the sheet", moreNames:(term, n) => "“" + term + "” — " + n + " more · add another name to it",
+    moreRow:(term, n) => "“" + term + "” — " + n + " more results", typed:"Typed: ",
+    colName:"Name", colJob:"Job", colNid:"National ID", address:"Address", colPermit:"Permit",
+    colSent:"Date sent", colMail:"Mail type", letterNo:"Letter number", letterDate:"Letter date", colCompany:"Company",
+    sender:"Sender", notes:"Notes", aseNote:"Note", colCount:"Permits", colEmp:"NCM employee",
+    colPlate:"Plate", colType:"Type", colOwner:"Belongs to",
+    cOk:"Valid", cSoon:"Expiring soon", cExpired:"Expired", cBan:"Banned", cRenew:"Renewal", cTemp:"Temporary",
+    cPending:"Awaiting response", cUndet:"Undetermined", permitUndet:"Status not yet determined",
+    stBanned:"Banned", stValid:"Valid", stExpired:"Expired", stExpiring:"Expiring soon", stNoDate:"No date", stNoPermit:"No permit",
+    resigned:"Resigned", codeN:c => "Code " + c, codeLabel:"CODE", noName:"Name not recorded", noNameShort:"No name",
+    drEmp:c => "Employee — code " + c, drInd:"A person's permits", drVeh:"A vehicle's permits", hisPermits:"In the permits sheet",
+    foreignNoLink:"Foreign — no national ID to link by.", nidNotInSheet:"This national ID is not in the individuals sheet.",
+    nidNotReg:"National ID not registered", nPermits:n => n + (n === 1 ? " permit" : " permits"), empLink:c => "NCM employee — code " + c,
+    nameForms:"Name written more than one way", permitsNewest:"Permits — newest first", permitNofM:(a, b) => "Permit " + a + " of " + b,
+    permitStatus:"Permit status", permit:"Permit", daysLeft:n => n + " days left", daysAgo:n => "Expired " + n + " days ago", today:"Expires today",
+    grpPersonal:"PERSONAL DETAILS", grpWork:"EMPLOYMENT DETAILS", grpSecurity:"SECURITY DETAILS",
+    passport:"Passport", phone:"Phone", department:"Department", hireDate:"Hire date", companyName:"Company name",
+    letterNote:"Notes", banReason:"Ban reason", resignEnd:"Resignation ends", foreignPill:"Foreign", photoAlt:"ID card"
+  }
+};
+let LANG = "ar";
+try{ const saved = localStorage.getItem("ncm_lang"); if(saved === "en" || saved === "ar") LANG = saved; }catch(e){}
+const isEN = () => LANG === "en";
+function t(key){
+  let v = I18N[LANG][key];
+  if(v === undefined) v = I18N.ar[key];
+  if(typeof v === "function") return v.apply(null, [].slice.call(arguments, 1));
+  return v === undefined ? key : v;
+}
+
+/* ============================================================
+   TEXT AND DATES — the rules both other systems keep, word for word.
+   ============================================================ */
+function toLatinDigits(s){
+  return String(s)
+    .replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x0660 + 48))
+    .replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x06F0 + 48));
+}
+function normalize(s){
+  if(s === null || s === undefined) return "";
+  return toLatinDigits(String(s)).replace(/\s+/g, " ").trim();
+}
+function clean(s){ return (s === null || s === undefined) ? "" : String(s).trim(); }
+function digitsOnly(s){ return normalize(s).replace(/[^\d]/g, ""); }
+/* One shape per Arabic letter, for MATCHING only — the same folding the
+   permits system does. What is shown is always what the sheet says. */
+function foldArabic(s){
+  return normalize(s)
+    .replace(/[ً-ْٰ]/g, "")
+    .replace(/ـ/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/[ىئ]/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/ؤ/g, "و")
+    .replace(/\s+/g, "")
+    .toLowerCase();
+}
+const pad2 = n => String(n).padStart(2, "0");
+function today0(){ const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function mkDate(y, m, d){
+  if(y < 1900 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(y, m - 1, d); dt.setHours(0, 0, 0, 0);
+  if(dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return dt;
+}
+function fmt(dt){ return pad2(dt.getDate()) + "/" + pad2(dt.getMonth() + 1) + "/" + dt.getFullYear(); }
+// The employees table: dd/mm/yyyy text (or ISO). Never the browser's own parser.
+function parseStrict(v){
+  const s = clean(v); if(!s) return null;
+  let h;
+  if((h = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))) return mkDate(+h[3], +h[2], +h[1]);
+  if((h = s.match(/^(\d{4})[\-\/.](\d{1,2})[\-\/.](\d{1,2})/)))  return mkDate(+h[1], +h[2], +h[3]);
+  return null;
+}
+// The permits sheet: a leading date, day first unless that is impossible,
+// with whatever was typed after it kept as a note ("18-11-2025(ABNA SINA)").
+const LEADING_DATE = /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/;
+function parseLoose(v){
+  const s = normalize(v), m = s.match(LEADING_DATE);
+  if(!m) return null;
+  const a = +m[1], b = +m[2], y = +m[3];
+  let day, month;
+  if(b > 12 && a <= 12){ month = a; day = b; } else { day = a; month = b; }
+  const date = mkDate(y, month, day);
+  if(!date) return null;
+  const rest = s.slice(m[0].length).replace(/^[\s\-\/(),.:؛;]+/, "").replace(/[)\]]+$/, "").trim();
+  return { date, text: fmt(date), rest };
+}
+function daysTo(dt){
+  const d = today0();
+  return Math.round((Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) -
+                     Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+}
+
+/* ============================================================
+   EMPLOYEES — the rules are the employees system's, word for word.
+   ============================================================ */
+const EMP_FIELDS = ["emp_code","full_name","full_name_en","national_id","job_title","department","category","phone","hire_date",
+  "address","permit_date","permit_status","ban_reason","resignation_end_date","notes",
+  "letter_number","letter_date","letter_company","letter_note"];
+function empStatus(e){
+  const raw = e.permit_status, dl = e.dl;
+  if(raw === "ممنوع") return { k:"ban", label:"ممنوع", code:"BANNED" };
+  // someone who left: the permit is either still running or over
+  if(e.resigned){
+    if(raw === "ساري" && dl !== null && dl >= 0) return { k:"ok", label:"ساري", code:"VERIFIED" };
+    return { k:"bad", label:"تصريح منتهي", code:"EXPIRED" };
+  }
+  if(raw === "ساري"){
+    if(e.permit_date === "ساري حتى الاستقالة") return { k:"ok", label:"ساري", code:"VERIFIED" };
+    if(dl === null) return { k:"mute", label:"بدون تاريخ", code:"NO DATE" };
+    if(dl < 0) return { k:"bad", label:"تصريح منتهي", code:"EXPIRED" };
+    if(dl <= EXPIRY_WINDOW) return { k:"warn", label:"قرب الانتهاء", code:"EXPIRING" };
+    return { k:"ok", label:"ساري", code:"VERIFIED" };
+  }
+  if(raw === "منتهي الصلاحية") return { k:"bad", label:"تصريح منتهي", code:"EXPIRED" };
+  if(raw === "بدون تصريح" || raw === "") return { k:"mute", label:"بدون تصريح", code:"NO PERMIT" };
+  return { k:"mute", label:raw, code:"UNKNOWN" };
+}
+function byCode(a, b){
+  const x = parseInt(digitsOnly(a.emp_code), 10), y = parseInt(digitsOnly(b.emp_code), 10);
+  if(isNaN(x) && isNaN(y)) return 0;
+  if(isNaN(x)) return 1;
+  if(isNaN(y)) return -1;
+  return x - y;
+}
+function buildEmployees(rows){
+  const list = [], seen = new Set();
+  rows.forEach(r => {
+    if(!r) return;
+    const e = {};
+    EMP_FIELDS.forEach(k => { e[k] = clean(r[k]); });
+    if(!e.emp_code || seen.has(e.emp_code)) return;
+    seen.add(e.emp_code);
+    e.resigned = !!e.resignation_end_date;                       // any value counts, even «غير محدد»
+    e.foreign  = !(e.national_id.length === 14 && /^[0-9]+$/.test(e.national_id));
+    e.pdate    = parseStrict(e.permit_date);
+    e.dl       = e.pdate ? daysTo(e.pdate) : null;
+    e.st       = empStatus(e);
+    e.nid      = digitsOnly(e.national_id);
+    list.push(e);
+  });
+  list.sort(byCode);
+  const byCodeMap = new Map(), byNid = new Map();
+  list.forEach(e => {
+    byCodeMap.set(e.emp_code, e);
+    if(!e.foreign){ if(!byNid.has(e.nid)) byNid.set(e.nid, []); byNid.get(e.nid).push(e); }
+  });
+  return { list, byCode: byCodeMap, byNid };
+}
+
+/* ============================================================
+   PERMITS — columns are read by position, exactly as the permits system does.
+   ============================================================ */
+const IND_COL = { NAME:2, JOB:3, ID:4, ADDR:5, NOTE:6, SENDER:7, PERMIT:8, DAY:9, MAIL:10, LETTER:11, COMPANY:12, LDATE:13, ANOTE:14 };
+const VEH_COL = { PLATE:2, TYPE:3, OWNER:4, PERMIT:5, DAY:6, MAIL:7 };
+const RENEW_WORDS = ["عايز تجديد","الرخصه منتهيه","غيرت لوحات","تجديد"];
+/* Where a permit stands, from what is written in its cell. `auto` marks the
+   two wordings that are the system's own and not the sheet's, so the page can
+   say them in whichever language it is showing. */
+function classify(rawValue){
+  const s = normalize(rawValue);
+  if(s === "") return { cat:"pending", cls:"warn", main:"في انتظار الرد", auto:"pending", note:"", date:null, dl:null };
+  if(/^[؟?]+$/.test(s.replace(/\s+/g, ""))) return { cat:"undet", cls:"mute", main:"غير محدد موقفه حتى الآن", auto:"undet", note:"", date:null, dl:null };
+  if(s.includes("منع")) return { cat:"ban", cls:"ban", main:s, note:"", date:null, dl:null };
+  if(RENEW_WORDS.some(w => s.includes(w))) return { cat:"renew", cls:"bad", main:s, note:"", date:null, dl:null };
+  if(s.includes("مؤقت")) return { cat:"temp", cls:"mute", main:s, note:"", date:null, dl:null };
+  const p = parseLoose(s);
+  if(p){
+    const dl = daysTo(p.date);
+    return { cat: dl < 0 ? "expired" : dl <= EXPIRY_WINDOW ? "soon" : "ok",
+             cls: dl < 0 ? "bad" : dl <= EXPIRY_WINDOW ? "warn" : "ok",
+             main: p.text, note: p.rest, date: p.date, dl };
+  }
+  if(s.includes("انتظار")) return { cat:"pending", cls:"warn", main:s, note:"", date:null, dl:null };
+  return { cat:"undet", cls:"mute", main:s, note:"", date:null, dl:null };
+}
+// dated first in order, undated after them; the LAST one is the one that counts
+function sortByDay(records){
+  return records.slice().sort((a, b) => {
+    if(a.dayDate && b.dayDate) return a.dayDate - b.dayDate;
+    if(a.dayDate) return -1;
+    if(b.dayDate) return 1;
+    return 0;
+  });
+}
+function buildIndividuals(rows){
+  const C = IND_COL, groups = new Map();
+  rows.forEach(c => {
+    if(!c || c.length < 5) return;
+    const idVal = normalize(c[C.ID]), nameVal = normalize(c[C.NAME]);
+    if(!idVal && !nameVal) return;
+    const key = idVal ? "ID:" + digitsOnly(idVal) : "NAME:" + nameVal;
+    if(!groups.has(key)) groups.set(key, { key, name: nameVal, nationalId: idVal, nid: digitsOnly(idVal), records: [], names: new Map() });
+    const g = groups.get(key);
+    const f = foldArabic(nameVal);
+    if(f && !g.names.has(f)) g.names.set(f, nameVal);
+    const day = parseLoose(c[C.DAY]);
+    g.records.push({
+      name: nameVal, job: normalize(c[C.JOB]), address: normalize(c[C.ADDR]), note: normalize(c[C.NOTE]),
+      sender: normalize(c[C.SENDER]), mail: normalize(c[C.MAIL]), letter: normalize(c[C.LETTER]),
+      company: normalize(c[C.COMPANY]), ldate: normalize(c[C.LDATE]), anote: normalize(c[C.ANOTE]),
+      day: normalize(c[C.DAY]), dayDate: day ? day.date : null, dayText: day ? day.text : "",
+      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT])
+    });
+  });
+  const list = [], byNid = new Map();
+  groups.forEach(g => {
+    g.records = sortByDay(g.records);
+    g.cur = g.records[g.records.length - 1];
+    g.p = g.cur.p;
+    if(g.nid) byNid.set(g.nid, g);
+    list.push(g);
+  });
+  return { list, groups, byNid };
+}
+function buildVehicles(rows){
+  const C = VEH_COL, groups = new Map();
+  rows.forEach(c => {
+    if(!c || c.length < 3) return;
+    const plate = normalize(c[C.PLATE]);
+    if(!plate) return;
+    const key = foldArabic(plate);
+    if(!groups.has(key)) groups.set(key, { key, plate, records: [] });
+    const g = groups.get(key);
+    const day = parseLoose(c[C.DAY]);
+    g.records.push({
+      plate, type: normalize(c[C.TYPE]), owner: normalize(c[C.OWNER]), mail: normalize(c[C.MAIL]),
+      day: normalize(c[C.DAY]), dayDate: day ? day.date : null, dayText: day ? day.text : "",
+      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT])
+    });
+  });
+  const list = [];
+  groups.forEach(g => {
+    g.records = sortByDay(g.records);
+    g.cur = g.records[g.records.length - 1];
+    g.p = g.cur.p;
+    list.push(g);
+  });
+  return { list, groups };
+}
+/* The model the search reads: each source there or not, and the two that hold
+   people tied together by national id — so a man who is in both is one answer. */
+const M = { emp: null, ind: null, veh: null };
+function linkModel(){
+  if(M.emp) M.emp.list.forEach(e => { e.per = (M.ind && !e.foreign) ? (M.ind.byNid.get(e.nid) || null) : null; });
+  if(M.ind) M.ind.list.forEach(g => { g.emp = (M.emp && g.nid && M.emp.byNid.get(g.nid)) || null; });
+}
+
+/* ============================================================
+   LOADING
+   The employees come from the table with the key the home screen unsealed;
+   the permits from the sheet's CSV export, tab by tab, the gid looked up fresh
+   by the tab's name - both exactly as the two systems read them. The three are
+   asked for at once and each arrives on its own, so a slow sheet does not hold
+   the employees back; the row of marks under the box says which are in.
+   ============================================================ */
+let sb = null;
+const SRC = { emp:"wait", ind:"wait", veh:"wait" };       // wait | ok | bad
+function paintSrc(){
+  const one = (k, name) => '<span class="pill ' + (SRC[k] === "ok" ? "ok" : SRC[k] === "bad" ? "bad" : "wait") + '"><span class="dot"></span>' + esc(t(name)) + "</span>";
+  $("src").innerHTML = one("emp", "srcEmp") + one("ind", "srcInd") + one("veh", "srcVeh");
+}
+/* The table answers a plain select with its first 1000 rows and says nothing
+   about the rest, so it is read a page at a time, in id order (see the
+   employees system for the long version of why). */
+async function fetchAllEmployees(){
+  const rows = [], PAGE = 1000;
+  for(let from = 0; ; from += PAGE){
+    const { data, error } = await sb.from("employees").select("*").order("id", { ascending: true }).range(from, from + PAGE - 1);
+    if(error) throw error;
+    const page = data || [];
+    rows.push(...page);
+    if(page.length < PAGE) return rows;
+  }
+}
+let tabGidsPromise = null;
+function loadTabGids(){
+  if(!tabGidsPromise){
+    tabGidsPromise = fetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
+      .then(r => r.ok ? r.text() : Promise.reject(new Error("htmlview " + r.status)))
+      .then(html => {
+        const map = new Map();
+        const re = /items\.push\(\{name: "((?:[^"\\]|\\.)*)"[\s\S]*?gid: "(\d+)"/g;
+        let m;
+        while((m = re.exec(html))){
+          try{ map.set(JSON.parse('"' + m[1].replace(/\\x([0-9a-fA-F]{2})/g, "\\u00$1") + '"'), m[2]); }catch(e){}
+        }
+        return map;
+      });
+    tabGidsPromise.catch(() => { tabGidsPromise = null; });
+  }
+  return tabGidsPromise;
+}
+async function tabCsvUrl(name){
+  try{
+    const gids = await loadTabGids();
+    if(gids.has(name)) return SHEET_BASE + "/export?format=csv&gid=" + gids.get(name);
+  }catch(e){ console.warn("tab gids unavailable, falling back to gviz", e); }
+  return GVIZ_BASE + encodeURIComponent(name);
+}
+function loadCSV(url){
+  const busted = url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
+  return new Promise((resolve, reject) => {
+    Papa.parse(busted, { download:true, header:false, skipEmptyLines:false,
+      complete: res => resolve(res.data), error: err => reject(err) });
+  });
+}
+let loadRun = 0;
+function loadAll(){
+  const run = ++loadRun;
+  SRC.emp = SRC.ind = SRC.veh = "wait";
+  tabGidsPromise = null;                    // an upload since the last load gave the tabs new gids
+  paintSrc();
+  const done = (k, model) => {
+    if(run !== loadRun) return;
+    M[k] = model; SRC[k] = model ? "ok" : "bad";
+    linkModel(); paintSrc();
+    if(st.res) { runMulti(); paintMulti(); }           // an answer on screen is asked again with what has just come in
+  };
+  const emp = fetchAllEmployees().then(rows => done("emp", buildEmployees(rows)), err => { console.error("[NCM] employees", err); done("emp", null); });
+  const ind = tabCsvUrl(INDIVIDUALS_TAB).then(loadCSV).then(rows => done("ind", buildIndividuals(rows.slice(1))), err => { console.error("[NCM] individuals", err); done("ind", null); });
+  const veh = tabCsvUrl(VEHICLES_TAB).then(loadCSV).then(rows => done("veh", buildVehicles(rows.slice(1))), err => { console.error("[NCM] vehicles", err); done("veh", null); });
+  return Promise.all([emp, ind, veh]);
+}
+
+/* ============================================================
+   THE SEARCH
+   ============================================================ */
+const st = { mode: "ind", text: "", res: null };
+const MULTI_CAP = 5000;        // per line: more than either sheet holds, so everything a line finds is shown — a guard, not a limit anyone meets
+const NAME_SHOW = 50;          // of a name that finds more people than this, this many are listed and the rest are counted
+
+/* The written list, one entry each. A new line splits, and so do a comma, a
+   semicolon and a tab, because that is how a list arrives when it is pasted
+   out of a message or a sheet. An entry written twice is asked once and counted. */
+function parseTerms(text){
+  const terms = [], seenT = new Set(); let dup = 0;
+  toLatinDigits(text || "").split(/[\n\r,;،\t]+/).forEach(piece => {
+    let parts = [piece.trim()];
+    /* Digits with gaps on one line are either several ids pasted side by side
+       or one id typed with a space in it. Fourteen digits in all is one
+       national id however it was spaced ("2990102 2020231" is a man, not two
+       half-numbers); otherwise pieces long enough to stand alone are separate
+       entries, and anything else is one number with stray spaces. */
+    if(/^[\d\s]+$/.test(parts[0]) && /\s/.test(parts[0])){
+      const toks = parts[0].split(/\s+/), joined = toks.join("");
+      parts = joined.length === 14 ? [joined] : toks.every(x => x.length >= 5) ? toks : [joined];
+    }
+    parts.forEach(p => {
+      p = normalize(p);
+      if(!p) return;
+      const k = foldArabic(p);
+      if(seenT.has(k)){ dup++; return; }
+      seenT.add(k); terms.push(p);
+    });
+  });
+  return { terms, dup };
+}
+const capped = all => ({ list: all.slice(0, MULTI_CAP), more: Math.max(0, all.length - MULTI_CAP) });
+// what was typed, a word at a time, folded the way names and plates are folded for matching
+const wordsOf = term => term.split(/\s+/).map(w => foldArabic(w)).filter(Boolean);
+function findPeople(term){
+  const d = digitsOnly(term), f = foldArabic(term), numeric = /^[\d\s-]+$/.test(term);
+  const hits = [], seenG = new Set(), seenE = new Set();
+  // a man who is in both sources is one row, not two
+  const addG = g => {
+    if(seenG.has(g.key)) return;
+    seenG.add(g.key);
+    (g.emp || []).forEach(e => seenE.add(e.emp_code));
+    hits.push({ g, emps: g.emp || [] });
+  };
+  const addE = e => {
+    if(seenE.has(e.emp_code)) return;
+    if(e.per) return addG(e.per);
+    seenE.add(e.emp_code);
+    hits.push({ g: null, emps: [e] });
+  };
+  if(numeric){
+    if(d.length === 14){
+      const g = M.ind && M.ind.byNid.get(d);
+      if(g) addG(g);
+      ((M.emp && M.emp.byNid.get(d)) || []).forEach(addE);
+    }else{
+      // a short number is an employee's code, whole; five digits and up is also looked for inside every national id
+      const byC = M.emp && M.emp.byCode.get(d);
+      if(byC) addE(byC);
+      if(d.length >= 5){
+        if(M.ind) M.ind.list.forEach(g => { if(g.nid && g.nid.includes(d)) addG(g); });
+        if(M.emp) M.emp.list.forEach(e => { if(e.nid && e.nid.includes(d)) addE(e); });
+      }
+    }
+  }else if(f){
+    /* A NAME TYPED IN PART finds everyone it is part of. Every word typed has
+       to be in the name, in any order and with anything between them — so
+       «ابراهيم سالم» finds «ابراهيم احمد محمد سالم». All of them are shown,
+       the closest first: the name that is exactly what was typed, then the
+       names that hold it as it was typed, then the names that hold its words.
+       A name as common as «محمد» finds hundreds: of those only the first
+       NAME_SHOW are listed and the line ends by saying how many more there are. */
+    const words = wordsOf(term), hasAll = s => words.every(w => s.includes(w));
+    const en = e => e.full_name_en.toLowerCase().replace(/\s+/g, "");
+    const rankG = g => {
+      let best = 9;
+      for(const n of g.names.keys()){ const r = n === f ? 0 : n.includes(f) ? 1 : hasAll(n) ? 2 : 9; if(r < best) best = r; }
+      return best;
+    };
+    const rankE = e => {
+      const a = foldArabic(e.full_name), b = en(e);
+      return a === f || b === f || foldArabic(e.national_id) === f ? 0 : a.includes(f) || b.includes(f) ? 1 : hasAll(a) || hasAll(b) ? 2 : 9;
+    };
+    const found = [];
+    if(M.ind) M.ind.list.forEach(g => { const r = rankG(g); if(r < 9) found.push({ r, name: g.name, add: () => addG(g) }); });
+    if(M.emp) M.emp.list.forEach(e => { const r = rankE(e); if(r < 9) found.push({ r, name: e.full_name, add: () => addE(e) }); });
+    found.sort((a, b) => a.r - b.r || foldArabic(a.name).localeCompare(foldArabic(b.name), "ar"));
+    found.forEach(x => x.add());
+    if(hits.length > NAME_SHOW) return { list: hits.slice(0, NAME_SHOW), more: hits.length - NAME_SHOW, names: true };
+  }
+  return capped(hits);
+}
+function findVehicles(term){
+  if(!M.veh) return capped([]);
+  const f = foldArabic(term), d = digitsOnly(term), numeric = /^[\d\s-]+$/.test(term);
+  if(numeric){
+    /* THE NUMBER ALONE, without the letters, finds every plate that has that
+       number in it, whatever its letters. All of them are shown: the plate
+       numbered exactly so first, then the plates whose number begins with
+       it, then the rest. */
+    if(!d) return capped([]);
+    const rank = g => { const x = g.key.replace(/\D/g, ""); return x === d ? 0 : x.startsWith(d) ? 1 : 2; };
+    return capped(M.veh.list.filter(g => g.key.includes(d)).map(g => ({ g, r: rank(g) }))
+      .sort((a, b) => a.r - b.r || a.g.key.localeCompare(b.g.key, "ar")).map(x => ({ g: x.g })));
+  }
+  const exact = M.veh.groups.get(f);
+  if(exact) return capped([{ g: exact }]);
+  // letters, or letters and numbers, typed in part: every piece typed has to be in the plate
+  const words = wordsOf(term);
+  return capped(M.veh.list.filter(g => g.key.includes(f) || words.every(w => g.key.includes(w))).map(g => ({ g })));
+}
+function runMulti(){
+  const parsed = parseTerms(st.text), rows = [];
+  let found = 0;
+  parsed.terms.forEach((term, i) => {
+    const hits = st.mode === "veh" ? findVehicles(term) : findPeople(term);
+    if(!hits.list.length){ rows.push({ n: i + 1, term, miss: true }); return; }
+    found++;
+    hits.list.forEach(h => rows.push(Object.assign({ n: i + 1, term }, h)));
+    if(hits.more) rows.push({ n: i + 1, term, more: hits.more, names: !!hits.names });
+  });
+  st.res = { rows, mode: st.mode, terms: parsed.terms.length, dup: parsed.dup, found, miss: parsed.terms.length - found };
+}
+
+/* ============================================================
+   THE TABLE OF ANSWERS
+   ============================================================ */
+const num = s => '<span class="num">' + esc(s) + "</span>";
+const dash = s => (s === "" || s === null || s === undefined) ? "—" : s;
+const pill = (cls, text) => '<span class="pill ' + cls + '">' + esc(text) + "</span>";
+/* The standings the page words itself. Anything else typed in a permit cell is
+   the sheet's own wording and is shown as written — in English the few phrases
+   the permits system already knows are given their English names. */
+const ST_KEY = { BANNED:"stBanned", VERIFIED:"stValid", EXPIRED:"stExpired", EXPIRING:"stExpiring", "NO DATE":"stNoDate", "NO PERMIT":"stNoPermit" };
+const stLabel = e => ST_KEY[e.st.code] ? t(ST_KEY[e.st.code]) : e.st.label;
+const PHRASE_EN = [
+  ["منع جنائى","Criminal ban"], ["منع جنائي","Criminal ban"], ["الرخصه منتهيه","License expired"], ["الرخصة منتهية","License expired"],
+  ["غيرت لوحات عايزة جديد","Plates changed - new permit required"], ["غيرت لوحات","Plates changed"], ["عايز تجديد","Renewal required"],
+  ["تجديد","Renewal"], ["مؤقت","Temporary"], ["منع","Banned"], ["انتظار","Awaiting response"], ["غير محدد","Undetermined"]
+];
+function permitText(p){
+  if(p.auto === "pending") return t("cPending");
+  if(p.auto === "undet") return t("permitUndet");
+  if(p.date || !isEN()) return p.main;
+  for(const pair of PHRASE_EN) if(p.main.includes(pair[0])) return pair[1];
+  return p.main;
+}
+const permitPill = p => '<span class="pill ' + p.cls + '">' + (p.date ? num(p.main) : esc(permitText(p))) + "</span>";
+const empPermitText = e => e.pdate ? fmt(e.pdate) : (e.permit_date || stLabel(e));
+const empPermit = e => '<span class="pill ' + e.st.k + '">' + (e.pdate ? num(fmt(e.pdate)) : esc(empPermitText(e))) + "</span>";
+const empTag = e => stLabel(e) + (e.resigned ? " · " + t("resigned") : "");
+const CAT_PILL = { ok:"ok", soon:"warn", expired:"bad", ban:"ban", renew:"bad", temp:"mute", pending:"warn", undet:"mute" };
+const CAT_NAME = { ok:"cOk", soon:"cSoon", expired:"cExpired", ban:"cBan", renew:"cRenew", temp:"cTemp", pending:"cPending", undet:"cUndet" };
+const hasCell = v => !(v === "" || v === null || v === undefined);
+function multiOpen(r){
+  if(st.res.mode === "veh") return "veh:" + r.g.key;
+  return r.g ? "ind:" + r.g.key : "emp:" + r.emps[0].emp_code;
+}
+function hintHTML(){
+  return '<div class="empty">' +
+    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+    "<h3>" + esc(t("hint")) + "</h3><p>" + esc(t("hintSub")) + "</p></div>";
+}
+/* One answer, as a row. A man who is in both sources is one row: his name and
+   his newest permit from the sheet, and under his name the mark of the
+   employee he also is - his code and where his staff permit stands. */
+function rowPeople(r){
+  const g = r.g, e0 = r.emps[0];
+  const nid = g ? g.nationalId : e0.national_id, job = g ? g.cur.job : e0.job_title;
+  // the id on one line and the job under it: side by side they break in the middle of the job on a narrow screen
+  const sub = [nid ? num(nid) : "", esc(job || "")].filter(Boolean).join("<br>");
+  const tags = r.emps.map(e => pill("link", t("codeN", e.emp_code)) + pill(e.st.k, empTag(e))).join("") +
+               (g && g.records.length > 1 ? pill("white", t("nPermits", g.records.length)) : "");
+  // what was typed is only repeated when it is not already sitting in the row
+  const typed = r.term !== (g ? g.nid : e0.nid) && foldArabic(r.term) !== foldArabic(g ? g.name : e0.full_name)
+    ? '<span class="typed">' + esc(t("typed") + r.term) + "</span>" : "";
+  return { name: esc(dash(g ? g.name : e0.full_name)), sub, tags, typed, end: g ? permitPill(g.p) : empPermit(e0) };
+}
+function rowVehicle(r){
+  const g = r.g;
+  const sub = [esc(g.cur.type || ""), esc(g.cur.owner || "")].filter(Boolean).join(" · ");
+  const typed = foldArabic(r.term) !== g.key ? '<span class="typed">' + esc(t("typed") + r.term) + "</span>" : "";
+  return { name: esc(g.plate), sub, tags: g.records.length > 1 ? pill("white", t("nPermits", g.records.length)) : "", typed, end: permitPill(g.p) };
+}
+function paintMulti(){
+  const res = st.res, box = $("mres");
+  if(!res || !res.terms){ box.innerHTML = hintHTML(); return; }      // nothing asked: the page says what it is for
+  const cats = {};
+  res.rows.forEach(r => { if(r.g) cats[r.g.p.cat] = (cats[r.g.p.cat] || 0) + 1; });
+  const sum = '<div class="sum">' +
+    '<span class="pill white">' + t("sumAsked") + " " + num(res.terms) + "</span>" +
+    '<span class="pill ok">' + t("sumFound") + " " + num(res.found) + "</span>" +
+    (res.miss ? '<span class="pill bad">' + t("sumMiss") + " " + num(res.miss) + "</span>" : "") +
+    (res.dup ? '<span class="pill">' + t("sumDup") + " " + num(res.dup) + "</span>" : "") +
+    Object.keys(CAT_PILL).filter(k => cats[k]).map(k => '<span class="pill ' + CAT_PILL[k] + '">' + t(CAT_NAME[k]) + " " + num(cats[k]) + "</span>").join("") +
+    "</div>";
+  /* An answer is only as whole as the sources behind it. With the permits not
+     loaded, a man who is banned comes back "not found" (or as an employee and
+     nothing more) — so the answers say which source they are without. */
+  const lacking = res.mode === "veh" ? (M.veh ? [] : ["srcVeh"]) : [M.ind ? "" : "srcInd", M.emp ? "" : "srcEmp"].filter(Boolean);
+  box.innerHTML =
+    (lacking.length ? '<div class="note warn">' + esc(t("searchLacks", lacking.map(k => t(k)).join(t("and")))) + "</div>" : "") +
+    sum + '<div class="mlist">' +
+    res.rows.map((r, i) => {
+      // each row takes its turn coming in; past the first screenful they are simply there
+      const turn = ' style="--d:' + Math.min(i * 0.04, 0.48).toFixed(2) + 's"';
+      const lead = '<span class="mrow-n">' + r.n + "</span>";
+      if(r.miss) return '<div class="mrow miss"' + turn + ">" + lead + '<span class="mrow-main"><span class="mrow-name">' + esc(r.term) + "</span></span>" +
+                        '<span class="mrow-end">' + pill("bad", t("missRow")) + "</span></div>";
+      if(r.more) return '<div class="mrow more"' + turn + ">" + esc(t(r.names ? "moreNames" : "moreRow", r.term, r.more)) + "</div>";
+      const c = res.mode === "veh" ? rowVehicle(r) : rowPeople(r);
+      return '<button type="button" class="mrow" data-open="' + esc(multiOpen(r)) + '"' + turn + ">" + lead +
+        '<span class="mrow-main"><span class="mrow-name">' + c.name + "</span>" +
+          (c.sub ? '<span class="mrow-sub">' + c.sub + "</span>" : "") +
+          (c.tags ? '<span class="mrow-tags">' + c.tags + "</span>" : "") + c.typed + "</span>" +
+        '<span class="mrow-end">' + c.end + "</span></button>";
+    }).join("") + "</div>";
+}
+function multiLines(){
+  $("mt-n").textContent = t("lines", parseTerms($("mt").value).terms.length);
+}
+function goMulti(){
+  st.text = $("mt").value;
+  if(!M.emp && !M.ind && !M.veh && (SRC.emp === "wait" || SRC.ind === "wait" || SRC.veh === "wait")){
+    $("mres").innerHTML = '<div class="note">' + esc(t("stillLoading")) + "</div>";
+    return;
+  }
+  runMulti(); paintMulti(); multiLines();
+  histAdd();
+  keep();
+}
+
+/* ============================================================
+   THE CARD BEHIND A ROW
+   A row opens what the two systems know about it: the employee's card, the
+   person's every permit newest first, the vehicle's every permit. It comes up
+   over the table and goes away with the phone's back button.
+   ============================================================ */
+const rowHTML = (label, value, cls) => hasCell(value)
+  ? '<div class="row"><dt>' + esc(label) + '</dt><dd class="' + (cls || "") + '">' + esc(value) + "</dd></div>" : "";
+const group = (title, rows) => rows ? '<div class="grp"><span class="grp-t">' + esc(title) + '</span><dl class="rows">' + rows + "</dl></div>" : "";
+function countdown(dl){
+  if(dl === null || dl === undefined) return "";
+  return dl === 0 ? t("today") : dl < 0 ? t("daysAgo", Math.abs(dl)) : t("daysLeft", dl);
+}
+function photoURL(code, second){
+  return SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + encodeURIComponent(code) + (second ? "_2" : "") + ".jpg";
+}
+function fmtPhone(v){
+  let s = digitsOnly(v);
+  if(!s) return "";
+  if(s.length === 10 && s[0] !== "0") s = "0" + s;      // stored values lost the leading zero
+  return s;
+}
+function empCardHTML(e){
+  const cat = e.category === "blue" ? "BLUE COLLAR" : e.category === "white" ? "WHITE COLLAR" : "";
+  const hire = parseStrict(e.hire_date), ldate = parseStrict(e.letter_date), rend = parseStrict(e.resignation_end_date);
+  return '<article class="rec">' +
+    '<div class="head">' +
+      '<span class="code">' + esc(t("codeLabel")) + " " + num(e.emp_code) + "</span>" +
+      '<h2 class="nm">' + esc(e.full_name || t("noName")) + "</h2>" +
+      (e.full_name_en ? '<p class="nm-en">' + esc(e.full_name_en) + "</p>" : "") +
+      '<div class="pills">' + pill(e.st.k, stLabel(e)) + (e.resigned ? pill("bad", t("resigned")) : "") +
+        (e.foreign ? pill("mute", t("foreignPill")) : "") + (cat ? pill(e.category === "blue" ? "blue" : "white", cat) : "") + "</div>" +
+    "</div>" +
+    '<div class="permit ' + e.st.k + '"><div><div class="permit-k">' + esc(t("permitStatus")) + "</div></div>" +
+      '<div><div class="permit-v">' + (e.pdate ? num(fmt(e.pdate)) : esc(e.permit_date || stLabel(e))) + "</div>" +
+      (e.pdate && !e.resigned ? '<div class="permit-x">' + esc(countdown(e.dl)) + "</div>" : "") + "</div></div>" +
+    group(t("grpPersonal"),
+      rowHTML(e.foreign ? t("passport") : t("colNid"), e.national_id, "num") +
+      rowHTML(t("phone"), fmtPhone(e.phone), "num") +
+      rowHTML(t("address"), e.address)) +
+    group(t("grpWork"),
+      rowHTML(t("colJob"), e.job_title) +
+      rowHTML(t("department"), e.department) +
+      rowHTML(t("hireDate"), hire ? fmt(hire) : e.hire_date, "num")) +
+    group(t("grpSecurity"),
+      rowHTML(t("letterNo"), e.letter_number, "num") +
+      rowHTML(t("letterDate"), ldate ? fmt(ldate) : e.letter_date, "num") +
+      rowHTML(t("colCompany"), e.letter_company) +
+      rowHTML(t("letterNote"), e.letter_note) +
+      rowHTML(t("banReason"), e.ban_reason, "bad") +
+      rowHTML(t("resignEnd"), rend ? fmt(rend) : e.resignation_end_date)) +
+    '<div class="shots">' +
+      '<img src="' + photoURL(e.emp_code, false) + '" alt="' + esc(t("photoAlt")) + '" loading="lazy" decoding="async">' +
+      '<img src="' + photoURL(e.emp_code, true) + '" alt="' + esc(t("photoAlt")) + '" loading="lazy" decoding="async">' +
+    "</div></article>";
+}
+// one permit out of a person's or a vehicle's history
+function permitRecHTML(r, n, total, veh){
+  const p = r.p;
+  return '<article class="rec">' +
+    '<div class="permit ' + p.cls + '"><div><div class="permit-k">' + esc(t("permitNofM", n + 1, total)) + "</div></div>" +
+      '<div><div class="permit-v">' + (p.date ? num(p.main) : esc(permitText(p))) + "</div>" +
+      (p.note ? '<div class="permit-x">' + esc(p.note) + "</div>" : p.date ? '<div class="permit-x">' + esc(countdown(p.dl)) + "</div>" : "") + "</div></div>" +
+    '<div class="grp"><dl class="rows">' +
+      rowHTML(t("colSent"), r.dayText ? r.dayText + (r.dayNote ? " " + r.dayNote : "") : r.day, r.dayText && !r.dayNote ? "num" : "") +
+      (veh
+        ? rowHTML(t("colType"), r.type) + rowHTML(t("colOwner"), r.owner) + rowHTML(t("colMail"), r.mail)
+        : rowHTML(t("colJob"), r.job) + rowHTML(t("address"), r.address) + rowHTML(t("sender"), r.sender) +
+          rowHTML(t("notes"), r.note) + rowHTML(t("colMail"), r.mail) +
+          rowHTML(t("letterNo"), r.letter, "num") + rowHTML(t("companyName"), r.company) +
+          rowHTML(t("letterDate"), r.ldate, "num") + rowHTML(t("aseNote"), r.anote)) +
+    "</dl></div></article>";
+}
+const historyHTML = (records, veh) => records.map((r, n, a) => permitRecHTML(r, n, a.length, veh)).reverse().join("");
+function drawerHTML(ref){
+  const i = ref.indexOf(":"), type = ref.slice(0, i), key = ref.slice(i + 1);
+  if(type === "emp" && M.emp){
+    const e = M.emp.byCode.get(key); if(!e) return null;
+    let h = empCardHTML(e);
+    if(M.ind){
+      h += '<div class="dr-sec">' + esc(t("hisPermits")) + " <b>" + (e.per ? e.per.records.length : 0) + "</b></div>";
+      h += e.per ? historyHTML(e.per.records, false) : '<div class="note">' + esc(t(e.foreign ? "foreignNoLink" : "nidNotInSheet")) + "</div>";
+    }
+    return { title: t("drEmp", e.emp_code), html: h };
+  }
+  if(type === "ind" && M.ind){
+    const g = M.ind.groups.get(key); if(!g) return null;
+    const h = '<article class="rec"><div class="head">' +
+        '<h2 class="nm">' + esc(g.name || t("noNameShort")) + "</h2>" +
+        '<div class="pills">' + (g.nationalId ? '<span class="pill white">' + num(g.nationalId) + "</span>" : pill("mute", t("nidNotReg"))) +
+          '<span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span>" +
+          (g.emp ? g.emp.map(e => '<button type="button" class="pill link" data-open="emp:' + esc(e.emp_code) + '">' + esc(t("empLink", e.emp_code)) + "</button>").join("") : "") +
+        "</div></div>" +
+        (g.names.size > 1 ? group(t("nameForms"), [...g.names.values()].map(n => rowHTML("—", n)).join("")) : "") +
+        '<div class="rec-pad"></div></article>' +
+      '<div class="dr-sec">' + esc(t("permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
+      historyHTML(g.records, false);
+    return { title: t("drInd"), html: h };
+  }
+  if(type === "veh" && M.veh){
+    const g = M.veh.groups.get(key); if(!g) return null;
+    const h = '<article class="rec"><div class="head">' +
+        '<h2 class="nm">' + esc(g.plate) + "</h2>" +
+        '<div class="pills"><span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span></div>" +
+        '</div><div class="rec-pad"></div></article>' +
+      '<div class="dr-sec">' + esc(t("permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
+      historyHTML(g.records, true);
+    return { title: t("drVeh"), html: h };
+  }
+  return null;
+}
+let drawerOn = false;
+/* Opening it puts an entry in the phone's history, so the back button closes
+   the card instead of walking out of the system; one card opened from inside
+   another takes its place and does not stack a second entry. */
+function openDrawer(ref){
+  const d = drawerHTML(ref);
+  if(!d) return;
+  $("dr-title").textContent = d.title;
+  $("dr-body").innerHTML = d.html;
+  $("dr-body").scrollTop = 0;
+  if(!drawerOn){
+    drawerOn = true;
+    try{ history.pushState({ ncmCard:true }, ""); }catch(e){}
+  }
+  $("drawer").classList.add("on"); $("veil").classList.add("on");
+  $("drawer").setAttribute("aria-hidden", "false");
+}
+function hideDrawer(){
+  drawerOn = false;
+  $("drawer").classList.remove("on"); $("veil").classList.remove("on");
+  $("drawer").setAttribute("aria-hidden", "true");
+}
+function closeDrawer(){
+  if(!drawerOn) return;
+  if(history.state && history.state.ncmCard) history.back();      // popstate does the hiding, and the entry is spent
+  else hideDrawer();
+}
+window.addEventListener("popstate", () => { if(drawerOn) hideDrawer(); });
+// a photograph that is not there (the second one often is not) takes no room
+$("dr-body").addEventListener("error", e => { if(e.target && e.target.tagName === "IMG") e.target.remove(); }, true);
+
+/* ============================================================
+   SEARCH HISTORY
+   Every search that is run is remembered on this phone — the list as it was
+   typed, whether it was people or vehicles, how many lines, when — newest
+   first, the same search never twice. The small arrow in the bar opens it; a
+   line in it puts that list back in the box and runs it again. Locking the
+   app from the home screen wipes it along with the key.
+   ============================================================ */
+const HIST_KEY = "ncm_multi_history", HIST_MAX = 40;
+let HIST = [];
+function histLoad(){
+  HIST = [];
+  try{
+    const list = JSON.parse(localStorage.getItem(HIST_KEY) || "[]");
+    // what comes off the disk is taken for nothing more than what it should be
+    if(Array.isArray(list)) HIST = list.filter(x => x && typeof x.t === "string" && x.t).slice(0, HIST_MAX)
+      .map(x => ({ m: x.m === "veh" ? "veh" : "ind", t: x.t.slice(0, 6000), n: +x.n || 0, f: +x.f || 0, at: +x.at || 0 }));
+  }catch(e){ HIST = []; }
+}
+function histSave(){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(HIST)); }catch(e){} }
+function histAdd(){
+  const res = st.res;
+  if(!res || !res.terms) return;
+  const text = parseTerms(st.text).terms.join("\n").slice(0, 6000);
+  HIST = HIST.filter(x => !(x.m === res.mode && x.t === text));
+  HIST.unshift({ m: res.mode, t: text, n: res.terms, f: res.found, at: Date.now() });
+  if(HIST.length > HIST_MAX) HIST.length = HIST_MAX;
+  histSave();
+}
+function stamp(at){
+  if(!at) return "";
+  const d = new Date(at);
+  return pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+}
+function histHTML(){
+  if(!HIST.length) return '<div class="hist-empty">' + esc(t("histEmpty")) + "</div>";
+  return HIST.map((x, i) => {
+    const terms = x.t.split("\n");
+    return '<button type="button" class="hist-row" data-hist="' + i + '">' + pill(x.m === "veh" ? "link" : "white", t(x.m === "veh" ? "segVehicles" : "segPeople")) +
+      '<span class="hist-t">' + esc(terms.slice(0, 2).join(" · ")) + (terms.length > 2 ? " <b>+" + (terms.length - 2) + "</b>" : "") + "</span>" +
+      '<span class="hist-at num">' + esc(stamp(x.at)) + "</span></button>";
+  }).join("") + '<button type="button" class="hist-clear" id="hist-clear">' + esc(t("histClear")) + "</button>";
+}
+function histToggle(open){
+  const box = $("hist");
+  if(open === undefined) open = box.hidden;
+  if(open) box.innerHTML = histHTML();
+  box.hidden = !open;
+  $("hist-btn").classList.toggle("on", open);
+  $("hist-btn").setAttribute("aria-expanded", open ? "true" : "false");
+}
+function histPick(i){
+  const x = HIST[i];
+  if(!x) return;
+  setMode(x.m);
+  $("mt").value = x.t;
+  histToggle(false);
+  goMulti();
+}
+
+/* What is on screen is kept for this visit only, so coming back to the page
+   - from the home screen and in again, or after the phone reloaded it - finds
+   the list where it was left. It is gone when the app is closed. */
+const KEEP_KEY = "ncm_multi_last";
+function keep(){ try{ sessionStorage.setItem(KEEP_KEY, JSON.stringify({ m: st.mode, t: st.text })); }catch(e){} }
+function kept(){
+  try{
+    const o = JSON.parse(sessionStorage.getItem(KEEP_KEY) || "null");
+    if(o && typeof o.t === "string") return { m: o.m === "veh" ? "veh" : "ind", t: o.t };
+  }catch(e){}
+  return null;
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+function setMode(mode){
+  st.mode = mode === "veh" ? "veh" : "ind";
+  [].forEach.call(document.querySelectorAll("#seg button"), b => b.classList.toggle("on", b.dataset.mmode === st.mode));
+  const veh = st.mode === "veh";
+  $("mt").placeholder = t(veh ? "phPlates" : "phPeople");
+  $("mt").setAttribute("aria-label", t(veh ? "ariaPlates" : "ariaNids"));
+}
+function applyLang(){
+  document.documentElement.lang = LANG;
+  document.documentElement.dir = "rtl";            // right-to-left in both languages, as the permits system is
+  $("pagename").textContent = t("page");
+  const seg = document.querySelectorAll("#seg button");
+  seg[0].textContent = t("segPeople"); seg[1].textContent = t("segVehicles");
+  $("go").textContent = t("search"); $("clear").textContent = t("clear");
+  $("refresh").setAttribute("aria-label", t("refresh")); $("refresh").title = t("refresh");
+  $("hist-btn").setAttribute("aria-label", t("histAria")); $("hist-btn").title = t("histAria");
+  $("dr-x").setAttribute("aria-label", t("close"));
+  setMode(st.mode); multiLines(); paintSrc();
+}
+$("seg").addEventListener("click", e => {
+  const b = e.target.closest("[data-mmode]");
+  if(!b || b.dataset.mmode === st.mode) return;
+  setMode(b.dataset.mmode);
+  // the same list, asked of the other sheet — if a list has been asked at all
+  if(st.res){ st.text = $("mt").value; runMulti(); paintMulti(); keep(); }
+});
+$("mt").addEventListener("input", multiLines);
+$("go").addEventListener("click", () => { $("mt").blur(); histToggle(false); goMulti(); });
+$("clear").addEventListener("click", () => {
+  $("mt").value = ""; st.text = ""; st.res = null;
+  multiLines(); paintMulti(); keep(); histToggle(false);
+  $("mt").focus();
+});
+$("hist-btn").addEventListener("click", () => histToggle());
+$("hist").addEventListener("click", e => {
+  if(e.target.closest("#hist-clear")){ HIST = []; histSave(); return histToggle(true); }
+  const row = e.target.closest("[data-hist]");
+  if(row) histPick(+row.dataset.hist);
+});
+let refreshing = false;
+$("refresh").addEventListener("click", () => {
+  if(refreshing) return;
+  refreshing = true;
+  $("refresh").classList.add("spin");
+  loadAll().finally(() => { refreshing = false; $("refresh").classList.remove("spin"); });
+});
+$("mres").addEventListener("click", e => {
+  const row = e.target.closest(".mrow[data-open]");
+  if(row) openDrawer(row.dataset.open);
+});
+$("dr-body").addEventListener("click", e => {
+  const link = e.target.closest("[data-open]");
+  if(link) openDrawer(link.dataset.open);
+});
+$("dr-x").addEventListener("click", closeDrawer);
+$("veil").addEventListener("click", closeDrawer);
+
+/* ============================================================
+   BOOT
+   The shell at the app root owns the PIN. Arriving here without the unsealed
+   key means this device was never let in, or the unlock was revoked, so the
+   page hands the visitor back to the door.
+   ============================================================ */
+function storedKey(){
+  // The cookie survives the storage sweeps that wipe localStorage, and the
+  // other way round; either one alone is enough to stay unlocked.
+  let flag = null;
+  try{ flag = localStorage.getItem(UNLOCK_KEY); }catch(e){}
+  if(!flag){
+    const hit = document.cookie.split("; ").find(c => c.startsWith(UNLOCK_KEY + "="));
+    flag = hit ? decodeURIComponent(hit.slice(UNLOCK_KEY.length + 1)) : null;
+  }
+  if(flag !== ACCESS_VERSION) return null;
+  try{ return localStorage.getItem(AUTH_KEY); }catch(e){ return null; }
+}
+const key = storedKey();
+if(!key){
+  location.replace("../");
+}else{
+  sb = supabase.createClient(SUPABASE_URL, key);
+  histLoad();
+  const last = kept();
+  if(last){ st.mode = last.m; st.text = last.t; $("mt").value = last.t; }
+  applyLang();
+  paintMulti();
+  loadAll().then(() => {
+    // the list left on screen last time is asked again, now that there is something to ask
+    if(last && parseTerms(last.t).terms.length && !st.res){ runMulti(); paintMulti(); }
+  });
+}
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("../service-worker.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

@@ -167,8 +167,8 @@ button{font-family:inherit;cursor:pointer;}
 .home-brand{margin:6px auto 4px;cursor:default;user-select:none;-webkit-user-select:none;}
 .home-brand.locking{opacity:.45;transition:opacity 1.4s linear;}
 .doors{
-  display:flex;flex-direction:column;gap:16px;
-  width:100%;max-width:480px;margin:34px auto 0;
+  display:flex;flex-direction:column;gap:14px;
+  width:100%;max-width:480px;margin:28px auto 0;
 }
 /* Each card carries the whole of its system's colour — the logo's own blue for
    the staff, its own green for the permits — so the two are told apart before
@@ -176,7 +176,7 @@ button{font-family:inherit;cursor:pointer;}
    which keeps the card sitting on the page instead of cut out of it. */
 .door{
   display:block;text-align:center;text-decoration:none;
-  padding:34px 22px;border-radius:22px;
+  padding:26px 22px;border-radius:22px;
   background:var(--accent);color:#fff;
   box-shadow:0 10px 26px var(--accent-shadow);
   /* the touch mark below is drawn inside the card and must not spill out of it */
@@ -205,8 +205,15 @@ button{font-family:inherit;cursor:pointer;}
 #home:not([hidden]) .home-brand{animation:brandIn .45s ease-out backwards;}
 #home:not([hidden]) .door{animation:doorIn .55s cubic-bezier(.2,.8,.2,1) .08s backwards;}
 #home:not([hidden]) .door + .door{animation-delay:.2s;}
+#home:not([hidden]) .door + .door + .door{animation-delay:.32s;}
 #door-emp{--accent:#1565c0;--accent-shadow:rgba(21,101,192,.34);}
 #door-per{--accent:#4ba548;--accent-shadow:rgba(75,165,72,.34);}
+/* The list search: a mid yellow of its own, the third colour on the page. White
+   words are lost on yellow, so this card alone writes in a dark brown, and its
+   touch ring is dark for the same reason. */
+#door-multi{--accent:#f2bf3f;--accent-shadow:rgba(214,150,26,.36);}
+#door-multi .door-title{color:#3b2a04;}
+#door-multi::after{background:#7a4703;}
 
 /* The mark carries the logo's own three colours, so it needs a light ground to
    sit on: the N's blue would vanish into the blue card and the C's green into
@@ -307,6 +314,10 @@ button{font-family:inherit;cursor:pointer;}
       <span class="door-mark" aria-hidden="true"><span class="ncm">N<i>C</i><b>M</b></span></span>
       <span class="door-title" id="per-title">تصاريح</span>
     </a>
+    <a class="door" href="./multi/" id="door-multi">
+      <span class="door-mark" aria-hidden="true"><span class="ncm">N<i>C</i><b>M</b></span></span>
+      <span class="door-title" id="multi-title">بحث متكرر</span>
+    </a>
   </div>
 
   <p class="credit">
@@ -361,6 +372,7 @@ const I18N = {
     checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح',
     empTitle:'موظفين',
     perTitle:'تصاريح',
+    multiTitle:'بحث متكرر',
     lockConfirm:'قفل التطبيق؟ هيطلب الرقم السري تاني على الجهاز ده.'
   },
   en:{
@@ -369,6 +381,7 @@ const I18N = {
     checking:'Checking', wrongPin:'Incorrect PIN',
     empTitle:'Employees',
     perTitle:'Permits',
+    multiTitle:'List search',
     lockConfirm:'Lock the app? This device will be asked for the PIN again.'
   }
 };
@@ -386,6 +399,7 @@ function applyLang(){
   $('pinboxes').setAttribute('aria-label', t('pinAria'));
   $('emp-title').textContent = t('empTitle');
   $('per-title').textContent = t('perTitle');
+  $('multi-title').textContent = t('multiTitle');
 }
 function toggleLang(){
   lang = (lang === 'ar') ? 'en' : 'ar';
@@ -418,6 +432,8 @@ function writeFlag(){
 }
 function clearFlag(){
   try{ localStorage.removeItem(UNLOCK_KEY); localStorage.removeItem(AUTH_KEY); }catch(e){}
+  // the list search keeps what was searched for on this phone; a locked phone keeps none of it
+  try{ localStorage.removeItem('ncm_multi_history'); sessionStorage.removeItem('ncm_multi_last'); }catch(e){}
   document.cookie = UNLOCK_KEY + '=;max-age=0;path=' + APP_ROOT;
   idbSet(null);
 }

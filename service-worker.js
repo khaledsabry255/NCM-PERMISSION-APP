@@ -5,7 +5,7 @@
 // Bump CACHE with every upload, otherwise devices keep serving the copy they
 // already have and never see the new files — including a raised
 // ACCESS_VERSION, which is the only way to lock a device that is already in.
-const CACHE = 'ncm-unified-v35';
+const CACHE = 'ncm-unified-v36';
 const SHELL = [
   './',
   './index.html',
@@ -14,6 +14,8 @@ const SHELL = [
   './employees/index.html',
   './permits/',
   './permits/index.html',
+  './multi/',
+  './multi/index.html',
   './supabase.min.js',
   './lib/papaparse.min.js',
   './icons/icon-192.png',
