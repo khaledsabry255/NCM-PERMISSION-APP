@@ -179,10 +179,32 @@ button{font-family:inherit;cursor:pointer;}
   padding:34px 22px;border-radius:22px;
   background:var(--accent);color:#fff;
   box-shadow:0 10px 26px var(--accent-shadow);
-  transition:transform .14s,box-shadow .2s,filter .16s;
+  /* the touch mark below is drawn inside the card and must not spill out of it */
+  position:relative;overflow:hidden;
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .2s,filter .16s;
 }
 .door:hover{box-shadow:0 16px 38px var(--accent-shadow);filter:brightness(1.06);}
-.door:active{transform:scale(.985);}
+/* A card gives under the finger: it sinks a little and dims, and comes back
+   when it is let go. */
+.door:active{transform:scale(.965);filter:brightness(.95);}
+/* ...and answers where it was touched: a soft ring opens from under the
+   fingertip and fades. --rx/--ry are set by the script at each touch. */
+.door::after{
+  content:"";position:absolute;left:var(--rx,50%);top:var(--ry,50%);
+  width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;
+  background:#fff;opacity:0;transform:scale(0);pointer-events:none;
+}
+.door.rip::after{animation:doorRip .6s ease-out;}
+@keyframes doorRip{from{opacity:.3;transform:scale(0);}to{opacity:0;transform:scale(30);}}
+/* The two cards arrive one after the other when the home screen opens: each
+   rises into its place. The movement fills backwards only, so once it is over
+   the card is exactly as it is drawn. Whoever asked the phone for less motion
+   gets none (the rule at the top). */
+@keyframes doorIn{from{opacity:0;transform:translateY(20px) scale(.94);}}
+@keyframes brandIn{from{opacity:0;transform:translateY(-8px);}}
+#home:not([hidden]) .home-brand{animation:brandIn .45s ease-out backwards;}
+#home:not([hidden]) .door{animation:doorIn .55s cubic-bezier(.2,.8,.2,1) .08s backwards;}
+#home:not([hidden]) .door + .door{animation-delay:.2s;}
 #door-emp{--accent:#1565c0;--accent-shadow:rgba(21,101,192,.34);}
 #door-per{--accent:#4ba548;--accent-shadow:rgba(75,165,72,.34);}
 
@@ -564,6 +586,20 @@ pin.addEventListener('keydown', e => { if(e.key==='Enter') submitPin(); });
   mark.addEventListener('pointerdown', start);
   ['pointerup','pointerleave','pointercancel'].forEach(ev => mark.addEventListener(ev, stop));
 })();
+
+/* A card answers where it is touched: the ring in its styles opens from under
+   the fingertip. Taking the class off and reading a width before putting it
+   back is what lets a second touch start the ring again. */
+[].forEach.call(document.querySelectorAll('.door'), door => {
+  door.addEventListener('pointerdown', e => {
+    const box = door.getBoundingClientRect();
+    door.style.setProperty('--rx', (e.clientX - box.left) + 'px');
+    door.style.setProperty('--ry', (e.clientY - box.top) + 'px');
+    door.classList.remove('rip');
+    void door.offsetWidth;
+    door.classList.add('rip');
+  });
+});
 
 /* ---------- boot ---------- */
 applyLang();

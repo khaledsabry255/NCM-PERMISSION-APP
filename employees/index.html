@@ -275,15 +275,30 @@ html[dir="ltr"] .tile{direction:ltr;}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 6px 16px rgba(31,78,121,.07);
   backdrop-filter:blur(12px) saturate(1.3);
   -webkit-backdrop-filter:blur(12px) saturate(1.3);
-  animation:rise .26s ease-out both;
   /* a button, so it needs telling to look like the div it replaced */
   width:100%;font:inherit;color:inherit;
   /* the name in the middle, the figure under it */
   align-items:center;text-align:center;
-  transition:transform .12s,box-shadow .18s;
+  /* the touch mark below is drawn inside the tile and must not spill out of it */
+  position:relative;overflow:hidden;
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .18s,filter .16s;
 }
 .tile:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 8px 20px rgba(21,101,192,.16);}
-.tile:active{transform:scale(.98);}
+/* A tile gives under the finger: it sinks a little and dims, and comes back
+   when it is let go. */
+.tile:active{transform:scale(.955);filter:brightness(.96);}
+/* ...and answers where it was touched: a soft ring opens from under the
+   fingertip and fades. --rx/--ry are set by the script at each touch. */
+.tile::after{
+  content:"";position:absolute;left:var(--rx,50%);top:var(--ry,50%);
+  width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  background:var(--brand-blue);opacity:0;transform:scale(0);pointer-events:none;
+}
+.tile.warn::after{background:#7a4703;}
+.tile.bad::after{background:#a81f1f;}
+.tile.ban::after{background:#fff;}
+.tile.rip::after{animation:tileRip .55s ease-out;}
+@keyframes tileRip{from{opacity:.22;transform:scale(0);}to{opacity:0;transform:scale(24);}}
 .tile:disabled{cursor:default;opacity:.6;box-shadow:none;transform:none;}
 /* The three toned sets keep their meaning through the glass — the tint is the
    same colour as before, carried at part strength instead of solid. */
@@ -341,9 +356,24 @@ html[dir="ltr"] .tile{direction:ltr;}
    out of the edge and fades. Only the two that mean a permit needs acting on
    ever carry it, and the reduced-motion rule at the top stops it dead for
    anyone who has asked the phone for stillness. */
-.tile.pulse{animation:rise .26s ease-out both, tilePulse 1.9s ease-in-out .35s infinite;}
+.tile.pulse{animation:tilePulse 1.9s ease-in-out .35s infinite;}
 .tile.warn.pulse{--pulse:rgba(214,150,26,.55);}
 .tile.bad.pulse {--pulse:rgba(206,70,70,.45);}
+/* ---------- boxes arriving ----------
+   When a screen of boxes is OPENED - the board, or the inside of a department -
+   they come in one after another, each rising into its place, and the figure
+   in each runs up to its value (countUp in the script). A screen that is only
+   redrawn where it stands - the refresh button - stays still: the class is on
+   the page for the moment of opening and no longer. The movement fills
+   backwards only, so once it is over the tile is exactly as it is drawn, press
+   and pulse included. --d is each tile's turn, set by the script in the order
+   they appear on the page. Whoever asked the phone for less motion gets none
+   (the rule at the top). */
+@keyframes boxIn{from{opacity:0;transform:translateY(16px) scale(.94);}}
+#out.enter .tile{animation:boxIn .5s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;}
+#out.enter .tile.pulse{animation:boxIn .5s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards, tilePulse 1.9s ease-in-out 1s infinite;}
+@keyframes headIn{from{opacity:0;transform:translateY(8px);}}
+#out.enter .tiles-head,#out.enter .sect,#out.enter .collar-lab{animation:headIn .4s ease-out var(--d,0s) backwards;}
 @keyframes tilePulse{
   0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 6px 16px rgba(31,78,121,.07), 0 0 0 0 var(--pulse);}
   55%    {box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 6px 16px rgba(31,78,121,.07), 0 0 0 6px var(--pulse);}
@@ -1120,6 +1150,7 @@ function setBusy(on){ out.setAttribute('aria-busy', on ? 'true' : 'false'); }
 
 function renderSkeleton(n){
   setBusy(true);
+  shownBoxes = '';
   let h = '';
   for(let i = 0; i < (n || 1); i++){
     h += '<div class="sk"><i class="r1"></i><i class="r2"></i><i class="r3"></i>' +
@@ -1127,6 +1158,71 @@ function renderSkeleton(n){
   }
   out.innerHTML = h;
 }
+/* ---------- boxes arriving ----------
+   A screen of tiles that has just been opened comes in with movement: each tile
+   in its turn, and the figure in it running up to its value. `key` says which
+   screen this is; painting the same one again where it stands is a redraw, and
+   a redraw stays still. See "boxes arriving" in the styles. */
+let shownBoxes = '', enterTimer = null;
+function arrive(key){
+  /* Nothing moves on a page nobody is looking at: a browser holds a hidden
+     page's animations at their first frame, which here is "not there yet", so
+     the tiles would sit invisible until it was looked at again. */
+  const opened = key !== shownBoxes && !document.hidden;
+  shownBoxes = key;
+  clearTimeout(enterTimer);
+  out.classList.toggle('enter', opened);
+  if(!opened) return;
+  // each tile's turn, in the order they sit on the page; a heading rides with the tile after it
+  let turn = 0;
+  out.querySelectorAll('.tile, .tiles-head, .sect, .collar-lab').forEach(el => {
+    el.style.setProperty('--d', Math.min(turn * 0.045, 0.72).toFixed(3) + 's');
+    if(el.classList.contains('tile')) turn++;
+  });
+  enterTimer = setTimeout(() => out.classList.remove('enter'), 1600);
+  countUp();
+}
+/* The figure in each tile runs up to its value as the tile arrives, starting
+   on that tile's own turn. The value is whatever the tile was drawn with, and
+   the run is timed by the clock rather than by counting frames: a tile that
+   has left the page is let be, and whatever became of the frames, the true
+   figure is put back at the end. */
+function countUp(){
+  if(document.hidden || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const RUN = 750, t0 = performance.now();
+  const figs = [].filter.call(out.querySelectorAll('.tile .tile-v'), el => /^\d+$/.test(el.textContent) && +el.textContent > 0)
+    .map(el => ({ el, end: +el.textContent,
+                  wait: (parseFloat(el.closest('.tile').style.getPropertyValue('--d')) || 0) * 1000 }));
+  if(!figs.length) return;
+  const put = now => {
+    let running = false;
+    figs.forEach(f => {
+      if(!f.el.isConnected) return;
+      const x = now === null ? 1 : Math.max(0, Math.min(1, (now - t0 - f.wait) / RUN));
+      f.el.textContent = x >= 1 ? f.end : Math.round(f.end * (1 - Math.pow(1 - x, 3)));
+      if(x < 1) running = true;
+    });
+    return running;
+  };
+  const step = now => { if(put(now)) requestAnimationFrame(step); };
+  put(t0);
+  requestAnimationFrame(step);
+  setTimeout(() => put(null), RUN + 1200);
+}
+/* A tile answers where it is touched: the ring in its styles opens from under
+   the fingertip. Taking the class off and reading a width before putting it
+   back is what lets a second touch start the ring again. */
+out.addEventListener('pointerdown', e => {
+  const tile = e.target.closest('button.tile');
+  if(!tile) return;
+  const box = tile.getBoundingClientRect();
+  tile.style.setProperty('--rx', (e.clientX - box.left) + 'px');
+  tile.style.setProperty('--ry', (e.clientY - box.top) + 'px');
+  tile.classList.remove('rip');
+  void tile.offsetWidth;
+  tile.classList.add('rip');
+});
+
 /* ---------- overview tiles (shown whenever the search box is empty) ---------- */
 let statsCache = null;
 
@@ -1187,6 +1283,7 @@ function paintStats(s){
             tileHTML(t('statForeign'), s.foreign || 0, 'job wide', 'foreign') +
           '</div>';
   out.innerHTML = html;
+  arrive('board');
 }
 
 /* The inside of one department: its jobs, white collar above blue. */
@@ -1213,6 +1310,7 @@ function paintDept(){
         '</div>' +
       '</div>'
     ).join('');
+  arrive('dept:' + d.name);
   window.scrollTo({top: 0, behavior: 'auto'});
 }
 function showDept(name){
@@ -1354,6 +1452,7 @@ async function runSearch(term){
 async function loadStats(){
   const myToken = ++token;
   setBusy(true);
+  shownBoxes = '';                 // the placeholders took the board's place: what comes next arrives
   out.innerHTML = '<div class="tiles">' +
     '<div class="sk-tile"></div><div class="sk-tile"></div>' +
     '<div class="sk-tile"></div><div class="sk-tile"></div></div>';
@@ -1554,6 +1653,7 @@ paintStuck();
 // while the app still says what it is.
 function revealResults(){
   setCompact(true);
+  shownBoxes = '';
 }
 
 /* ---------- save both photos ----------

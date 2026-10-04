@@ -81,6 +81,11 @@ body{
 /* Latin digits, laid out left-to-right even inside Arabic text. */
 .num{ direction:ltr; unicode-bidi:embed; display:inline-block; font-family:var(--mono); font-variant-numeric:lining-nums tabular-nums; }
 
+/* Whoever has asked the phone for less motion gets none of the movement below. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; }
+}
+
 .wrap{
   max-width:640px;
   margin:0 auto;
@@ -300,6 +305,10 @@ body.search-mode .tabs{ margin:10px 0; }
   justify-content:center;
   gap:7px;
 }
+/* Every control gives under the finger: it sinks a little while it is held and
+   comes back when it is let go. */
+.tab-btn:active, .search-go:active, .refresh-btn:active{ transform:scale(.955); }
+.search-go, .refresh-btn{ transition:transform .15s ease, filter .15s ease; }
 .tab-btn.active{ background:#FFD24D; border-color:#E0A800; color:#0B1114; }
 
 .status-line{
@@ -350,12 +359,20 @@ body.search-mode .tabs{ margin:10px 0; }
   backdrop-filter:blur(14px) saturate(1.15);
   -webkit-backdrop-filter:blur(14px) saturate(1.15);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 6px 18px rgba(21,101,192,.13);
-  animation:recordIn .25s ease;
+  /* A card arrives: it rises into its place, and when a search brings several
+     they come one after another rather than all at once. Backwards-filled, so
+     once the movement is over the card is exactly as it is drawn. */
+  animation:recordIn .46s cubic-bezier(.2,.8,.2,1) backwards;
 }
+.results > .person-card:nth-child(2){ animation-delay:.06s; }
+.results > .person-card:nth-child(3){ animation-delay:.12s; }
+.results > .person-card:nth-child(4){ animation-delay:.18s; }
+.results > .person-card:nth-child(n+5){ animation-delay:.24s; }
 @keyframes recordIn{
-  from{ opacity:0; transform:translateY(6px); }
-  to{ opacity:1; transform:translateY(0); }
+  from{ opacity:0; transform:translateY(16px) scale(.96); }
 }
+/* The page that waits for a search, and the answer when nothing was found, come in the same way. */
+.search-hint, .empty-state{ animation:recordIn .4s ease-out backwards; }
 .person-head{ padding:13px 15px 0; }
 .record-top{
   display:flex;
@@ -423,7 +440,11 @@ body.search-mode .tabs{ margin:10px 0; }
   cursor:pointer;
   transition:all .15s ease;
 }
+.occ-chip:active{ transform:scale(.9); }
 .occ-chip.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+/* Choosing another permit of the same person swaps what the card shows: the new one fades up into place. */
+.occ-content > *{ animation:occIn .28s ease-out backwards; }
+@keyframes occIn{ from{ opacity:0; transform:translateY(6px); } }
 
 .occ-content{ padding:13px 15px 15px; }
 
