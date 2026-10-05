@@ -25,7 +25,7 @@
    desk system (Khaled's NCM SYSTEM): the same way of reading the list and the
    same rules for who a line finds. What it LOOKS like is this app and nothing
    else - the desk's wide table of fifteen columns is no use on a phone, so
-   each answer is a short row and the rest is in the card behind it.
+   each answer is the cards the other two systems already draw for it.
 
    It is a file of its own on purpose, like the other two systems: it borrows
    their rules by copying them, and shares no name with either.
@@ -62,6 +62,15 @@
   --mono:'IBM Plex Mono',ui-monospace,monospace;
   --cond:'Barlow Condensed',sans-serif;
   --sans:'Tajawal',system-ui,sans-serif;
+  /* the employees system's tokens, by their own names, for its card below */
+  --gold:#1565c0;
+  --gold-soft:#1e75d6;
+  --brand-navy:#1f4e79;
+  --brand-ink:#0b1114;
+  --success:#12874f;  --success-bg:#dff3e7;  --success-br:#8fd3ae;
+  --warning:#b96e08;  --warning-bg:#fcebd5;  --warning-br:#efc383;
+  --danger:#c22f2f;   --danger-bg:#fbe3e3;   --danger-br:#efa9a9;
+  --neutral:#4a5a6b;  --neutral-bg:#edf0f3;  --neutral-br:#cbd3db;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;}
@@ -83,7 +92,7 @@ body{
   font-feature-settings:"locl" 0;
   font-variant-numeric:lining-nums;
 }
-.num{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed;display:inline-block;}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed;}
 button{font-family:inherit;cursor:pointer;}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px;}
 @media (prefers-reduced-motion:reduce){
@@ -177,20 +186,11 @@ button{font-family:inherit;cursor:pointer;}
 .pill.wait .dot{animation:blink 1.1s infinite;}
 @keyframes blink{50%{opacity:.3;}}
 
-/* ---------- pills ---------- */
-.pill{
-  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;line-height:1.5;
-  padding:3px 11px;border-radius:999px;white-space:nowrap;
-  color:var(--mute);background:var(--mute-bg);border:1px solid var(--mute-br);
-}
-.pill.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-br);}
-.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-br);}
-.pill.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad-br);}
+/* ---------- pills the page itself draws (the count on top, the sources) ----------
+   The base .pill is the employee card's, below; these are the kinds it does not have. */
 .pill.ban{background:var(--ban);color:#fff;border-color:var(--ban);}
-.pill.blue{background:var(--blue);color:#fff;border-color:var(--blue);}
-.pill.white{background:#fff;color:var(--text);border-color:var(--line-2);}
 .pill.link{background:var(--tint);color:var(--blue);border-color:var(--line-2);}
-button.pill{font-family:inherit;}
+.sum .pill,.src .pill{font-size:13px;padding:3px 11px;gap:6px;white-space:nowrap;}
 
 /* ---------- answers ---------- */
 #mres{margin-top:14px;}
@@ -199,15 +199,15 @@ button.pill{font-family:inherit;}
   background:var(--tint);border:1px solid var(--line-2);color:var(--text-2);text-align:center;
 }
 .note.warn{background:var(--warn-bg);border-color:var(--warn-br);color:#7a4703;}
-/* ---------- the answers ----------
-   Everything a line found is laid out in full, one card under another: the
-   employee's card with his photographs, and every permit the sheet holds for
-   him, newest first. Nothing is behind a tap - the list is read by scrolling
-   (asked for so, 5 October 2026: «تظهرلى الكروت تحت بعض»). */
+/* Everything a line found is laid out in full, one card under another, and
+   each card is the one its own system draws: the employee's card exactly as
+   the employees system shows it, and the permits card exactly as the permits
+   system shows it - one permit at a time, with the 1-2-3 buttons for a man or
+   a car that has several (asked for so, 5 October 2026). */
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}}
 .sum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-bottom:6px;animation:fadeUp .36s ease-out backwards;}
 /* the line of the list an answer belongs to: its number, and what was typed */
-.mterm{display:flex;align-items:center;gap:9px;margin:20px 2px 9px;}
+.mterm{display:flex;align-items:center;gap:9px;margin:20px 2px 4px;}
 .mterm::after{content:"";flex:1;height:1px;background:var(--line-2);opacity:.8;}
 .mrow-n{
   flex:none;min-width:27px;height:27px;padding:0 6px;border-radius:999px;
@@ -216,55 +216,389 @@ button.pill{font-family:inherit;}
   font-family:var(--mono);font-size:12px;font-weight:700;color:#3b2a04;
 }
 .term{font-family:'IBM Plex Mono','Tajawal','Segoe UI',Tahoma,sans-serif;font-size:14px;font-weight:700;color:var(--text-2);unicode-bidi:plaintext;word-break:break-word;}
-.hit{animation:fadeUp .44s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;}
-.hit + .hit{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line-2);}
+.hit + .hit{margin-top:18px;padding-top:6px;border-top:1px dashed var(--line-2);}
 .mrow{
-  display:flex;align-items:center;gap:11px;width:100%;
+  display:flex;align-items:center;gap:11px;width:100%;margin-top:10px;
   padding:12px 13px;border-radius:var(--r);
-  animation:fadeUp .44s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;
+  animation:fadeUp .44s cubic-bezier(.2,.8,.2,1) backwards;
 }
 .mrow.miss{justify-content:center;background:rgba(251,227,227,.78);border:1px solid var(--bad-br);}
 .mrow.more{justify-content:center;background:var(--panel-2);border:1px dashed var(--line-2);
-  font-size:13px;font-weight:700;color:var(--muted);text-align:center;line-height:1.7;margin-top:10px;}
-.dr-sec{margin:14px 4px 8px;font-size:13px;font-weight:800;color:var(--navy);}
-.dr-sec b{color:var(--blue);font-family:var(--mono);}
+  font-size:13px;font-weight:700;color:var(--muted);text-align:center;line-height:1.7;}
+
+/* ============================================================
+   THE EMPLOYEE CARD — copied from employees/index.html, rule for rule.
+   Change it there first, then bring the change here.
+   ============================================================ */
+/* download control, under both photos */
+.dlbtn{
+  width:100%;padding:12px;border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  border:1px solid var(--gold);background:var(--gold);
+  color:#fff;font-weight:800;font-size:14.5px;
+  transition:background .16s,color .16s,border-color .16s;
+}
+.dlbtn:hover{background:var(--gold-soft);}
+.dlbtn[disabled]{cursor:default;}
+.dlbtn.done{color:var(--success);border-color:var(--success-br);background:var(--success-bg);}
+.dlbtn.fail{color:var(--danger);border-color:var(--danger-br);background:var(--danger-bg);}
+
+/* ============================================================
+   EMPLOYEE CARD — one calm card
+   ============================================================ */
 .rec{
-  border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px;
+  /* pinned: the interface may flip, but a record the guard has learned to read
+     must not rearrange itself around him */
+  direction:rtl;
+  margin-top:14px;border-radius:var(--r-lg);overflow:hidden;
   border:1px solid rgba(255,255,255,.68);background:var(--card);
+  backdrop-filter:blur(13px) saturate(1.25);
+  -webkit-backdrop-filter:blur(13px) saturate(1.25);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 6px 18px rgba(21,101,192,.13);
+  animation:rise .26s ease-out both;
 }
-.rec .head{padding:18px 16px 14px;text-align:center;border-bottom:1px solid var(--card-line);}
+@keyframes rise{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
+.rec[data-s="ok"]  {--tone:var(--success);}
+.rec[data-s="warn"]{--tone:var(--warning);}
+.rec[data-s="bad"] {--tone:var(--danger);}
+.rec[data-s="mute"]{--tone:var(--neutral);}
+
+/* identity */
+.head{padding:22px 18px 18px;text-align:center;border-bottom:1px solid var(--card-line);}
 .code{
-  display:inline-flex;align-items:center;gap:7px;margin-bottom:9px;padding:3px 12px;border-radius:999px;
-  background:var(--panel-2);border:1px solid var(--line-2);font-size:13px;font-weight:700;color:var(--muted);
+  display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;
+  font-size:12px;font-weight:800;color:var(--gold);
+  background:var(--tint);border:1px solid var(--line-2);
+  border-radius:999px;padding:3px 12px;
 }
-.code .num{color:var(--blue);font-weight:700;font-size:15px;}
-.nm{font-size:19px;font-weight:800;line-height:1.42;margin:0;color:var(--text);}
-.nm-en{margin:4px 0 0;font-family:var(--cond);font-size:16.5px;font-weight:700;letter-spacing:.03em;color:var(--text-2);text-transform:uppercase;direction:ltr;}
-.pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:11px;}
-.permit{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid var(--card-line);}
-.permit.ok{background:rgba(223,243,231,.85);}
-.permit.warn{background:rgba(252,235,213,.9);}
-.permit.bad{background:rgba(251,227,227,.9);}
-.permit.ban{background:rgba(163,21,21,.92);color:#fff;}
-.permit.mute{background:rgba(237,240,243,.9);}
-.permit-k{font-size:13px;font-weight:800;}
-.permit-v{font-size:17px;font-weight:800;unicode-bidi:plaintext;text-align:end;}
-.permit-x{font-size:12px;font-weight:700;opacity:.82;margin-top:2px;text-align:end;}
-.grp{padding:10px 14px 4px;}
-.grp-t{display:block;font-size:12.5px;font-weight:800;color:var(--text-2);margin:0 2px 7px;}
-.rows{margin:0;}
+.code em{font-style:normal;color:var(--muted);font-size:12px;font-weight:700;}
+.code .num{font-size:13.5px;}
+.nm{font-size:20px;font-weight:800;line-height:1.42;margin:0;color:var(--text);letter-spacing:-.01em;}
+.nm-en{
+  font-family:var(--cond);font-weight:800;letter-spacing:.04em;font-size:19px;
+  color:var(--text-2);text-transform:uppercase;direction:ltr;margin:4px 0 0;line-height:1.3;
+}
+.pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;
+  padding:5px 13px;border-radius:999px;color:var(--neutral);
+  background:var(--neutral-bg);border:1px solid var(--neutral-br);
+}
+.pill.ok  {background:var(--success-bg);color:var(--success);border-color:var(--success-br);}
+.pill.warn{background:var(--warning-bg);color:var(--warning);border-color:var(--warning-br);}
+.pill.bad {background:var(--danger-bg);color:var(--danger);border-color:var(--danger-br);}
+.pill.mute{background:var(--neutral-bg);color:var(--neutral);border-color:var(--neutral-br);}
+.pill.blue {background:var(--gold);color:#fff;border-color:var(--gold);}
+.pill.white{background:#fff;color:var(--text);border-color:var(--line-2);}
+.ic{flex:none;width:13px;height:13px;}
+
+/* permit strip */
+.permit{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:15px 18px;border-bottom:1px solid var(--card-line);
+  background:color-mix(in srgb, var(--tone) 16%, #ffffff);
+}
+.permit-k{font-size:13px;font-weight:800;color:var(--text);}
+.permit-s{font-size:15.5px;font-weight:800;color:var(--tone);margin-top:3px;}
+.permit-c{font-size:14px;color:var(--text);margin-top:5px;font-weight:800;}
+.permit-d{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--tone);line-height:1;letter-spacing:-.02em;}
+.permit-d.na{font-family:var(--sans);font-size:17px;font-weight:800;color:var(--neutral);}
+.track{position:relative;height:4px;border-radius:999px;margin-top:9px;overflow:hidden;background:var(--line);}
+.track span{position:absolute;inset-block:0;inset-inline-start:0;border-radius:999px;background:var(--tone);opacity:.85;}
+
+/* info list — grouped rows, no extra cards */
+.grp{padding:0 14px;}
+.grp-t{
+  display:block;font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--text);
+  padding:15px 4px 8px;
+}
+.rows{margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
+/* every field sits in its own panel */
 .row{
-  display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:7px;
-  padding:10px 13px;border-radius:12px;background:rgba(255,255,255,.82);border:1px solid var(--card-line);
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding:11px 14px;border-radius:var(--r-sm);
+  background:rgba(255,255,255,.82);border:1px solid #c7d3e0;
 }
-.row dt{flex:none;font-size:13px;font-weight:800;color:var(--text-2);}
-.row dd{margin:0;font-size:14.5px;font-weight:800;color:var(--text);text-align:left;word-break:break-word;min-width:0;unicode-bidi:plaintext;}
-.row dd.num{font-weight:700;}
-.row dd.bad{color:var(--bad);}
-.shots{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;}
-.shots img{display:block;width:100%;border-radius:12px;border:1px solid var(--card-line);background:var(--tint);}
-.rec-pad{height:8px;}
+.row dt{flex:none;font-size:14px;font-weight:800;color:var(--text);margin:0;}
+.row dd{margin:0;font-size:15.5px;font-weight:800;color:var(--text);text-align:end;word-break:break-word;min-width:0;}
+.row dd.num{font-size:15.5px;font-weight:700;}
+/* English text in an Arabic card: the direction comes from the text itself, so
+   "TITAN2 (NCM)" keeps its closing bracket at the end. The side is spelled
+   out, because `end` would follow the text's own direction and push a second
+   line away from where every other value sits. */
+.row dd.ltr{unicode-bidi:plaintext;text-align:left;}
+html[dir="ltr"] .row dd.ltr{text-align:right;}
+.row dd.warn{color:var(--warning);}
+.row dd.bad{color:var(--danger);}
+
+/* photos — separate panels, only slightly inset */
+.shots{padding:0 14px 16px;margin-top:15px;display:flex;flex-direction:column;gap:9px;}
+.shot{
+  position:relative;margin:0;overflow:hidden;border-radius:var(--r);
+  background:#f7fafd;border:1px solid #cdd7e2;
+}
+.shot img{display:block;width:100%;height:auto;cursor:zoom-in;}
+.noshot{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  aspect-ratio:16/10;background:var(--tint);color:var(--neutral);
+}
+.noshot span{font-size:14px;font-weight:800;}
+.noshot svg{opacity:.5;}
+
+/* lightbox */
+#zoom{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.94);}
+#zoom.on{display:flex;}
+#zoom img{max-width:100%;max-height:88dvh;border-radius:var(--r);}
+#zoom button{
+  position:absolute;top:calc(14px + env(safe-area-inset-top));inset-inline-end:14px;
+  width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2);
+  background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;
+}
+
+
+/* ============================================================
+   THE PERMITS CARD — copied from permits/index.html, rule for rule.
+   Its colours and sizes are the permits system's own, so they are set on the
+   wrapper each of its cards sits in and reach nothing else on the page.
+   ============================================================ */
+.pc{
+  /* Brand, taken from the NCM wordmark */
+  --blue:#1565C0;
+  --blue-deep:#0E4C93;
+  --green:#4BA548;
+  --grey:#3B4A5C;
+
+  --page:#EDF2F8;
+  --card:#FFFFFF;
+  --field:#F3F7FB;
+  --tint:#E6EEF8;
+  --line:#D2DEEC;
+  --line-soft:#E2E9F2;
+  --edge:#C0D3EC;
+
+  --ink:#0B1114;
+  --ink-2:#2A3238;
+
+  --ok:#12874F;      --ok-bg:#DFF3E7;    --ok-br:#8FD3AE;
+  --soon:#B96E08;    --soon-bg:#FCEBD5;  --soon-br:#EFC383;
+  --bad:#C22F2F;     --bad-bg:#FBE3E3;   --bad-br:#EFA9A9;
+  --ban:#A31515;     --ban-bg:#F6D6D6;   --ban-br:#E08A8A;
+  --unclear:#5A646C; --unclear-bg:#EDF0F3; --unclear-br:#CBD3DB;
+
+  --topbar-h:66px;
+
+  /* Ported from the sister app: translucent card over the page, and the mono
+     face it uses for figures. */
+  --card-glass:rgba(172,188,206,.6);
+  --card-line:#b3c2d4;
+  --row-bg:rgba(255,255,255,.82);
+  --row-line:#c7d3e0;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  /* Light blue shared by the send-date and ASE DATA boxes */
+  --sky:#A9CCEE;
+  --sky-line:#7BAADD;
+  margin-top:14px;color:var(--ink);
+}
+.pc .num{display:inline-block;font-variant-numeric:lining-nums tabular-nums;}
+/* ---- Record card ---- */
+.person-card{
+  background:var(--card-glass);
+  border:1px solid var(--card-line);
+  border-radius:18px;
+  overflow:hidden;
+  backdrop-filter:blur(14px) saturate(1.15);
+  -webkit-backdrop-filter:blur(14px) saturate(1.15);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 6px 18px rgba(21,101,192,.13);
+  /* A card arrives: it rises into its place, and when a search brings several
+     they come one after another rather than all at once. Backwards-filled, so
+     once the movement is over the card is exactly as it is drawn. */
+  animation:recordIn .46s cubic-bezier(.2,.8,.2,1) backwards;
+}
+.results > .person-card:nth-child(2){ animation-delay:.06s; }
+.results > .person-card:nth-child(3){ animation-delay:.12s; }
+.results > .person-card:nth-child(4){ animation-delay:.18s; }
+.results > .person-card:nth-child(n+5){ animation-delay:.24s; }
+@keyframes recordIn{
+  from{ opacity:0; transform:translateY(16px) scale(.96); }
+}
+/* The page that waits for a search, and the answer when nothing was found, come in the same way. */
+.search-hint, .empty-state{ animation:recordIn .4s ease-out backwards; }
+.person-head{ padding:13px 15px 0; }
+.record-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:11px;
+  /* Count badge left, numbered chips right, regardless of interface language. */
+  direction:rtl;
+}
+.record-identity{ min-width:0; padding-bottom:13px; border-bottom:1px solid var(--line-soft); }
+.record-name{
+  font-family:'Tajawal',sans-serif;
+  font-weight:900;
+  font-size:21px;
+  color:var(--ink);
+  line-height:1.35;
+  text-align:center;
+  background:#ffffff;
+  border:1px solid var(--edge);
+  border-radius:11px;
+  padding:13px 10px;
+  margin-bottom:8px;
+}
+.record-subid{
+  text-align:center;
+  font-weight:800;
+  font-size:17px;
+  letter-spacing:.4px;
+  color:var(--ink);
+  background:#ffffff;
+  border:1px solid var(--edge);
+  border-radius:11px;
+  padding:11px;
+}
+.count-badge{
+  /* "2 permits" is a number then a Latin word; inside an RTL box the two are
+     separate runs and get laid out right-to-left, reading "permits 2". Let the
+     badge take its direction from its own text instead. */
+  unicode-bidi:plaintext;
+  background:#F7C58A;
+  border:1px solid #D98B2B;
+  color:#8A4E04;
+  font-size:13px;
+  font-weight:800;
+  padding:5px 11px;
+  border-radius:100px;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+
+.occ-selector{ display:flex; gap:5px; overflow-x:auto; direction:rtl; }
+.occ-chip{
+  flex-shrink:0;
+  min-width:30px;
+  height:30px;
+  padding:0 9px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--ink-2);
+  font-family:inherit;
+  font-size:13.5px;
+  font-weight:800;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.occ-chip:active{ transform:scale(.9); }
+.occ-chip.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+/* Choosing another permit of the same person swaps what the card shows: the new one fades up into place. */
+.occ-content > *{ animation:occIn .28s ease-out backwards; }
+@keyframes occIn{ from{ opacity:0; transform:translateY(6px); } }
+
+.occ-content{ padding:13px 15px 15px; }
+
+/* Heading for the ASE DATA block inside a record card */
+/* Same treatment as the send-date box, one size down */
+.rows-group-title{
+  text-align:center;
+  background:var(--sky);
+  border:1px solid var(--sky-line);
+  border-radius:9px;
+  padding:9px 10px;
+  margin:12px 0 8px;
+  font-size:15.5px;
+  font-weight:900;
+  letter-spacing:1.2px;
+  color:var(--ink);
+}
+
+.record-rows{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.record-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:11px 14px;
+  border-radius:10px;
+  background:var(--row-bg);
+  border:1px solid var(--row-line);
+  font-size:16px;
+  /* Fixed order — label right, value left — so the pair never swaps sides
+     when the interface language changes. */
+  direction:rtl;
+}
+.record-row .k{
+  color:var(--ink-2);
+  font-weight:800;
+  font-size:14.5px;
+  flex-shrink:0;
+  /* A fixed column: "Mail type" and "نوع الإرسال" are not the same length, and
+     letting the label size itself moved the value's edge on every language
+     change. The width holds the split still; long labels wrap instead. */
+  width:96px;
+  text-align:start;
+  overflow-wrap:break-word;
+}
+.record-row .v{ color:var(--ink); font-weight:800; flex:1; unicode-bidi:plaintext; text-align:left; }
+
+/* ---- Permit status banner ---- */
+.permit-banner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 14px;
+  border-radius:11px;
+  border:1.5px solid transparent;
+  margin-bottom:12px;
+  /* Icon + tag stay on the right, the status value on the left, in both languages. */
+  direction:rtl;
+}
+.permit-banner .pb-left{ display:flex; align-items:center; gap:9px; }
+.permit-icon{
+  width:30px; height:30px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  color:#fff;
+}
+.permit-banner .pb-tag{ font-size:13px; font-weight:800; }
+.pb-body{ text-align:end; min-width:0; }
+.permit-banner .pb-value{ font-size:17px; font-weight:800; unicode-bidi:plaintext; }
+.permit-banner .pb-extra{ font-size:12px; font-weight:700; opacity:.8; margin-top:3px; }
+
+.pb-ok{ background:var(--ok-bg); border-color:var(--ok-br); color:var(--ok); }
+.pb-ok .permit-icon{ background:var(--ok); }
+.pb-soon{ background:var(--soon-bg); border-color:var(--soon-br); color:var(--soon); }
+.pb-soon .permit-icon{ background:var(--soon); }
+.pb-bad{ background:var(--bad-bg); border-color:var(--bad-br); color:var(--bad); }
+.pb-bad .permit-icon{ background:var(--bad); }
+.pb-ban{ background:var(--ban-bg); border-color:var(--ban-br); color:var(--ban); }
+.pb-ban .permit-icon{ background:var(--ban); }
+.pb-unclear{ background:var(--unclear-bg); border-color:var(--unclear-br); color:var(--unclear); }
+.pb-unclear .permit-icon{ background:var(--unclear); }
+
+.occ-date-box{
+  text-align:center;
+  background:var(--sky);
+  border:1px solid var(--sky-line);
+  border-radius:11px;
+  padding:12px 10px;
+  margin-bottom:12px;
+}
+.occ-date-box .odb-label{ font-weight:900; font-size:17px; color:var(--ink); }
+.occ-date-box .odb-value{ font-size:17px; color:var(--ink); font-weight:900; margin-top:5px; }
+.occ-date-box .odb-extra{ font-size:14.5px; color:var(--ink-2); font-weight:800; margin-top:4px; }
+
+/* Always English, whichever language the interface is in: a name is not
+   translated, and it reads the same on every screen of the app. */
 
 /* ---------- credit ---------- */
 .credit{padding-top:28px;text-align:center;direction:ltr;line-height:1.55;}
@@ -319,6 +653,13 @@ button.pill{font-family:inherit;}
       <span class="credit-name">KHALED SABRY</span>
     </p>
   </div>
+</div>
+
+<div id="zoom" role="dialog" aria-modal="true" aria-label="عرض الصورة">
+  <button id="zoom-x" type="button" aria-label="إغلاق">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+  </button>
+  <img id="zoom-img" alt="">
 </div>
 
 <script>
@@ -519,6 +860,7 @@ function buildEmployees(rows){
     if(!r) return;
     const e = {};
     EMP_FIELDS.forEach(k => { e[k] = clean(r[k]); });
+    e.raw = r;                                                   // the row as the table has it: what the employee card is drawn from
     if(!e.emp_code || seen.has(e.emp_code)) return;
     seen.add(e.emp_code);
     e.resigned = !!e.resignation_end_date;                       // any value counts, even «غير محدد»
@@ -590,7 +932,9 @@ function buildIndividuals(rows){
       sender: normalize(c[C.SENDER]), mail: normalize(c[C.MAIL]), letter: normalize(c[C.LETTER]),
       company: normalize(c[C.COMPANY]), ldate: normalize(c[C.LDATE]), anote: normalize(c[C.ANOTE]),
       day: normalize(c[C.DAY]), dayDate: day ? day.date : null, dayText: day ? day.text : "",
-      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT])
+      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT]),
+      // what the permits card reads, under the names it reads them by
+      mailType: normalize(c[C.MAIL]), permit: c[C.PERMIT], dayParsed: day ? day.date : null, ase: PER_CARD.aseValues(c)
     });
   });
   const list = [], byNid = new Map();
@@ -616,7 +960,8 @@ function buildVehicles(rows){
     g.records.push({
       plate, type: normalize(c[C.TYPE]), owner: normalize(c[C.OWNER]), mail: normalize(c[C.MAIL]),
       day: normalize(c[C.DAY]), dayDate: day ? day.date : null, dayText: day ? day.text : "",
-      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT])
+      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT]),
+      mailType: normalize(c[C.MAIL]), permit: c[C.PERMIT], dayParsed: day ? day.date : null
     });
   });
   const list = [];
@@ -708,7 +1053,7 @@ function loadAll(){
     if(st.res) { runMulti(); paintMulti(); }           // an answer on screen is asked again with what has just come in
   };
   const emp = fetchAllEmployees().then(rows => done("emp", buildEmployees(rows)), err => { console.error("[NCM] employees", err); done("emp", null); });
-  const ind = tabCsvUrl(INDIVIDUALS_TAB).then(loadCSV).then(rows => done("ind", buildIndividuals(rows.slice(1))), err => { console.error("[NCM] individuals", err); done("ind", null); });
+  const ind = tabCsvUrl(INDIVIDUALS_TAB).then(loadCSV).then(rows => { PER_CARD.setAseColumns(rows[0] || []); done("ind", buildIndividuals(rows.slice(1))); }, err => { console.error("[NCM] individuals", err); done("ind", null); });
   const veh = tabCsvUrl(VEHICLES_TAB).then(loadCSV).then(rows => done("veh", buildVehicles(rows.slice(1))), err => { console.error("[NCM] vehicles", err); done("veh", null); });
   return Promise.all([emp, ind, veh]);
 }
@@ -840,94 +1185,58 @@ function runMulti(){
 }
 
 /* ============================================================
-   THE TABLE OF ANSWERS
+   THE ANSWERS
    ============================================================ */
 const num = s => '<span class="num">' + esc(s) + "</span>";
-const dash = s => (s === "" || s === null || s === undefined) ? "—" : s;
 const pill = (cls, text) => '<span class="pill ' + cls + '">' + esc(text) + "</span>";
-/* The standings the page words itself. Anything else typed in a permit cell is
-   the sheet's own wording and is shown as written — in English the few phrases
-   the permits system already knows are given their English names. */
-const ST_KEY = { BANNED:"stBanned", VERIFIED:"stValid", EXPIRED:"stExpired", EXPIRING:"stExpiring", "NO DATE":"stNoDate", "NO PERMIT":"stNoPermit" };
-const stLabel = e => ST_KEY[e.st.code] ? t(ST_KEY[e.st.code]) : e.st.label;
-const PHRASE_EN = [
-  ["منع جنائى","Criminal ban"], ["منع جنائي","Criminal ban"], ["الرخصه منتهيه","License expired"], ["الرخصة منتهية","License expired"],
-  ["غيرت لوحات عايزة جديد","Plates changed - new permit required"], ["غيرت لوحات","Plates changed"], ["عايز تجديد","Renewal required"],
-  ["تجديد","Renewal"], ["مؤقت","Temporary"], ["منع","Banned"], ["انتظار","Awaiting response"], ["غير محدد","Undetermined"]
-];
-function permitText(p){
-  if(p.auto === "pending") return t("cPending");
-  if(p.auto === "undet") return t("permitUndet");
-  if(p.date || !isEN()) return p.main;
-  for(const pair of PHRASE_EN) if(p.main.includes(pair[0])) return pair[1];
-  return p.main;
-}
-const permitPill = p => '<span class="pill ' + p.cls + '">' + (p.date ? num(p.main) : esc(permitText(p))) + "</span>";
-const empPermitText = e => e.pdate ? fmt(e.pdate) : (e.permit_date || stLabel(e));
-const empPermit = e => '<span class="pill ' + e.st.k + '">' + (e.pdate ? num(fmt(e.pdate)) : esc(empPermitText(e))) + "</span>";
-const empTag = e => stLabel(e) + (e.resigned ? " · " + t("resigned") : "");
 const CAT_PILL = { ok:"ok", soon:"warn", expired:"bad", ban:"ban", renew:"bad", temp:"mute", pending:"warn", undet:"mute" };
 const CAT_NAME = { ok:"cOk", soon:"cSoon", expired:"cExpired", ban:"cBan", renew:"cRenew", temp:"cTemp", pending:"cPending", undet:"cUndet" };
-const hasCell = v => !(v === "" || v === null || v === undefined);
-/* Everything one answer is, in full. A man who is in both sources shows as the
-   employee he is - card and photographs - and under it every permit the sheet
-   holds for him; a man who is only in the sheet gets a head of his own first. */
-function personHeadHTML(g){
-  return '<article class="rec"><div class="head">' +
-      '<h2 class="nm">' + esc(g.name || t("noNameShort")) + "</h2>" +
-      '<div class="pills">' + (g.nationalId ? '<span class="pill white">' + num(g.nationalId) + "</span>" : pill("mute", t("nidNotReg"))) +
-        '<span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span></div></div>" +
-      (g.names.size > 1 ? group(t("nameForms"), [...g.names.values()].map(n => rowHTML("—", n)).join("")) : "") +
-    '<div class="rec-pad"></div></article>';
-}
-function cardsPeople(r){
-  const g = r.g;
-  let h = r.emps.map(empCardHTML).join("");
-  if(g){
-    if(!r.emps.length) h += personHeadHTML(g);
-    h += '<div class="dr-sec">' + esc(t(r.emps.length ? "hisPermits" : "permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
-         historyHTML(g.records, false);
+/* Everything one answer is, in full, in the cards of the systems it comes
+   from: the employee's card for the employee he is, and the permits card for
+   what the sheet holds on him - the newest permit showing, the others one tap
+   away on its numbered buttons, exactly as in the permits system. */
+function hitNode(r, veh){
+  const hit = document.createElement("div");
+  hit.className = "hit";
+  if(!veh && r.emps.length) hit.innerHTML = r.emps.map(e => EMP_CARD.recordHTML(e.raw)).join("");
+  if(r.g){
+    const pc = document.createElement("div");
+    pc.className = "pc";
+    if(veh) PER_CARD.renderVehicleCard(r.g, pc); else pc.appendChild(PER_CARD.personCard(r.g));
+    hit.appendChild(pc);
   }
-  return h;
-}
-function cardsVehicle(r){
-  const g = r.g;
-  return '<article class="rec"><div class="head"><h2 class="nm">' + esc(g.plate) + "</h2>" +
-      '<div class="pills"><span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span></div></div>" +
-      '<div class="rec-pad"></div></article>' +
-    '<div class="dr-sec">' + esc(t("permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
-    historyHTML(g.records, true);
+  return hit;
 }
 function paintMulti(){
   const res = st.res, box = $("mres");
-  if(!res || !res.terms){ box.innerHTML = ""; return; }      // nothing asked, nothing shown
+  box.innerHTML = "";
+  if(!res || !res.terms) return;                                   // nothing asked, nothing shown
   const cats = {};
   res.rows.forEach(r => { if(r.g) cats[r.g.p.cat] = (cats[r.g.p.cat] || 0) + 1; });
-  const sum = '<div class="sum">' +
-    '<span class="pill white">' + t("sumAsked") + " " + num(res.terms) + "</span>" +
-    '<span class="pill ok">' + t("sumFound") + " " + num(res.found) + "</span>" +
-    (res.miss ? '<span class="pill bad">' + t("sumMiss") + " " + num(res.miss) + "</span>" : "") +
-    (res.dup ? '<span class="pill">' + t("sumDup") + " " + num(res.dup) + "</span>" : "") +
-    Object.keys(CAT_PILL).filter(k => cats[k]).map(k => '<span class="pill ' + CAT_PILL[k] + '">' + t(CAT_NAME[k]) + " " + num(cats[k]) + "</span>").join("") +
-    "</div>";
   /* An answer is only as whole as the sources behind it. With the permits not
      loaded, a man who is banned comes back "not found" (or as an employee and
      nothing more) — so the answers say which source they are without. */
   const lacking = res.mode === "veh" ? (M.veh ? [] : ["srcVeh"]) : [M.ind ? "" : "srcInd", M.emp ? "" : "srcEmp"].filter(Boolean);
-  let line = 0, turn = 0;
-  box.innerHTML =
+  box.insertAdjacentHTML("beforeend",
     (lacking.length ? '<div class="note warn">' + esc(t("searchLacks", lacking.map(k => t(k)).join(t("and")))) + "</div>" : "") +
-    sum +
-    res.rows.map(r => {
-      // the first few come in one after another; past the first screenful they are simply there
-      const d = ' style="--d:' + Math.min(turn++ * 0.06, 0.36).toFixed(2) + 's"';
-      // each line of the list is named once, above whatever it found
-      const head = r.n !== line ? '<div class="mterm"><span class="mrow-n">' + r.n + '</span><span class="term">' + esc(r.term) + "</span></div>" : "";
+    '<div class="sum">' +
+      '<span class="pill white">' + t("sumAsked") + " " + num(res.terms) + "</span>" +
+      '<span class="pill ok">' + t("sumFound") + " " + num(res.found) + "</span>" +
+      (res.miss ? '<span class="pill bad">' + t("sumMiss") + " " + num(res.miss) + "</span>" : "") +
+      (res.dup ? '<span class="pill">' + t("sumDup") + " " + num(res.dup) + "</span>" : "") +
+      Object.keys(CAT_PILL).filter(k => cats[k]).map(k => '<span class="pill ' + CAT_PILL[k] + '">' + t(CAT_NAME[k]) + " " + num(cats[k]) + "</span>").join("") +
+    "</div>");
+  let line = 0;
+  res.rows.forEach(r => {
+    // each line of the list is named once, above whatever it found
+    if(r.n !== line){
+      box.insertAdjacentHTML("beforeend", '<div class="mterm"><span class="mrow-n">' + r.n + '</span><span class="term">' + esc(r.term) + "</span></div>");
       line = r.n;
-      if(r.miss) return head + '<div class="mrow miss"' + d + ">" + pill("bad", t("missRow")) + "</div>";
-      if(r.more) return '<div class="mrow more"' + d + ">" + esc(t(r.names ? "moreNames" : "moreRow", r.term, r.more)) + "</div>";
-      return head + '<div class="hit"' + d + ">" + (res.mode === "veh" ? cardsVehicle(r) : cardsPeople(r)) + "</div>";
-    }).join("");
+    }
+    if(r.miss) return box.insertAdjacentHTML("beforeend", '<div class="mrow miss">' + pill("bad", t("missRow")) + "</div>");
+    if(r.more) return box.insertAdjacentHTML("beforeend", '<div class="mrow more">' + esc(t(r.names ? "moreNames" : "moreRow", r.term, r.more)) + "</div>");
+    box.appendChild(hitNode(r, res.mode === "veh"));
+  });
 }
 function multiLines(){
   $("mt-n").textContent = t("lines", parseTerms($("mt").value).terms.length);
@@ -944,80 +1253,789 @@ function goMulti(){
 }
 
 /* ============================================================
-   THE CARDS
-   What the two systems know about an answer, drawn in full: the employee's
-   card, and one card per permit.
+   THE CARDS — each system's own, copied from its file text for text.
+   Two closed boxes, so that neither's names (t, I18N, rowHTML ...) meet the
+   other's or this page's. Change a card in its own system first, then bring
+   the change here.
    ============================================================ */
-const rowHTML = (label, value, cls) => hasCell(value)
-  ? '<div class="row"><dt>' + esc(label) + '</dt><dd class="' + (cls || "") + '">' + esc(value) + "</dd></div>" : "";
-const group = (title, rows) => rows ? '<div class="grp"><span class="grp-t">' + esc(title) + '</span><dl class="rows">' + rows + "</dl></div>" : "";
-function countdown(dl){
-  if(dl === null || dl === undefined) return "";
-  return dl === 0 ? t("today") : dl < 0 ? t("daysAgo", Math.abs(dl)) : t("daysLeft", dl);
+
+/* ---- from employees/index.html: the employee card, its photographs and the save button ---- */
+const EMP_CARD = (() => {
+const I18N = {
+  ar:{
+    dir:'rtl', htmlLang:'ar', other:'EN', otherIsArabic:false,
+    statActive:'الموظفون الموجودون', statResigned:'الاستقالات',
+    noExpiring:'لا يوجد تصريح ينتهي خلال ' + EXPIRY_WINDOW + ' يوم',
+    statForeign:'الأجانب', noForeign:'لا يوجد موظفون أجانب',
+    statExpiring:'تصاريح قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
+    download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
+    dlUpdateApp:'حدّث التطبيق عشان التحميل يشتغل',
+    navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
+    tabExpiring:'قرب الانتهاء', tabExpired:'منتهية',
+    expiredList:'تصاريح منتهية', noExpired:'لا توجد تصاريح منتهية',
+    refresh:'تحديث البيانات', resultsAria:'نتائج',
+    searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
+    zoomAria:'عرض الصورة', closeAria:'إغلاق',
+    code:'الكود', noName:'اسم غير مسجل', resigned:'استقالة',
+    photoAlt:'صورة الموظف', noPhoto:'لا يوجد صورة',
+    permitStatus:'حالة التصريح',
+    grpPersonal:'البيانات الشخصية', grpWork:'بيانات التوظيف', grpSecurity:'بيانات أمنية',
+    nationalId:'الرقم القومي', phone:'رقم الهاتف', address:'العنوان',
+    jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
+    letterNo:'رقم الخطاب', letterDate:'تاريخ الخطاب', letterCompany:'الشركة', letterNote:'ملاحظات',
+    banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
+    searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
+    byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
+    listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
+    noMatch:'لم يتم العثور على موظف مطابق', noMatchHint:'تأكد من الكود أو الرقم القومي أو الاسم',
+    cutHead:'دول أول %1 من %2 موظف مطابق', cutHint:'كمّل الاسم أو ابحث بالكود أو بالرقم القومي',
+    loadFail:'تعذر تحميل البيانات', loadFailHint:'تحقق من الاتصال بالإنترنت وحاول مرة أخرى', retry:'إعادة المحاولة',
+    stBanned:'ممنوع', stValid:'ساري', stExpiring:'قرب الانتهاء',
+    stExpired:'تصريح منتهي', stNoPermit:'بدون تصريح', stNoDate:'بدون تاريخ'
+  },
+  en:{
+    dir:'ltr', htmlLang:'en', other:'AR', otherIsArabic:false,
+    statActive:'Active employees', statResigned:'Resignations',
+    noExpiring:'No permit expires within ' + EXPIRY_WINDOW + ' days',
+    statForeign:'Foreign staff', noForeign:'No foreign staff',
+    statExpiring:'Expiring permits', statExpired:'Expired permits', statBanned:'Banned',
+    download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
+    dlUpdateApp:'Update the app to download',
+    navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
+    tabExpiring:'Expiring', tabExpired:'Expired',
+    expiredList:'Expired Permits', noExpired:'No expired permits',
+    refresh:'Refresh data', resultsAria:'Results',
+    searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
+    zoomAria:'Photo viewer', closeAria:'Close',
+    code:'CODE', noName:'Name not recorded', resigned:'RESIGNED',
+    photoAlt:'Employee photo', noPhoto:'No photo available',
+    permitStatus:'Permit Status',
+    grpPersonal:'PERSONAL DETAILS', grpWork:'EMPLOYMENT DETAILS', grpSecurity:'SECURITY DETAILS',
+    nationalId:'National ID', phone:'Phone', address:'Address',
+    jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
+    letterNo:'Letter Number', letterDate:'Letter Date', letterCompany:'Company', letterNote:'Notes',
+    banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
+    searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
+    byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
+    listActive:'Active employees', listResigned:'Resignations',
+    noMatch:'No matching employee found', noMatchHint:'Check the code, national ID or name',
+    cutHead:'These are the first %1 of %2 matching employees', cutHint:'type more of the name, or search by code or national ID',
+    loadFail:'Could not load data', loadFailHint:'Check your internet connection and try again', retry:'Try again',
+    stBanned:'Banned', stValid:'Valid', stExpiring:'Expiring Soon',
+    stExpired:'Expired', stNoPermit:'No Permit', stNoDate:'No Date'
+  }
+};
+
+const lang = LANG;
+function t(k){
+  const v = I18N[lang][k];
+  return v === undefined ? (I18N.ar[k] === undefined ? k : I18N.ar[k]) : v;
 }
-function photoURL(code, second){
-  return SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + encodeURIComponent(code) + (second ? "_2" : "") + ".jpg";
+function isEN(){ return lang === 'en'; }
+
+function parseDate(v){
+  if(v === null || v === undefined) return null;
+  if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  const s = String(v).trim();
+  if(!s) return null;
+
+  let d, m, y, hit;
+  if((hit = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))){       // dd/mm/yyyy
+    d = +hit[1]; m = +hit[2]; y = +hit[3];
+  } else if((hit = s.match(/^(\d{4})[\-\/.](\d{1,2})[\-\/.](\d{1,2})/))){ // yyyy-mm-dd
+    y = +hit[1]; m = +hit[2]; d = +hit[3];
+  } else {
+    return null;
+  }
+  if(y < 1900 || y > 2200 || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(y, m - 1, d);
+  dt.setHours(0,0,0,0);
+  // Rejects impossible dates like 31/02 that would silently roll over.
+  if(dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return dt;
 }
+function fmtDate(v){
+  const dt = parseDate(v);
+  if(!dt) return null;
+  const p = n => String(n).padStart(2,'0');
+  return p(dt.getDate()) + '/' + p(dt.getMonth()+1) + '/' + dt.getFullYear();
+}
+function today0(){ const t = new Date(); t.setHours(0,0,0,0); return t; }
+// Whole-day difference computed from calendar values, so DST can't shift it.
+function daysLeft(v){
+  const dt = parseDate(v);
+  if(!dt) return null;
+  const a = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  const t = today0();
+  const b = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+  return Math.round((a - b) / 86400000);
+}
+// Digits are wrapped so they always render in the Latin monospace face,
+// never in the Arabic-Indic forms the body font would otherwise reach for.
+function numHTML(n){ return '<span class="num">' + n + '</span>'; }
+
+function daysWord(n){
+  n = Math.abs(n);
+  if(isEN()) return n === 1 ? numHTML(1) + ' day' : numHTML(n) + ' days';
+  if(n === 1) return 'يوم واحد';
+  if(n === 2) return 'يومين';
+  if(n >= 3 && n <= 10) return numHTML(n) + ' أيام';
+  return numHTML(n) + ' يوم';
+}
+function countdownText(dl){
+  if(dl === null) return null;
+  if(isEN()){
+    if(dl === 0) return 'Expires today';
+    if(dl < 0)   return 'Expired ' + daysWord(dl) + ' ago';
+    return daysWord(dl) + ' left';
+  }
+  if(dl === 0)  return 'ينتهي اليوم';
+  if(dl < 0)    return 'منتهي منذ ' + daysWord(dl);
+  return 'متبقي ' + daysWord(dl);
+}
+
+/* ============================================================
+   STATUS — the permit DATE is authoritative over the stored label,
+   so a row marked "ساري" with a past date still reads as expired.
+   ============================================================ */
+// Any value in the resignation column counts, not just a readable date:
+// some rows carry "غير محدد", and those people have still left.
+function isResigned(emp){
+  return !!(emp && emp.resignation_end_date && String(emp.resignation_end_date).trim());
+}
+// Shows the date when there is one, otherwise the stored wording itself.
+function resignEnd(v){
+  if(v === null || v === undefined) return null;
+  const raw = String(v).trim();
+  if(!raw) return null;
+  const asDate = fmtDate(raw);
+  if(asDate) return {text:asDate, cls:'num warn'};
+  return {text: raw === 'غير محدد' ? t('notSpecified') : raw, cls:'warn'};
+}
+
+function statusOf(emp){
+  const raw = (emp && emp.permit_status ? String(emp.permit_status) : '').trim();
+  const dl  = daysLeft(emp && emp.permit_date);
+
+  // The raw values below are the ones stored in the database and are
+  // matched as-is in both languages; only the shown label changes.
+  if(raw === 'ممنوع') return {k:'bad', label:t('stBanned'), code:'BANNED'};
+
+  // Someone who left has a permit that is either still running or over: no
+  // "expiring soon" to chase, no "no date" or "no permit" to puzzle over.
+  if(isResigned(emp)){
+    if(raw === 'ساري' && dl !== null && dl >= 0) return {k:'ok', label:t('stValid'), code:'VERIFIED'};
+    return {k:'bad', label:t('stExpired'), code:'EXPIRED'};
+  }
+
+  if(raw === 'ساري'){
+    // Foreign staff carry this exact wording where a date would go — not a
+    // missing date but a decision that the permit runs until they resign,
+    // so it reads as any other valid permit rather than the muted "no date".
+    const pd = (emp && emp.permit_date !== null && emp.permit_date !== undefined)
+                 ? String(emp.permit_date).trim() : '';
+    if(pd === 'ساري حتى الاستقالة') return {k:'ok', label:t('stValid'), code:'VERIFIED'};
+    if(dl === null)        return {k:'mute', label:t('stNoDate'),   code:'NO DATE'};
+    if(dl < 0)             return {k:'bad',  label:t('stExpired'),  code:'EXPIRED'};
+    if(dl <= EXPIRY_WINDOW)return {k:'warn', label:t('stExpiring'), code:'EXPIRING'};
+    return {k:'ok', label:t('stValid'), code:'VERIFIED'};
+  }
+  if(raw === 'منتهي الصلاحية') return {k:'bad', label:t('stExpired'), code:'EXPIRED'};
+  if(raw === 'بدون تصريح' || raw === '') return {k:'mute', label:t('stNoPermit'), code:'NO PERMIT'};
+  // Anything unexpected is surfaced as-is rather than silently relabelled.
+  return {k:'mute', label:raw, code:'UNKNOWN'};
+}
+
 function fmtPhone(v){
+  if(v === null || v === undefined) return null;
   let s = digitsOnly(v);
-  if(!s) return "";
-  if(s.length === 10 && s[0] !== "0") s = "0" + s;      // stored values lost the leading zero
+  if(!s) return null;
+  if(s.length === 10 && s[0] !== '0') s = '0' + s;   // stored values lost the leading zero
   return s;
 }
-function empCardHTML(e){
-  const cat = e.category === "blue" ? "BLUE COLLAR" : e.category === "white" ? "WHITE COLLAR" : "";
-  const hire = parseStrict(e.hire_date), ldate = parseStrict(e.letter_date), rend = parseStrict(e.resignation_end_date);
-  return '<article class="rec">' +
+function photoURL(code, second){
+  return SUPABASE_URL + '/storage/v1/object/public/' + BUCKET + '/' +
+         encodeURIComponent(code) + (second ? '_2' : '') + '.jpg';
+}
+function NOSHOT(){
+  return '<div class="noshot">' +
+    '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10.5" r="1.9" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 17.5l4.7-4.2 3.6 3 3-2.4 3.7 3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+    '<span>' + esc(t('noPhoto')) + '</span>' +
+  '</div>';
+}
+
+const ICON_SAVE =
+  '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 4v10.5M7.6 10.6L12 15l4.4-4.4" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 17.5v1.2A1.3 1.3 0 0 0 5.8 20h12.4a1.3 1.3 0 0 0 1.3-1.3v-1.2" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>';
+
+function shotHTML(code, second){
+  if(code === '') return '<figure class="shot">' + NOSHOT() + '</figure>';
+  return '<figure class="shot"><img src="' + photoURL(code, second) +
+         '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom></figure>';
+}
+// One control under both photos; it saves the pair.
+function downloadHTML(code){
+  if(code === '') return '';
+  return '<button class="dlbtn" type="button" data-dl="' + esc(code) + '">' +
+         ICON_SAVE + '<span>' + esc(t('download')) + '</span></button>';
+}
+// Renders a labelled block only when it actually has rows, so an employee
+// with no security notes never shows an empty "بيانات أمنية" heading.
+function group(title, rows){
+  if(!rows) return '';
+  return '<div class="grp"><span class="grp-t">' + title + '</span>' +
+         '<dl class="rows">' + rows + '</dl></div>';
+}
+
+function rowHTML(label, value, cls){
+  if(value === null || value === undefined || value === '') return '';
+  return '<div class="row"><dt>' + label + '</dt>' +
+         '<dd class="' + (cls || '') + '">' + esc(value) + '</dd></div>';
+}
+
+function statusIcon(k){
+  if(k === 'ok')   return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M5 12.6l4.4 4.4L19 7.4" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  if(k === 'warn') return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M12 7.6V13" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17" r="1.4" fill="currentColor"/></svg>';
+  if(k === 'bad')  return '<svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
+  return '<svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2.4"/></svg>';
+}
+
+function recordHTML(emp){
+  const s        = statusOf(emp);
+  const code     = (emp.emp_code === null || emp.emp_code === undefined) ? '' : String(emp.emp_code).trim();
+  const resigned = isResigned(emp);
+  const rEnd     = resignEnd(emp.resignation_end_date);
+  const cat      = emp.category === 'blue' ? 'BLUE COLLAR' : emp.category === 'white' ? 'WHITE COLLAR' : null;
+  const dl       = daysLeft(emp.permit_date);
+  const pdate    = fmtDate(emp.permit_date);
+  /* Nine rows carry "غير معروف" where the date belongs, deliberately. A dash
+     told the guard nothing was there; the sheet's own word tells him it was
+     looked at and is not known. Anything that is not a date is shown as
+     written — never invented, never blanked. */
+  const prawTxt  = (emp.permit_date === null || emp.permit_date === undefined)
+                     ? '' : String(emp.permit_date).trim();
+  const cd       = countdownText(dl);
+
+  const bar = (s.k === 'warn' && dl !== null && dl >= 0)
+    ? '<div class="track"><span style="width:' + Math.max(4, Math.round(dl / EXPIRY_WINDOW * 100)) + '%"></span></div>'
+    : '';
+
+  const names = '<h2 class="nm">' + esc(emp.full_name || t('noName')) + '</h2>' +
+    (emp.full_name_en ? '<p class="nm-en">' + esc(emp.full_name_en) + '</p>' : '');
+
+  return '<article class="rec" data-s="' + s.k + '">' +
     '<div class="head">' +
-      '<span class="code">' + esc(t("codeLabel")) + " " + num(e.emp_code) + "</span>" +
-      '<h2 class="nm">' + esc(e.full_name || t("noName")) + "</h2>" +
-      (e.full_name_en ? '<p class="nm-en">' + esc(e.full_name_en) + "</p>" : "") +
-      '<div class="pills">' + pill(e.st.k, stLabel(e)) + (e.resigned ? pill("bad", t("resigned")) : "") +
-        (e.foreign ? pill("mute", t("foreignPill")) : "") + (cat ? pill(e.category === "blue" ? "blue" : "white", cat) : "") + "</div>" +
-    "</div>" +
-    '<div class="permit ' + e.st.k + '"><div><div class="permit-k">' + esc(t("permitStatus")) + "</div></div>" +
-      '<div><div class="permit-v">' + (e.pdate ? num(fmt(e.pdate)) : esc(e.permit_date || stLabel(e))) + "</div>" +
-      (e.pdate && !e.resigned ? '<div class="permit-x">' + esc(countdown(e.dl)) + "</div>" : "") + "</div></div>" +
-    group(t("grpPersonal"),
-      rowHTML(e.foreign ? t("passport") : t("colNid"), e.national_id, "num") +
-      rowHTML(t("phone"), fmtPhone(e.phone), "num") +
-      rowHTML(t("address"), e.address)) +
-    group(t("grpWork"),
-      rowHTML(t("colJob"), e.job_title) +
-      rowHTML(t("department"), e.department) +
-      rowHTML(t("hireDate"), hire ? fmt(hire) : e.hire_date, "num")) +
-    group(t("grpSecurity"),
-      rowHTML(t("letterNo"), e.letter_number, "num") +
-      rowHTML(t("letterDate"), ldate ? fmt(ldate) : e.letter_date, "num") +
-      rowHTML(t("colCompany"), e.letter_company) +
-      rowHTML(t("letterNote"), e.letter_note) +
-      rowHTML(t("banReason"), e.ban_reason, "bad") +
-      rowHTML(t("resignEnd"), rend ? fmt(rend) : e.resignation_end_date)) +
-    '<div class="shots">' +
-      '<img src="' + photoURL(e.emp_code, false) + '" alt="' + esc(t("photoAlt")) + '" loading="lazy" decoding="async">' +
-      '<img src="' + photoURL(e.emp_code, true) + '" alt="' + esc(t("photoAlt")) + '" loading="lazy" decoding="async">' +
-    "</div></article>";
+      (code ? '<span class="code"><em>' + esc(t('code')) + '</em><span class="num">' + esc(code) + '</span></span>' : '') +
+      names +
+      '<div class="pills">' +
+        '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
+        (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>' : '') +
+        (cat ? '<span class="pill ' + emp.category + '">' + cat + '</span>' : '') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="permit">' +
+      '<div><div class="permit-k">' + esc(t('permitStatus')) + '</div>' +
+           '<div class="permit-s">' + esc(s.label) + '</div>' +
+           (cd ? '<div class="permit-c">' + cd + '</div>' : '') +
+           bar +
+      '</div>' +
+      (pdate    ? '<div class="permit-d num">' + pdate + '</div>'
+       : prawTxt ? '<div class="permit-d na">' + esc(prawTxt) + '</div>'
+                 : '<div class="permit-d na">—</div>') +
+    '</div>' +
+
+    group(t('grpPersonal'),
+      rowHTML(t('nationalId'), emp.national_id, 'num') +
+      rowHTML(t('phone'), fmtPhone(emp.phone), 'num') +
+      rowHTML(t('address'), emp.address)
+    ) +
+    group(t('grpWork'),
+      rowHTML(t('jobTitle'), emp.job_title) +
+      rowHTML(t('department'), emp.department) +
+      rowHTML(t('hireDate'), fmtDate(emp.hire_date), 'num')
+    ) +
+    // The ASE letter behind the man's site permit - its number, its date, the
+    // company it was issued under and the note ASE keeps beside it - sits
+    // here, under the employment details, by Khaled's choice. Foreign staff
+    // have none, and an empty value draws no row at all. A date the sheet
+    // wrote some other way is shown as written rather than dropped.
+    // The company and the note are English text inside an Arabic card; `ltr`
+    // keeps a closing bracket or a slash where it was typed.
+    group(t('grpSecurity'),
+      rowHTML(t('letterNo'), emp.letter_number, 'num') +
+      rowHTML(t('letterDate'), fmtDate(emp.letter_date) || emp.letter_date, 'num') +
+      rowHTML(t('letterCompany'), emp.letter_company, 'ltr') +
+      rowHTML(t('letterNote'), emp.letter_note, 'ltr') +
+      rowHTML(t('banReason'), emp.ban_reason, 'bad') +
+      rowHTML(t('resignEnd'), rEnd && rEnd.text, rEnd && rEnd.cls)
+    ) +
+
+    '<div class="shots">' + shotHTML(code, false) + shotHTML(code, true) +
+      downloadHTML(code) +
+    '</div>' +
+  '</article>';
 }
-// one permit out of a person's or a vehicle's history
-function permitRecHTML(r, n, total, veh){
-  const p = r.p;
-  return '<article class="rec">' +
-    '<div class="permit ' + p.cls + '"><div><div class="permit-k">' + esc(t("permitNofM", n + 1, total)) + "</div></div>" +
-      '<div><div class="permit-v">' + (p.date ? num(p.main) : esc(permitText(p))) + "</div>" +
-      (p.note ? '<div class="permit-x">' + esc(p.note) + "</div>" : p.date ? '<div class="permit-x">' + esc(countdown(p.dl)) + "</div>" : "") + "</div></div>" +
-    '<div class="grp"><dl class="rows">' +
-      rowHTML(t("colSent"), r.dayText ? r.dayText + (r.dayNote ? " " + r.dayNote : "") : r.day, r.dayText && !r.dayNote ? "num" : "") +
-      (veh
-        ? rowHTML(t("colType"), r.type) + rowHTML(t("colOwner"), r.owner) + rowHTML(t("colMail"), r.mail)
-        : rowHTML(t("colJob"), r.job) + rowHTML(t("address"), r.address) + rowHTML(t("sender"), r.sender) +
-          rowHTML(t("notes"), r.note) + rowHTML(t("colMail"), r.mail) +
-          rowHTML(t("letterNo"), r.letter, "num") + rowHTML(t("companyName"), r.company) +
-          rowHTML(t("letterDate"), r.ldate, "num") + rowHTML(t("aseNote"), r.anote)) +
-    "</dl></div></article>";
+
+const IN_WEBVIEW = /; wv\)/.test(navigator.userAgent);
+function androidBridge(){
+  const b = window.NCMAndroid;
+  return b && typeof b.download === 'function' ? b : null;
 }
-const historyHTML = (records, veh) => records.map((r, n, a) => permitRecHTML(r, n, a.length, veh)).reverse().join("");
-// a photograph that is not there (the second one often is not) takes no room
-$("mres").addEventListener("error", e => { if(e.target && e.target.tagName === "IMG") e.target.remove(); }, true);
+async function grab(url, name){
+  const bridge = androidBridge();
+  if(bridge){
+    const head = await fetch(url, {method:'HEAD'});
+    if(!head.ok) return false;               // a missing second photo is normal
+    return bridge.download(url, name) === true;
+  }
+  const res = await fetch(url);
+  if(!res.ok) return false;                 // a missing second photo is normal
+  const obj = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = obj;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(obj), 5000);
+  return true;
+}
+async function saveBoth(btn){
+  if(btn.disabled) return;
+  const code = btn.dataset.dl;
+  const label = btn.querySelector('span');
+  if(IN_WEBVIEW && !androidBridge()){
+    btn.classList.add('fail');
+    label.textContent = t('dlUpdateApp');
+    return;
+  }
+  btn.disabled = true;
+  btn.classList.remove('done','fail');
+  label.textContent = t('downloading');
+  let saved = 0;
+  for(const second of [false, true]){
+    try{
+      if(await grab(photoURL(code, second), code + (second ? '_2' : '') + '.jpg')) saved++;
+    }catch(err){ console.error('[NCM] download', err); }
+    if(!second) await new Promise(r => setTimeout(r, 500));   // browsers throttle bursts
+  }
+  btn.classList.add(saved ? 'done' : 'fail');
+  label.textContent = saved ? t('downloaded') : t('downloadFail');
+  setTimeout(() => {
+    btn.classList.remove('done','fail');
+    label.textContent = t('download');
+    btn.disabled = false;
+  }, 2200);
+}
+
+return { recordHTML, saveBoth, NOSHOT };
+})();
+
+/* ---- from permits/index.html: the permits card, with the switcher between a holder's permits ---- */
+const PER_CARD = (() => {
+const I18N = {
+  ar: {
+    appTitle:"بحث التصاريح",
+    statusUpdating:"جاري التحديث",
+    statusOnline:"متصل",
+    statusError:"خطأ في الاتصال",
+    tabIndividuals:"الأفراد",
+    tabVehicles:"المركبات",
+    searchPlaceholderInd:"الرقم القومى أو الاسم",
+    searchPlaceholderVeh:"رقم السيارة",
+    searchBtn:"بحث",
+    loadingData:"جاري تحميل البيانات",
+    stillLoading:"البيانات لسه بتحمّل، استنى ثانية وجرّب تاني.",
+    hintInd:"ابحث بالرقم القومى أو الاسم لعرض سجل التصريح",
+    hintVeh:"ابحث برقم اللوحة لعرض سجل التصريح",
+    noResultInd:q=>`مفيش نتيجة مطابقة لـ <b>${q}</b>. تأكد إن الرقم القومى أو الاسم مكتوب زي ما هو بالظبط في الشيت.`,
+    noResultVeh:q=>`مفيش نتيجة مطابقة لرقم السيارة <b>${q}</b>. تأكد إنه مكتوب زي ما هو بالظبط في الشيت.`,
+    noPlateContains:q=>`مفيش أي سيارة رقمها فيه <b>${q}</b>.`,
+    truncatedName:n=>`دول أول 50 من ${n} نتيجة مطابقة. اكتب جزء أطول من الاسم عشان تضيّق البحث.`,
+    truncatedPlate:n=>`دول أول 50 من ${n} نتيجة مطابقة. اكتب رقم أطول عشان تضيّق البحث.`,
+    permitCount:n=>`${n} ${n===1 ? "تصريح" : "تصاريح"}`,
+    noName:"بدون اسم",
+    noId:"غير مسجل",
+    permitTag:"تصريح",
+    sendDate:"تاريخ الإرسال",
+    notSpecified:"غير محدد",
+    fieldJob:"الوظيفة",
+    fieldAddress:"العنوان",
+    fieldSender:"المرسل",
+    fieldNotes:"ملاحظات",
+    fieldType:"النوع",
+    fieldOwner:"تابعه",
+    fieldMailType:"نوع الإرسال",
+    permitPending:"في انتظار الرد",
+    permitUndetermined:"غير محدد موقفه حتى الآن",
+    loadErrInd:d=>`حصل خطأ في تحميل بيانات الأفراد (${d}). اتأكد إن فيه اتصال بالإنترنت وجرّب تاني.`,
+    loadErrVeh:d=>`حصل خطأ في تحميل بيانات المركبات (${d}). اتأكد إن فيه اتصال بالإنترنت وجرّب تاني.`
+  },
+  en: {
+    appTitle:"Permit Search",
+    statusUpdating:"Updating",
+    statusOnline:"Connected",
+    statusError:"Connection error",
+    tabIndividuals:"Individuals",
+    tabVehicles:"Vehicles",
+    searchPlaceholderInd:"National ID or name",
+    searchPlaceholderVeh:"Plate number",
+    searchBtn:"Search",
+    loadingData:"Loading data",
+    stillLoading:"Data is still loading — wait a moment and try again.",
+    hintInd:"Search by national ID or name to view the permit record",
+    hintVeh:"Search by plate number to view the permit record",
+    noResultInd:q=>`No match found for <b>${q}</b>. Make sure the national ID or name is written exactly as it appears in the sheet.`,
+    noResultVeh:q=>`No match found for plate <b>${q}</b>. Make sure it is written exactly as it appears in the sheet.`,
+    noPlateContains:q=>`No vehicle has a plate containing <b>${q}</b>.`,
+    truncatedName:n=>`These are the first 50 of ${n} matches. Type more of the name to narrow it down.`,
+    truncatedPlate:n=>`These are the first 50 of ${n} matches. Type a longer number to narrow it down.`,
+    permitCount:n=>`${n} ${n===1 ? "permit" : "permits"}`,
+    noName:"No name",
+    noId:"Not registered",
+    permitTag:"Permit",
+    sendDate:"Date sent",
+    notSpecified:"Not specified",
+    fieldJob:"Job title",
+    fieldAddress:"Address",
+    fieldSender:"Sender",
+    fieldNotes:"Notes",
+    fieldType:"Type",
+    fieldOwner:"Belongs to",
+    fieldMailType:"Mail type",
+    permitPending:"Awaiting response",
+    permitUndetermined:"Status not yet determined",
+    loadErrInd:d=>`Failed to load the individuals data (${d}). Check your internet connection and try again.`,
+    loadErrVeh:d=>`Failed to load the vehicles data (${d}). Check your internet connection and try again.`
+  }
+};
+function t(key, arg){
+  const entry = I18N[LANG][key];
+  if(typeof entry === "function") return entry(arg);
+  return entry !== undefined ? entry : key;
+}
+
+/* Arabic names for the ASE DATA columns, keyed on the header text in the sheet
+   (matched case-insensitively). A header with no entry here shows as written,
+   so a newly added column still appears — just untranslated until listed. */
+// Sheet-keeping columns: internal row ids, formula scratch, anything marked
+// "(auto)". They are for the sheet's own bookkeeping, never for the card.
+function isHelperColumn(header){
+  const h = String(header).trim().toLowerCase();
+  return /\(auto\)|^db row|^helper|^internal|^_/.test(h);
+}
+
+const ASE_LABEL_AR = {
+  "letter number": "رقم الخطاب",
+  "company name": "اسم الشركة",
+  "letter date": "تاريخ الخطاب",
+  "note": "ملاحظة",
+  "notes": "ملاحظات",
+  "mail type": "نوع الإرسال",
+  "source": "المصدر",
+  "national id": "الرقم القومى"
+};
+
+function aseLabel(header){
+  if(LANG === "en") return header;
+  return ASE_LABEL_AR[String(header).trim().toLowerCase()] || header;
+}
+
+const PERMIT_PHRASE_EN = [
+  ["الرخصه منتهيه","License expired"],
+  ["الرخصة منتهية","License expired"],
+  ["غيرت لوحات عايزة جديد","Plates changed - new permit required"],
+  ["غيرت لوحات","Plates changed"],
+  ["عايز تجديد","Renewal required"],
+  ["تجديد","Renewal"],
+  ["مؤقت","Temporary"],
+  ["منع","Banned"]
+];
+
+const BAN_WORDS = ["منع"];
+const RENEW_WORDS = ["عايز تجديد","الرخصه منتهيه","غيرت لوحات","تجديد"];
+const TEMP_WORDS = ["مؤقت"];
+const QUESTION_MARKS_ONLY = /^[؟?]+$/;
+const LEADING_DATE = /^(\d{1,2})([-\/])(\d{1,2})[-\/](\d{4})/;
+
+/* Dates arrive day-first: "18-11-2025" typed by hand, and "30/11/2025" from
+   real date cells, which the upload gives an explicit dd/mm/yyyy format.
+   Before that format was set (until 2026-09-16) Google showed and exported
+   real dates month-first, so a permit ending 5 March read as 3 May. A slash
+   date whose second number is over 12 is still read month-first, because
+   day-first is impossible there - otherwise JS rolls month 30 into 2028 and
+   paints an expired permit green. */
+function parseDateParts(s){
+  const m = normalize(s).match(LEADING_DATE);
+  if(!m) return null;
+
+  const a = parseInt(m[1],10);
+  const sep = m[2];
+  const b = parseInt(m[3],10);
+  const year = parseInt(m[4],10);
+
+  let day, month;
+  // The sheet is normalised to day-first (dd/mm/yyyy). Only read month-first
+  // when day-first is impossible, which is what a legacy US-order export looks
+  // like. `sep` is kept for that older shape.
+  if(b > 12 && a <= 12){ month = a; day = b; }
+  else { day = a; month = b; }
+
+  if(month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const d = new Date(year, month-1, day);
+  if(isNaN(d.getTime()) || d.getMonth() !== month-1 || d.getDate() !== day) return null;
+
+  return { date:d, day, month, year, matched:m[0] };
+}
+
+function parseDateLoose(v){
+  const p = v ? parseDateParts(v) : null;
+  return p ? p.date : null;
+}
+
+const pad2 = n => String(n).padStart(2,"0");
+
+/* Splits a cell into a tidy dd/mm/yyyy date plus whatever text trailed it,
+   so "18-11-2025(ABNA SINA)" shows the date on one line and the note below. */
+function splitDateAndNote(v){
+  const s = normalize(v);
+  if(!s) return { date:null, note:"" };
+  const p = parseDateParts(s);
+  if(!p) return { date:null, note:s };
+  const rest = s.slice(p.matched.length).replace(/^[\s\-\/(),.:؛;]+/,"").replace(/[)\]]+$/,"").trim();
+  return { date:`${pad2(p.day)}/${pad2(p.month)}/${p.year}`, note:rest };
+}
+
+function classifyPermit(rawValue){
+  const s = normalize(rawValue);
+  if(s === "") return {kind:"pending", cls:"pb-soon", raw:s};
+
+  const noSpaces = s.replace(/\s+/g,"");
+  if(QUESTION_MARKS_ONLY.test(noSpaces)) return {kind:"undetermined", cls:"pb-unclear", raw:s};
+
+  if(BAN_WORDS.some(w=>s.includes(w))) return {kind:"raw", cls:"pb-ban", raw:s};
+  if(RENEW_WORDS.some(w=>s.includes(w))) return {kind:"raw", cls:"pb-bad", raw:s};
+  if(TEMP_WORDS.some(w=>s.includes(w))) return {kind:"raw", cls:"pb-unclear", raw:s};
+
+  const d = parseDateLoose(s);
+  if(d){
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const diffDays = Math.round((d - today) / 86400000);
+    if(diffDays < 0) return {kind:"raw", cls:"pb-bad", raw:s};
+    if(diffDays <= 30) return {kind:"raw", cls:"pb-soon", raw:s};
+    return {kind:"raw", cls:"pb-ok", raw:s};
+  }
+  return {kind:"raw", cls:"pb-unclear", raw:s};
+}
+
+function permitDisplay(p){
+  if(p.kind === "pending") return { main:t("permitPending"), note:"" };
+  if(p.kind === "undetermined") return { main:t("permitUndetermined"), note:"" };
+
+  const parts = splitDateAndNote(p.raw);
+  if(parts.date) return { main:parts.date, note:parts.note };
+
+  if(LANG === "en"){
+    for(const [ar, en] of PERMIT_PHRASE_EN){
+      if(p.raw.includes(ar)) return { main:en, note:"" };
+    }
+  }
+  return { main:p.raw, note:"" };
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+/** Escape for display, with Arabic-Indic digits rewritten to 0-9. */
+function disp(str){ return escapeHtml(toLatinDigits(String(str))); }
+
+/** Wrap a value that is mostly digits so it always reads left-to-right. */
+function dispNum(str){ return `<span class="num">${disp(str)}</span>`; }
+
+
+// [{index, label}] describing the ASE DATA columns, filled from the sheet header.
+let indAseColumns = [];
+function setAseColumns(headerRow){
+  indAseColumns = [];
+  for(let c = IND_COL.LETTER; c < headerRow.length; c++){
+    const label = normalize(headerRow[c]);
+    if(label && !isHelperColumn(label)) indAseColumns.push({ index:c, label });
+  }
+}
+const aseValues = cols => indAseColumns.map(col => normalize(cols[col.index]));
+const PERMIT_ICONS = {
+  "pb-ok": '<path d="M20 6L9 17l-5-5"/>',
+  "pb-soon": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
+  "pb-bad": '<circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/>',
+  "pb-ban": '<circle cx="12" cy="12" r="9"/><path d="M5.5 5.5l13 13"/>',
+  "pb-unclear": '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7v.3"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/>'
+};
+
+function attachOccurrenceSwitcher(card, chipsContainer, sorted, fieldsHtmlFn){
+  const content = document.createElement("div");
+  content.className = "occ-content";
+
+  function renderContent(idx){
+    const rec = sorted[idx];
+    const p = classifyPermit(rec.permit);
+    const icon = PERMIT_ICONS[p.cls] || PERMIT_ICONS["pb-unclear"];
+    const shown = permitDisplay(p);
+    const sent = splitDateAndNote(rec.day);
+
+    const permitMain = shown.main && /^\d/.test(shown.main) ? dispNum(shown.main) : disp(shown.main);
+    const sentMain = sent.date ? dispNum(sent.date) : disp(sent.note || t("notSpecified"));
+    const sentNote = sent.date ? sent.note : "";
+
+    content.innerHTML = `
+      <div class="permit-banner ${p.cls}">
+        <div class="pb-left">
+          <div class="permit-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">${icon}</svg></div>
+          <span class="pb-tag">${disp(t("permitTag"))}</span>
+        </div>
+        <div class="pb-body">
+          <div class="pb-value">${permitMain}</div>
+          ${shown.note ? `<div class="pb-extra">${disp(shown.note)}</div>` : ""}
+        </div>
+      </div>
+      <div class="rows-group-title">NCM DATA</div>
+      ${fieldsHtmlFn(rec, { sendMain: sentMain, sendNote: sentNote })}
+    `;
+  }
+
+  const defaultIdx = sorted.length - 1;
+
+  sorted.forEach((rec, i)=>{
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "occ-chip" + (i === defaultIdx ? " active" : "");
+    chip.textContent = i + 1;
+    chip.addEventListener("click", ()=>{
+      chipsContainer.querySelectorAll(".occ-chip").forEach(c=>c.classList.remove("active"));
+      chip.classList.add("active");
+      renderContent(i);
+    });
+    chipsContainer.appendChild(chip);
+  });
+
+  renderContent(defaultIdx);
+  card.appendChild(content);
+}
+
+/* The ASE DATA block: its own heading plus one row per sheet column, rendered
+   only when at least one of those cells has a value. */
+function aseBlockHtml(rec){
+  const vals = rec.ase || [];
+  const rows = indAseColumns.map((col, i) => {
+    const v = vals[i];
+    if(!v) return "";
+    const shown = /^[0-9]/.test(v) ? dispNum(v) : disp(v);
+    return `<div class="record-row"><span class="k">${disp(aseLabel(col.label))}</span><span class="v">${shown}</span></div>`;
+  }).join("");
+  if(!rows) return "";
+  return `<div class="rows-group-title">ASE DATA</div><div class="record-rows">${rows}</div>`;
+}
+
+function sortByDay(records){
+  return [...records].sort((a,b)=>{
+    if(a.dayParsed && b.dayParsed) return a.dayParsed - b.dayParsed;
+    if(a.dayParsed) return -1;
+    if(b.dayParsed) return 1;
+    return 0;
+  });
+}
+
+/* One person's card: every permit he has, the newest showing. */
+function personCard(g){
+    const sorted = sortByDay(g.records);
+    const card = document.createElement("div");
+    card.className = "person-card";
+
+    const head = document.createElement("div");
+    head.className = "person-head";
+    head.innerHTML = `
+      <div class="record-top">
+        <div class="occ-selector"></div>
+        <div class="count-badge">${disp(t("permitCount", sorted.length))}</div>
+      </div>
+      <div class="record-identity">
+        <div class="record-name">${disp(g.name || t("noName"))}</div>
+        <div class="record-subid">${g.nationalId ? dispNum(g.nationalId) : disp(t("noId"))}</div>
+      </div>
+    `;
+    card.appendChild(head);
+
+    attachOccurrenceSwitcher(card, head.querySelector(".occ-selector"), sorted, (rec, sent) => `
+      <div class="record-rows">
+        <div class="record-row"><span class="k">${disp(t("sendDate"))}</span><span class="v">${sent.sendMain}${sent.sendNote ? " " + disp(sent.sendNote) : ""}</span></div>
+        <div class="record-row"><span class="k">${disp(t("fieldJob"))}</span><span class="v">${disp(rec.job || "—")}</span></div>
+        <div class="record-row"><span class="k">${disp(t("fieldAddress"))}</span><span class="v">${disp(rec.address || "—")}</span></div>
+        <div class="record-row"><span class="k">${disp(t("fieldSender"))}</span><span class="v">${disp(rec.sender || "—")}</span></div>
+        <div class="record-row"><span class="k">${disp(t("fieldNotes"))}</span><span class="v">${disp(rec.note || "—")}</span></div>
+        ${rec.mailType ? `<div class="record-row"><span class="k">${disp(t("fieldMailType"))}</span><span class="v">${disp(rec.mailType)}</span></div>` : ""}
+      </div>
+      ${aseBlockHtml(rec)}
+    `);
+
+    return card;
+}
+
+function renderVehicleCard(g, resultsEl){
+  const sorted = sortByDay(g.records);
+
+  const card = document.createElement("div");
+  card.className = "person-card";
+  const head = document.createElement("div");
+  head.className = "person-head";
+  head.innerHTML = `
+    <div class="record-top">
+      <div class="occ-selector"></div>
+      <div class="count-badge">${disp(t("permitCount", sorted.length))}</div>
+    </div>
+    <div class="record-identity">
+      <div class="record-name" style="margin-bottom:0;">${disp(g.plate)}</div>
+    </div>
+  `;
+  card.appendChild(head);
+
+  attachOccurrenceSwitcher(card, head.querySelector(".occ-selector"), sorted, (rec, sent) => `
+    <div class="record-rows">
+      <div class="record-row"><span class="k">${disp(t("sendDate"))}</span><span class="v">${sent.sendMain}${sent.sendNote ? " " + disp(sent.sendNote) : ""}</span></div>
+      <div class="record-row"><span class="k">${disp(t("fieldType"))}</span><span class="v">${disp(rec.type || "—")}</span></div>
+      <div class="record-row"><span class="k">${disp(t("fieldOwner"))}</span><span class="v">${disp(rec.owner || "—")}</span></div>
+      ${rec.mailType ? `<div class="record-row"><span class="k">${disp(t("fieldMailType"))}</span><span class="v">${disp(rec.mailType)}</span></div>` : ""}
+    </div>
+  `);
+
+  resultsEl.appendChild(card);
+}
+
+
+return { personCard, renderVehicleCard, setAseColumns, aseValues };
+})();
+
+// a photograph that is not there (the second one often is not): the employee card's own placeholder
+$("mres").addEventListener("error", e => {
+  const img = e.target;
+  if(img && img.tagName === "IMG" && img.hasAttribute("data-zoom")){
+    const fig = img.closest(".shot");
+    if(fig) fig.innerHTML = EMP_CARD.NOSHOT();
+  }
+}, true);
+// the save button under the photographs, and a tap on a photograph to see it large
+$("mres").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-dl]");
+  if(btn) return EMP_CARD.saveBoth(btn);
+  const img = e.target.closest("img[data-zoom]");
+  if(img){ $("zoom-img").src = img.src; $("zoom").classList.add("on"); }
+});
+function closeZoom(){ $("zoom").classList.remove("on"); $("zoom-img").removeAttribute("src"); }
+$("zoom").addEventListener("click", closeZoom);
+$("zoom-x").addEventListener("click", closeZoom);
+document.addEventListener("keydown", e => { if(e.key === "Escape" && $("zoom").classList.contains("on")) closeZoom(); });
 
 /* ============================================================
    SEARCH HISTORY
