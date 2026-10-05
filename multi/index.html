@@ -1191,7 +1191,6 @@ function goMulti(){
   }
   runMulti(); paintMulti(); multiLines();
   histAdd();
-  keep();
 }
 
 /* ============================================================
@@ -2040,18 +2039,16 @@ function histPick(i){
   goMulti();
 }
 
-/* What is on screen is kept for this visit only, so coming back to the page
-   - from the home screen and in again, or after the phone reloaded it - finds
-   the list where it was left. It is gone when the app is closed. */
-const KEEP_KEY = "ncm_multi_last";
-function keep(){ try{ sessionStorage.setItem(KEEP_KEY, JSON.stringify({ m: st.mode, t: st.text })); }catch(e){} }
-function kept(){
-  try{
-    const o = JSON.parse(sessionStorage.getItem(KEEP_KEY) || "null");
-    if(o && typeof o.t === "string") return { m: o.m === "veh" ? "veh" : "ind", t: o.t };
-  }catch(e){}
-  return null;
+/* Nothing of a search outlives the visit to this page: going back ends it, and
+   coming in again finds the box empty (asked for so, 5 October 2026 - the page
+   used to put the last list back). A list that is wanted again is one tap away
+   in the history above. */
+function startEmpty(){
+  $("mt").value = ""; st.text = ""; st.res = null;
+  setMode("ind"); multiLines(); paintMulti(); histToggle(false);
 }
+// a page the phone kept whole and shows again is cleared the same way
+window.addEventListener("pageshow", e => { if(e.persisted) startEmpty(); });
 
 /* ============================================================
    WIRING
@@ -2078,13 +2075,13 @@ $("seg").addEventListener("click", e => {
   if(!b || b.dataset.mmode === st.mode) return;
   setMode(b.dataset.mmode);
   // the same list, asked of the other sheet — if a list has been asked at all
-  if(st.res){ st.text = $("mt").value; runMulti(); paintMulti(); keep(); }
+  if(st.res){ st.text = $("mt").value; runMulti(); paintMulti(); }
 });
 $("mt").addEventListener("input", multiLines);
 $("go").addEventListener("click", () => { $("mt").blur(); histToggle(false); goMulti(); });
 $("clear").addEventListener("click", () => {
   $("mt").value = ""; st.text = ""; st.res = null;
-  multiLines(); paintMulti(); keep(); histToggle(false);
+  multiLines(); paintMulti(); histToggle(false);
   $("mt").focus();
 });
 $("hist-btn").addEventListener("click", () => histToggle());
@@ -2125,14 +2122,10 @@ if(!key){
 }else{
   sb = supabase.createClient(SUPABASE_URL, key);
   histLoad();
-  const last = kept();
-  if(last){ st.mode = last.m; st.text = last.t; $("mt").value = last.t; }
+  try{ sessionStorage.removeItem("ncm_multi_last"); }catch(e){}   // what an older version of the page left behind
   applyLang();
   paintMulti();
-  loadAll().then(() => {
-    // the list left on screen last time is asked again, now that there is something to ask
-    if(last && parseTerms(last.t).terms.length && !st.res){ runMulti(); paintMulti(); }
-  });
+  loadAll();
 }
 
 if("serviceWorker" in navigator){

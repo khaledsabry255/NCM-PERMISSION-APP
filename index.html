@@ -434,7 +434,7 @@ function writeFlag(){
 function clearFlag(){
   try{ localStorage.removeItem(UNLOCK_KEY); localStorage.removeItem(AUTH_KEY); }catch(e){}
   // the list search keeps what was searched for on this phone; a locked phone keeps none of it
-  try{ localStorage.removeItem('ncm_multi_history'); sessionStorage.removeItem('ncm_multi_last'); }catch(e){}
+  try{ localStorage.removeItem('ncm_multi_history'); }catch(e){}
   document.cookie = UNLOCK_KEY + '=;max-age=0;path=' + APP_ROOT;
   idbSet(null);
 }
