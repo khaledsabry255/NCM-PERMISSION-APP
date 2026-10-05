@@ -138,6 +138,19 @@ button{font-family:inherit;cursor:pointer;}
 .pinboxes i.on{border-color:var(--gold);background:var(--panel);}
 /* the box waiting for the next digit, so the row shows where you are */
 .pinboxes.focus i.next{border-color:var(--gold);box-shadow:0 0 0 3px rgba(21,101,192,.13);}
+/* The row answers a tap by sinking a little, like every other box in the app. */
+.pinboxes:active i.next{transform:scale(.96);}
+.pinboxes i{transition:border-color .16s,background .16s,box-shadow .16s,transform .14s;}
+/* The four of them arrive in turn when the screen opens... */
+@keyframes pinIn{from{opacity:0;transform:translateY(10px) scale(.94);}}
+#gate.enter .pinboxes i{animation:pinIn .42s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;}
+/* ...and a digit landing is felt as well as seen: the box it lands in gives a
+   small nudge. This comes after the arrival above and names the screen too, or
+   a digit typed in the moment the screen is still arriving would lose its nudge
+   to that rule. */
+@keyframes pinPop{40%{transform:scale(1.07);}}
+.pinboxes i.pop,
+#gate .pinboxes i.pop{animation:pinPop .26s ease-out;}
 @media (max-width:339px){
   .pinboxes{gap:8px;}
   .pinboxes i{width:46px;height:56px;font-size:22px;}
@@ -196,16 +209,22 @@ button{font-family:inherit;cursor:pointer;}
 }
 .door.rip::after{animation:doorRip .6s ease-out;}
 @keyframes doorRip{from{opacity:.3;transform:scale(0);}to{opacity:0;transform:scale(30);}}
-/* The two cards arrive one after the other when the home screen opens: each
+/* The three cards arrive one after the other when the home screen opens: each
    rises into its place. The movement fills backwards only, so once it is over
    the card is exactly as it is drawn. Whoever asked the phone for less motion
-   gets none (the rule at the top). */
+   gets none (the rule at the top).
+
+   It hangs on a class the script puts on, not on the screen simply being
+   shown, because the app opens its window before anyone is looking at it: a
+   browser holds a hidden page's animations at their first frame, which here is
+   "not there yet", and the cards would sit invisible until the phone was
+   looked at again. The script waits for that moment. */
 @keyframes doorIn{from{opacity:0;transform:translateY(20px) scale(.94);}}
 @keyframes brandIn{from{opacity:0;transform:translateY(-8px);}}
-#home:not([hidden]) .home-brand{animation:brandIn .45s ease-out backwards;}
-#home:not([hidden]) .door{animation:doorIn .55s cubic-bezier(.2,.8,.2,1) .08s backwards;}
-#home:not([hidden]) .door + .door{animation-delay:.2s;}
-#home:not([hidden]) .door + .door + .door{animation-delay:.32s;}
+#home.enter .home-brand{animation:brandIn .45s ease-out backwards;}
+#home.enter .door{animation:doorIn .55s cubic-bezier(.2,.8,.2,1) .08s backwards;}
+#home.enter .door + .door{animation-delay:.2s;}
+#home.enter .door + .door + .door{animation-delay:.32s;}
 #door-emp{--accent:#1565c0;--accent-shadow:rgba(21,101,192,.34);}
 #door-per{--accent:#4ba548;--accent-shadow:rgba(75,165,72,.34);}
 /* The list search: a mid yellow of its own, the third colour on the page. White
@@ -515,15 +534,48 @@ const pinboxes = $('pinboxes'), gateErr = $('gate-err');
 function paintBoxes(){
   const n = pin.value.length;
   [].forEach.call(pinboxes.children, (b, i) => {
+    const was = b.classList.contains('on');
     b.classList.toggle('on', i < n);
     b.classList.toggle('next', i === n);
     b.textContent = i < n ? '•' : '';
+    if(i < n && !was) pop(b);                 // the digit just landed in this one
   });
+}
+function pop(el){
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+/* ---------- boxes arriving ----------
+   A screen of boxes that has just opened comes in with movement, each box in
+   its turn. Nothing moves on a page nobody is looking at: a browser holds a
+   hidden page's animations at their first frame, which here is "not there
+   yet", so the boxes would sit invisible until it was looked at again — and
+   the app opens its window before anyone is looking. So a screen that opens
+   while the page is hidden waits for the moment it is seen. */
+function arrive(screen, sel, step){
+  if(document.hidden){
+    const seen = () => {
+      if(document.hidden) return;
+      document.removeEventListener('visibilitychange', seen);
+      arrive(screen, sel, step);
+    };
+    document.addEventListener('visibilitychange', seen);
+    return;
+  }
+  let turn = 0;
+  screen.querySelectorAll(sel).forEach(el => { el.style.setProperty('--d', (turn++ * step).toFixed(3) + 's'); });
+  screen.classList.remove('enter');
+  void screen.offsetWidth;                    // what lets the movement start over
+  screen.classList.add('enter');
+  setTimeout(() => screen.classList.remove('enter'), 1600);
 }
 function openHome(){
   gate.style.display = 'none';
   home.hidden = false;
   pin.blur();          // the PIN is done; let the keyboard go
+  arrive(home, '.door', 0);                   // their turns are in the styles
 }
 const b64d = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
@@ -607,15 +659,15 @@ pin.addEventListener('keydown', e => { if(e.key==='Enter') submitPin(); });
 /* A card answers where it is touched: the ring in its styles opens from under
    the fingertip. Taking the class off and reading a width before putting it
    back is what lets a second touch start the ring again. */
-[].forEach.call(document.querySelectorAll('.door'), door => {
-  door.addEventListener('pointerdown', e => {
-    const box = door.getBoundingClientRect();
-    door.style.setProperty('--rx', (e.clientX - box.left) + 'px');
-    door.style.setProperty('--ry', (e.clientY - box.top) + 'px');
-    door.classList.remove('rip');
-    void door.offsetWidth;
-    door.classList.add('rip');
-  });
+document.addEventListener('pointerdown', e => {
+  const door = e.target.closest('.door');
+  if(!door) return;
+  const box = door.getBoundingClientRect();
+  door.style.setProperty('--rx', (e.clientX - box.left) + 'px');
+  door.style.setProperty('--ry', (e.clientY - box.top) + 'px');
+  door.classList.remove('rip');
+  void door.offsetWidth;
+  door.classList.add('rip');
 });
 
 /* ---------- boot ---------- */
@@ -639,6 +691,7 @@ function letIn(apiKey){
 }
 function askForPin(){
   clearFlag();
+  arrive(gate, '.pinboxes i', 0.07);    // the four boxes come in one after another
   setTimeout(() => pin.focus(), 120);
 }
 

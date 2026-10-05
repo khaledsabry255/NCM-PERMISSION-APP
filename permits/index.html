@@ -311,6 +311,25 @@ body.search-mode .tabs{ margin:10px 0; }
 .search-go, .refresh-btn{ transition:transform .15s ease, filter .15s ease; }
 .tab-btn.active{ background:#FFD24D; border-color:#E0A800; color:#0B1114; }
 
+/* ...and answers where it was touched: a soft ring opens from under the
+   fingertip and fades. --rx/--ry are set by the script at each touch, the same
+   ring the boxes in the other two systems draw. */
+.tab-btn, .occ-chip, .search-go, .refresh-btn{ position:relative; overflow:hidden; }
+.tab-btn::after, .occ-chip::after, .search-go::after, .refresh-btn::after{
+  content:""; position:absolute; left:var(--rx,50%); top:var(--ry,50%);
+  width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%;
+  background:var(--blue); opacity:0; transform:scale(0); pointer-events:none;
+}
+.tab-btn.active::after, .search-go::after{ background:#fff; }
+.rip::after{ animation:ringOut .55s ease-out; }
+@keyframes ringOut{ from{ opacity:.26; transform:scale(0); } to{ opacity:0; transform:scale(26); } }
+/* The two tabs arrive when the page opens. It hangs on a class the script puts
+   on rather than on the page loading, because the app opens its window before
+   anyone is looking and a hidden page holds its animations at the first frame
+   — the tabs would sit invisible until it was looked at again. */
+@keyframes tabIn{ from{ opacity:0; transform:translateY(10px) scale(.96); } }
+body.enter .tab-btn{ animation:tabIn .45s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards; }
+
 .status-line{
   text-align:center;
   color:var(--ink-2);
@@ -1565,6 +1584,35 @@ async function reloadData(){
 
 const _refreshBtn = document.getElementById("refresh-btn");
 if(_refreshBtn) _refreshBtn.addEventListener("click", reloadData);
+
+/* ---- Movement: the boxes arriving, and a touch answered ----
+   A box answers where it is touched: the ring in its styles opens from under
+   the fingertip. Taking the class off and reading a width before putting it
+   back is what lets a second touch start the ring again. */
+document.addEventListener("pointerdown", e => {
+  const el = e.target.closest(".tab-btn, .occ-chip, .search-go, .refresh-btn");
+  if(!el) return;
+  const box = el.getBoundingClientRect();
+  el.style.setProperty("--rx", (e.clientX - box.left) + "px");
+  el.style.setProperty("--ry", (e.clientY - box.top) + "px");
+  el.classList.remove("rip");
+  void el.offsetWidth;
+  el.classList.add("rip");
+});
+/* Nothing moves on a page nobody is looking at — a hidden page holds its
+   animations at the first frame — so a page that opened unseen waits. */
+function arrive(){
+  if(document.hidden){
+    const seen = () => { if(document.hidden) return; document.removeEventListener("visibilitychange", seen); arrive(); };
+    document.addEventListener("visibilitychange", seen);
+    return;
+  }
+  let turn = 0;
+  document.querySelectorAll(".tab-btn").forEach(el => { el.style.setProperty("--d", (turn++ * 0.08).toFixed(2) + "s"); });
+  document.body.classList.add("enter");
+  setTimeout(() => document.body.classList.remove("enter"), 1600);
+}
+arrive();
 
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{

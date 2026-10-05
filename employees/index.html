@@ -399,6 +399,16 @@ html[dir="ltr"] .tile{direction:ltr;}
   transition:background .16s,color .16s,border-color .16s;
 }
 .dlbtn:hover{background:var(--gold-soft);}
+/* It gives under the finger and answers where it was touched, like every box
+   in the app: a soft ring opens from under the fingertip and fades. */
+.dlbtn{position:relative;overflow:hidden;transition:background .16s,color .16s,border-color .16s,transform .12s;}
+.dlbtn:active{transform:scale(.98);}
+.dlbtn::after{
+  content:"";position:absolute;left:var(--rx,50%);top:var(--ry,50%);
+  width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  background:#fff;opacity:0;transform:scale(0);pointer-events:none;
+}
+.dlbtn.rip::after{animation:tileRip .55s ease-out;}
 .dlbtn[disabled]{cursor:default;}
 .dlbtn.done{color:var(--success);border-color:var(--success-br);background:var(--success-bg);}
 .dlbtn.fail{color:var(--danger);border-color:var(--danger-br);background:var(--danger-bg);}
@@ -1167,7 +1177,17 @@ let shownBoxes = '', enterTimer = null;
 function arrive(key){
   /* Nothing moves on a page nobody is looking at: a browser holds a hidden
      page's animations at their first frame, which here is "not there yet", so
-     the tiles would sit invisible until it was looked at again. */
+     the tiles would sit invisible until it was looked at again. The app opens
+     its window before anyone is looking, so a screen opened while hidden waits
+     for the moment it is seen rather than giving up its movement. */
+  if(document.hidden && key !== shownBoxes){
+    const seen = () => {
+      if(document.hidden) return;
+      document.removeEventListener('visibilitychange', seen);
+      if(shownBoxes === key){ shownBoxes = ''; arrive(key); }   // still the same screen
+    };
+    document.addEventListener('visibilitychange', seen);
+  }
   const opened = key !== shownBoxes && !document.hidden;
   shownBoxes = key;
   clearTimeout(enterTimer);
@@ -1209,11 +1229,11 @@ function countUp(){
   requestAnimationFrame(step);
   setTimeout(() => put(null), RUN + 1200);
 }
-/* A tile answers where it is touched: the ring in its styles opens from under
+/* A box answers where it is touched: the ring in its styles opens from under
    the fingertip. Taking the class off and reading a width before putting it
    back is what lets a second touch start the ring again. */
 out.addEventListener('pointerdown', e => {
-  const tile = e.target.closest('button.tile');
+  const tile = e.target.closest('button.tile, .dlbtn');
   if(!tile) return;
   const box = tile.getBoundingClientRect();
   tile.style.setProperty('--rx', (e.clientX - box.left) + 'px');

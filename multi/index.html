@@ -119,7 +119,15 @@ button{font-family:inherit;cursor:pointer;}
 }
 
 /* ---------- the list box ---------- */
-.multi-box{position:relative;display:flex;flex-direction:column;gap:10px;margin-top:14px;animation:fadeUp .4s ease-out backwards;}
+.multi-box{position:relative;display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+/* The box, the two tabs, the buttons and the row of sources arrive one after
+   another when the page opens. It hangs on a class the script puts on rather
+   than on the page loading, because the app opens its window before anyone is
+   looking and a hidden page holds its animations at the first frame — they
+   would sit invisible until it was looked at again. */
+body.enter .multi-box,
+body.enter .multi-bar > *,
+body.enter .src .pill{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;}
 /* --mono ends in the generic "monospace", which answers for Arabic before
    Tajawal ever gets asked — so the stack is spelled out here instead. */
 .multi-ta{
@@ -149,6 +157,18 @@ button{font-family:inherit;cursor:pointer;}
   transition:background .16s,transform .12s,filter .16s;
 }
 .btn:active{transform:scale(.96);}
+/* Every control gives under the finger and answers where it was touched: a
+   soft ring opens from under the fingertip and fades — the same ring the boxes
+   in the other two systems draw. --rx/--ry are set by the script at each
+   touch. */
+.btn,.fab,.seg button,.hist-row{position:relative;overflow:hidden;}
+.btn::after,.fab::after,.seg button::after,.hist-row::after{
+  content:"";position:absolute;left:var(--rx,50%);top:var(--ry,50%);
+  width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  background:var(--blue);opacity:0;transform:scale(0);pointer-events:none;
+}
+.btn.primary::after,.seg button.on::after,.fab.on::after{background:#fff;}
+.rip::after{animation:ringOut .55s ease-out;}
 .btn.primary{flex:1;min-width:150px;padding-block:13px;font-size:15.5px;background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(21,101,192,.24);}
 .btn[disabled]{opacity:.55;cursor:default;}
 .fab{
@@ -242,6 +262,16 @@ html[lang="en"] .row dd.ltr{text-align:right;}
   transition:background .16s,color .16s,border-color .16s;
 }
 .dlbtn:hover{background:var(--gold-soft);}
+/* It gives under the finger and answers where it was touched, like every box
+   in the app: a soft ring opens from under the fingertip and fades. */
+.dlbtn{position:relative;overflow:hidden;transition:background .16s,color .16s,border-color .16s,transform .12s;}
+.dlbtn:active{transform:scale(.98);}
+.dlbtn::after{
+  content:"";position:absolute;left:var(--rx,50%);top:var(--ry,50%);
+  width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  background:#fff;opacity:0;transform:scale(0);pointer-events:none;
+}
+.dlbtn.rip::after{animation:tileRip .55s ease-out;}
 .dlbtn[disabled]{cursor:default;}
 .dlbtn.done{color:var(--success);border-color:var(--success-br);background:var(--success-bg);}
 .dlbtn.fail{color:var(--danger);border-color:var(--danger-br);background:var(--danger-bg);}
@@ -495,9 +525,19 @@ html[dir="ltr"] .row dd.ltr{text-align:right;}
 }
 .occ-chip:active{ transform:scale(.9); }
 .occ-chip.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+/* ...and answers where it was touched, the same ring the permits system draws
+   on it. (Its other controls — the tabs, the search button — are that page's
+   own and have no part here.) */
+.occ-chip{ position:relative; overflow:hidden; }
+.occ-chip::after{
+  content:""; position:absolute; left:var(--rx,50%); top:var(--ry,50%);
+  width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%;
+  background:var(--blue); opacity:0; transform:scale(0); pointer-events:none;
+}
 /* Choosing another permit of the same person swaps what the card shows: the new one fades up into place. */
 .occ-content > *{ animation:occIn .28s ease-out backwards; }
 @keyframes occIn{ from{ opacity:0; transform:translateY(6px); } }
+@keyframes ringOut{ from{ opacity:.26; transform:scale(0); } to{ opacity:0; transform:scale(26); } }
 
 .occ-content{ padding:13px 15px 15px; }
 
@@ -2100,6 +2140,36 @@ $("mt").addEventListener("input", multiLines);
 $("go").addEventListener("click", () => { $("mt").blur(); histToggle(false); goMulti(); });
 $("clear").addEventListener("click", () => { leaveSearch(); $("mt").focus(); });
 $("hist-btn").addEventListener("click", () => histToggle());
+
+/* ---------- boxes arriving, and a touch answered ----------
+   A box answers where it is touched: the ring in its styles opens from under
+   the fingertip. Taking the class off and reading a width before putting it
+   back is what lets a second touch start the ring again. */
+document.addEventListener("pointerdown", e => {
+  const el = e.target.closest(".btn, .fab, .seg button, .hist-row, .occ-chip, .dlbtn");
+  if(!el) return;
+  const box = el.getBoundingClientRect();
+  el.style.setProperty("--rx", (e.clientX - box.left) + "px");
+  el.style.setProperty("--ry", (e.clientY - box.top) + "px");
+  el.classList.remove("rip");
+  void el.offsetWidth;
+  el.classList.add("rip");
+});
+/* Nothing moves on a page nobody is looking at, so a page that opened unseen
+   waits for the moment it is seen. */
+function arrive(){
+  if(document.hidden){
+    const seen = () => { if(document.hidden) return; document.removeEventListener("visibilitychange", seen); arrive(); };
+    document.addEventListener("visibilitychange", seen);
+    return;
+  }
+  let turn = 1;                                  // the box itself comes first, then the row under it
+  document.querySelectorAll(".multi-bar > *, .src .pill").forEach(el => {
+    el.style.setProperty("--d", Math.min(turn++ * 0.05, 0.5).toFixed(2) + "s");
+  });
+  document.body.classList.add("enter");
+  setTimeout(() => document.body.classList.remove("enter"), 1600);
+}
 $("hist").addEventListener("click", e => {
   if(e.target.closest("#hist-clear")){ HIST = []; histSave(); return histToggle(true); }
   const row = e.target.closest("[data-hist]");
@@ -2140,6 +2210,7 @@ if(!key){
   try{ sessionStorage.removeItem("ncm_multi_last"); }catch(e){}   // what an older version of the page left behind
   applyLang();
   paintMulti();
+  arrive();
   loadAll();
 }
 
