@@ -200,65 +200,33 @@ button.pill{font-family:inherit;}
 }
 .note.warn{background:var(--warn-bg);border-color:var(--warn-br);color:#7a4703;}
 /* ---------- the answers ----------
-   One short row per answer, in the glass the rest of the app is made of: who
-   it is and where his permit stands, at a size a thumb can read and press. A
-   phone has no room for a table of fifteen columns and is not asked to show
-   one - everything a row leaves out is in the card that opens behind it. */
+   Everything a line found is laid out in full, one card under another: the
+   employee's card with his photographs, and every permit the sheet holds for
+   him, newest first. Nothing is behind a tap - the list is read by scrolling
+   (asked for so, 5 October 2026: «تظهرلى الكروت تحت بعض»). */
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}}
-.sum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-bottom:12px;animation:fadeUp .36s ease-out backwards;}
-.mlist{display:flex;flex-direction:column;gap:9px;}
-.mrow{
-  display:flex;align-items:center;gap:11px;width:100%;
-  padding:12px 13px;border-radius:var(--r);text-align:start;
-  border:1px solid rgba(255,255,255,.68);background:var(--card);color:var(--text);font-family:var(--sans);
-  -webkit-backdrop-filter:blur(12px) saturate(1.25);backdrop-filter:blur(12px) saturate(1.25);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 5px 14px rgba(21,101,192,.10);
-  transition:transform .16s cubic-bezier(.2,.8,.2,1),filter .16s;
-  /* the rows come in one after another, like every other box in the app */
-  animation:rowIn .44s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;
-}
-@keyframes rowIn{from{opacity:0;transform:translateY(14px) scale(.97);}}
-button.mrow:active{transform:scale(.975);filter:brightness(.97);}
+.sum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin-bottom:6px;animation:fadeUp .36s ease-out backwards;}
+/* the line of the list an answer belongs to: its number, and what was typed */
+.mterm{display:flex;align-items:center;gap:9px;margin:20px 2px 9px;}
+.mterm::after{content:"";flex:1;height:1px;background:var(--line-2);opacity:.8;}
 .mrow-n{
   flex:none;min-width:27px;height:27px;padding:0 6px;border-radius:999px;
   display:flex;align-items:center;justify-content:center;
-  background:var(--panel);border:1px solid var(--line-2);
-  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);
+  background:var(--sun);border:1px solid var(--sun-deep);
+  font-family:var(--mono);font-size:12px;font-weight:700;color:#3b2a04;
 }
-.mrow-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
-.mrow-name{font-size:15.5px;font-weight:800;line-height:1.45;word-break:break-word;}
-.mrow-sub{font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.55;word-break:break-word;}
-.mrow-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;}
-.mrow-tags .pill{font-size:11.5px;padding:2px 9px;}
-.mrow-end{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-width:44%;}
-.mrow-end .pill{font-size:12.5px;padding:4px 11px;white-space:normal;text-align:center;line-height:1.45;}
-.typed{font-size:11.5px;font-weight:500;color:var(--muted);unicode-bidi:plaintext;}
-.mrow.miss{background:rgba(251,227,227,.78);border-color:var(--bad-br);box-shadow:none;}
-.mrow.miss .mrow-end{max-width:none;}
-.mrow.miss .mrow-end .pill{white-space:nowrap;}
-.mrow.miss .mrow-name{color:var(--bad);font-family:'IBM Plex Mono','Tajawal','Segoe UI',Tahoma,sans-serif;font-size:15px;unicode-bidi:plaintext;}
-.mrow.more{justify-content:center;background:var(--panel-2);border:1px dashed var(--line-2);box-shadow:none;
-  font-size:13px;font-weight:700;color:var(--muted);text-align:center;line-height:1.7;}
-.empty{text-align:center;padding:40px 20px;color:var(--muted);animation:fadeUp .4s ease-out backwards;}
-.empty svg{opacity:.5;margin-bottom:12px;}
-.empty h3{margin:0 0 6px;font-size:16px;font-weight:800;color:var(--text-2);}
-.empty p{margin:0;font-size:14px;line-height:1.9;}
-
-/* ---------- the card behind a row ---------- */
-#veil{position:fixed;inset:0;z-index:90;background:rgba(11,17,20,.34);opacity:0;pointer-events:none;transition:opacity .18s;}
-#veil.on{opacity:1;pointer-events:auto;}
-/* comes up from the bottom edge and takes most of the screen; the page behind stays where it was */
-#drawer{
-  position:fixed;z-index:100;left:0;right:0;bottom:0;max-height:88dvh;
-  display:flex;flex-direction:column;
-  background:var(--bg);border-radius:22px 22px 0 0;box-shadow:0 -14px 40px rgba(11,17,20,.24);
-  transform:translateY(104%);transition:transform .24s cubic-bezier(.2,.8,.2,1);
+.term{font-family:'IBM Plex Mono','Tajawal','Segoe UI',Tahoma,sans-serif;font-size:14px;font-weight:700;color:var(--text-2);unicode-bidi:plaintext;word-break:break-word;}
+.hit{animation:fadeUp .44s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;}
+.hit + .hit{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line-2);}
+.mrow{
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:12px 13px;border-radius:var(--r);
+  animation:fadeUp .44s cubic-bezier(.2,.8,.2,1) var(--d,0s) backwards;
 }
-#drawer.on{transform:none;}
-.dr-head{flex:none;display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line);}
-.dr-title{flex:1;min-width:0;margin:0;font-size:15.5px;font-weight:800;color:var(--navy);}
-.dr-body{flex:1;min-height:0;overflow-y:auto;padding:12px 14px calc(22px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;}
-.dr-sec{margin:18px 4px 8px;font-size:13px;font-weight:800;color:var(--navy);}
+.mrow.miss{justify-content:center;background:rgba(251,227,227,.78);border:1px solid var(--bad-br);}
+.mrow.more{justify-content:center;background:var(--panel-2);border:1px dashed var(--line-2);
+  font-size:13px;font-weight:700;color:var(--muted);text-align:center;line-height:1.7;margin-top:10px;}
+.dr-sec{margin:14px 4px 8px;font-size:13px;font-weight:800;color:var(--navy);}
 .dr-sec b{color:var(--blue);font-family:var(--mono);}
 .rec{
   border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px;
@@ -353,17 +321,6 @@ button.mrow:active{transform:scale(.975);filter:brightness(.97);}
   </div>
 </div>
 
-<div id="veil"></div>
-<aside id="drawer" role="dialog" aria-modal="true" aria-hidden="true">
-  <div class="dr-head">
-    <h2 class="dr-title" id="dr-title"></h2>
-    <button type="button" class="fab" id="dr-x" aria-label="إغلاق">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-    </button>
-  </div>
-  <div class="dr-body" id="dr-body"></div>
-</aside>
-
 <script>
 "use strict";
 
@@ -399,15 +356,13 @@ function esc(s){
 const I18N = {
   ar:{
     page:"بحث متكرر", segPeople:"أفراد", segVehicles:"مركبات", search:"بحث", clear:"مسح", lines:n => "سطور: " + n,
-    phPeople:"رقم قومي أو كود أو اسم\nكل واحد في سطر", phPlates:"رقم سيارة\nكل واحد في سطر",
     ariaNids:"الأرقام القومية، رقم في كل سطر", ariaPlates:"أرقام السيارات، رقم في كل سطر",
     refresh:"تحديث البيانات", histAria:"سجل البحث", histEmpty:"السجل فاضي", histClear:"مسح السجل", close:"إغلاق",
     srcEmp:"الموظفين", srcInd:"تصاريح الأفراد", srcVeh:"تصاريح المركبات", loading:"جاري تحميل البيانات", stillLoading:"البيانات لسه بتحمّل، استنى ثانية وجرّب تاني.",
-    hint:"اكتب القايمة أو الصقها", hintSub:"كل واحد في سطر — وبيتبحث في الموظفين والتصاريح مع بعض",
     sumAsked:"مطلوب", sumFound:"موجود", sumMiss:"مش موجود", sumDup:"متكرر في القايمة",
     searchLacks:x => x + " مش متحمّل دلوقتي — النتايج دي من غيره، و«مش موجود» مش أكيدة", and:" و",
-    missRow:"مش موجود في الشيت", moreNames:(term, n) => "«" + term + "» — " + n + " كمان · اكتب اسم كمان معاه",
-    moreRow:(term, n) => "«" + term + "» — " + n + " نتيجة كمان", typed:"المكتوب: ",
+    missRow:"مش موجود في الشيت", moreNames:(term, n) => "«" + term + "» — " + n + " كمان",
+    moreRow:(term, n) => "«" + term + "» — " + n + " نتيجة كمان",
     colName:"الاسم", colJob:"الوظيفة", colNid:"الرقم القومي", address:"العنوان", colPermit:"التصريح",
     colSent:"تاريخ الإرسال", colMail:"نوع الإرسال", letterNo:"رقم الخطاب", letterDate:"تاريخ الخطاب", colCompany:"الشركة",
     sender:"المرسل", notes:"ملاحظات", aseNote:"ملاحظة", colCount:"تصاريح", colEmp:"موظف NCM",
@@ -427,15 +382,13 @@ const I18N = {
   },
   en:{
     page:"List search", segPeople:"People", segVehicles:"Vehicles", search:"Search", clear:"Clear", lines:n => "Lines: " + n,
-    phPeople:"National ID, code or name\nOne per line", phPlates:"Plate number\nOne per line",
     ariaNids:"National IDs, one per line", ariaPlates:"Plate numbers, one per line",
     refresh:"Refresh data", histAria:"Search history", histEmpty:"No history yet", histClear:"Clear history", close:"Close",
     srcEmp:"Employees", srcInd:"Individual permits", srcVeh:"Vehicle permits", loading:"Loading data", stillLoading:"Data is still loading — wait a moment and try again.",
-    hint:"Type the list or paste it", hintSub:"One per line — searched in employees and permits together",
     sumAsked:"Asked", sumFound:"Found", sumMiss:"Not found", sumDup:"Repeated in the list",
     searchLacks:x => x + " is not loaded right now — these answers are without it, and a “Not found” is not certain", and:" and ",
-    missRow:"Not in the sheet", moreNames:(term, n) => "“" + term + "” — " + n + " more · add another name to it",
-    moreRow:(term, n) => "“" + term + "” — " + n + " more results", typed:"Typed: ",
+    missRow:"Not in the sheet", moreNames:(term, n) => "“" + term + "” — " + n + " more",
+    moreRow:(term, n) => "“" + term + "” — " + n + " more results",
     colName:"Name", colJob:"Job", colNid:"National ID", address:"Address", colPermit:"Permit",
     colSent:"Date sent", colMail:"Mail type", letterNo:"Letter number", letterDate:"Letter date", colCompany:"Company",
     sender:"Sender", notes:"Notes", aseNote:"Note", colCount:"Permits", colEmp:"NCM employee",
@@ -916,39 +869,38 @@ const empTag = e => stLabel(e) + (e.resigned ? " · " + t("resigned") : "");
 const CAT_PILL = { ok:"ok", soon:"warn", expired:"bad", ban:"ban", renew:"bad", temp:"mute", pending:"warn", undet:"mute" };
 const CAT_NAME = { ok:"cOk", soon:"cSoon", expired:"cExpired", ban:"cBan", renew:"cRenew", temp:"cTemp", pending:"cPending", undet:"cUndet" };
 const hasCell = v => !(v === "" || v === null || v === undefined);
-function multiOpen(r){
-  if(st.res.mode === "veh") return "veh:" + r.g.key;
-  return r.g ? "ind:" + r.g.key : "emp:" + r.emps[0].emp_code;
+/* Everything one answer is, in full. A man who is in both sources shows as the
+   employee he is - card and photographs - and under it every permit the sheet
+   holds for him; a man who is only in the sheet gets a head of his own first. */
+function personHeadHTML(g){
+  return '<article class="rec"><div class="head">' +
+      '<h2 class="nm">' + esc(g.name || t("noNameShort")) + "</h2>" +
+      '<div class="pills">' + (g.nationalId ? '<span class="pill white">' + num(g.nationalId) + "</span>" : pill("mute", t("nidNotReg"))) +
+        '<span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span></div></div>" +
+      (g.names.size > 1 ? group(t("nameForms"), [...g.names.values()].map(n => rowHTML("—", n)).join("")) : "") +
+    '<div class="rec-pad"></div></article>';
 }
-function hintHTML(){
-  return '<div class="empty">' +
-    '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-    "<h3>" + esc(t("hint")) + "</h3><p>" + esc(t("hintSub")) + "</p></div>";
-}
-/* One answer, as a row. A man who is in both sources is one row: his name and
-   his newest permit from the sheet, and under his name the mark of the
-   employee he also is - his code and where his staff permit stands. */
-function rowPeople(r){
-  const g = r.g, e0 = r.emps[0];
-  const nid = g ? g.nationalId : e0.national_id, job = g ? g.cur.job : e0.job_title;
-  // the id on one line and the job under it: side by side they break in the middle of the job on a narrow screen
-  const sub = [nid ? num(nid) : "", esc(job || "")].filter(Boolean).join("<br>");
-  const tags = r.emps.map(e => pill("link", t("codeN", e.emp_code)) + pill(e.st.k, empTag(e))).join("") +
-               (g && g.records.length > 1 ? pill("white", t("nPermits", g.records.length)) : "");
-  // what was typed is only repeated when it is not already sitting in the row
-  const typed = r.term !== (g ? g.nid : e0.nid) && foldArabic(r.term) !== foldArabic(g ? g.name : e0.full_name)
-    ? '<span class="typed">' + esc(t("typed") + r.term) + "</span>" : "";
-  return { name: esc(dash(g ? g.name : e0.full_name)), sub, tags, typed, end: g ? permitPill(g.p) : empPermit(e0) };
-}
-function rowVehicle(r){
+function cardsPeople(r){
   const g = r.g;
-  const sub = [esc(g.cur.type || ""), esc(g.cur.owner || "")].filter(Boolean).join(" · ");
-  const typed = foldArabic(r.term) !== g.key ? '<span class="typed">' + esc(t("typed") + r.term) + "</span>" : "";
-  return { name: esc(g.plate), sub, tags: g.records.length > 1 ? pill("white", t("nPermits", g.records.length)) : "", typed, end: permitPill(g.p) };
+  let h = r.emps.map(empCardHTML).join("");
+  if(g){
+    if(!r.emps.length) h += personHeadHTML(g);
+    h += '<div class="dr-sec">' + esc(t(r.emps.length ? "hisPermits" : "permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
+         historyHTML(g.records, false);
+  }
+  return h;
+}
+function cardsVehicle(r){
+  const g = r.g;
+  return '<article class="rec"><div class="head"><h2 class="nm">' + esc(g.plate) + "</h2>" +
+      '<div class="pills"><span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span></div></div>" +
+      '<div class="rec-pad"></div></article>' +
+    '<div class="dr-sec">' + esc(t("permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
+    historyHTML(g.records, true);
 }
 function paintMulti(){
   const res = st.res, box = $("mres");
-  if(!res || !res.terms){ box.innerHTML = hintHTML(); return; }      // nothing asked: the page says what it is for
+  if(!res || !res.terms){ box.innerHTML = ""; return; }      // nothing asked, nothing shown
   const cats = {};
   res.rows.forEach(r => { if(r.g) cats[r.g.p.cat] = (cats[r.g.p.cat] || 0) + 1; });
   const sum = '<div class="sum">' +
@@ -962,23 +914,20 @@ function paintMulti(){
      loaded, a man who is banned comes back "not found" (or as an employee and
      nothing more) — so the answers say which source they are without. */
   const lacking = res.mode === "veh" ? (M.veh ? [] : ["srcVeh"]) : [M.ind ? "" : "srcInd", M.emp ? "" : "srcEmp"].filter(Boolean);
+  let line = 0, turn = 0;
   box.innerHTML =
     (lacking.length ? '<div class="note warn">' + esc(t("searchLacks", lacking.map(k => t(k)).join(t("and")))) + "</div>" : "") +
-    sum + '<div class="mlist">' +
-    res.rows.map((r, i) => {
-      // each row takes its turn coming in; past the first screenful they are simply there
-      const turn = ' style="--d:' + Math.min(i * 0.04, 0.48).toFixed(2) + 's"';
-      const lead = '<span class="mrow-n">' + r.n + "</span>";
-      if(r.miss) return '<div class="mrow miss"' + turn + ">" + lead + '<span class="mrow-main"><span class="mrow-name">' + esc(r.term) + "</span></span>" +
-                        '<span class="mrow-end">' + pill("bad", t("missRow")) + "</span></div>";
-      if(r.more) return '<div class="mrow more"' + turn + ">" + esc(t(r.names ? "moreNames" : "moreRow", r.term, r.more)) + "</div>";
-      const c = res.mode === "veh" ? rowVehicle(r) : rowPeople(r);
-      return '<button type="button" class="mrow" data-open="' + esc(multiOpen(r)) + '"' + turn + ">" + lead +
-        '<span class="mrow-main"><span class="mrow-name">' + c.name + "</span>" +
-          (c.sub ? '<span class="mrow-sub">' + c.sub + "</span>" : "") +
-          (c.tags ? '<span class="mrow-tags">' + c.tags + "</span>" : "") + c.typed + "</span>" +
-        '<span class="mrow-end">' + c.end + "</span></button>";
-    }).join("") + "</div>";
+    sum +
+    res.rows.map(r => {
+      // the first few come in one after another; past the first screenful they are simply there
+      const d = ' style="--d:' + Math.min(turn++ * 0.06, 0.36).toFixed(2) + 's"';
+      // each line of the list is named once, above whatever it found
+      const head = r.n !== line ? '<div class="mterm"><span class="mrow-n">' + r.n + '</span><span class="term">' + esc(r.term) + "</span></div>" : "";
+      line = r.n;
+      if(r.miss) return head + '<div class="mrow miss"' + d + ">" + pill("bad", t("missRow")) + "</div>";
+      if(r.more) return '<div class="mrow more"' + d + ">" + esc(t(r.names ? "moreNames" : "moreRow", r.term, r.more)) + "</div>";
+      return head + '<div class="hit"' + d + ">" + (res.mode === "veh" ? cardsVehicle(r) : cardsPeople(r)) + "</div>";
+    }).join("");
 }
 function multiLines(){
   $("mt-n").textContent = t("lines", parseTerms($("mt").value).terms.length);
@@ -995,10 +944,9 @@ function goMulti(){
 }
 
 /* ============================================================
-   THE CARD BEHIND A ROW
-   A row opens what the two systems know about it: the employee's card, the
-   person's every permit newest first, the vehicle's every permit. It comes up
-   over the table and goes away with the phone's back button.
+   THE CARDS
+   What the two systems know about an answer, drawn in full: the employee's
+   card, and one card per permit.
    ============================================================ */
 const rowHTML = (label, value, cls) => hasCell(value)
   ? '<div class="row"><dt>' + esc(label) + '</dt><dd class="' + (cls || "") + '">' + esc(value) + "</dd></div>" : "";
@@ -1068,73 +1016,8 @@ function permitRecHTML(r, n, total, veh){
     "</dl></div></article>";
 }
 const historyHTML = (records, veh) => records.map((r, n, a) => permitRecHTML(r, n, a.length, veh)).reverse().join("");
-function drawerHTML(ref){
-  const i = ref.indexOf(":"), type = ref.slice(0, i), key = ref.slice(i + 1);
-  if(type === "emp" && M.emp){
-    const e = M.emp.byCode.get(key); if(!e) return null;
-    let h = empCardHTML(e);
-    if(M.ind){
-      h += '<div class="dr-sec">' + esc(t("hisPermits")) + " <b>" + (e.per ? e.per.records.length : 0) + "</b></div>";
-      h += e.per ? historyHTML(e.per.records, false) : '<div class="note">' + esc(t(e.foreign ? "foreignNoLink" : "nidNotInSheet")) + "</div>";
-    }
-    return { title: t("drEmp", e.emp_code), html: h };
-  }
-  if(type === "ind" && M.ind){
-    const g = M.ind.groups.get(key); if(!g) return null;
-    const h = '<article class="rec"><div class="head">' +
-        '<h2 class="nm">' + esc(g.name || t("noNameShort")) + "</h2>" +
-        '<div class="pills">' + (g.nationalId ? '<span class="pill white">' + num(g.nationalId) + "</span>" : pill("mute", t("nidNotReg"))) +
-          '<span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span>" +
-          (g.emp ? g.emp.map(e => '<button type="button" class="pill link" data-open="emp:' + esc(e.emp_code) + '">' + esc(t("empLink", e.emp_code)) + "</button>").join("") : "") +
-        "</div></div>" +
-        (g.names.size > 1 ? group(t("nameForms"), [...g.names.values()].map(n => rowHTML("—", n)).join("")) : "") +
-        '<div class="rec-pad"></div></article>' +
-      '<div class="dr-sec">' + esc(t("permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
-      historyHTML(g.records, false);
-    return { title: t("drInd"), html: h };
-  }
-  if(type === "veh" && M.veh){
-    const g = M.veh.groups.get(key); if(!g) return null;
-    const h = '<article class="rec"><div class="head">' +
-        '<h2 class="nm">' + esc(g.plate) + "</h2>" +
-        '<div class="pills"><span class="pill warn">' + esc(t("nPermits", g.records.length)) + "</span></div>" +
-        '</div><div class="rec-pad"></div></article>' +
-      '<div class="dr-sec">' + esc(t("permitsNewest")) + " <b>" + g.records.length + "</b></div>" +
-      historyHTML(g.records, true);
-    return { title: t("drVeh"), html: h };
-  }
-  return null;
-}
-let drawerOn = false;
-/* Opening it puts an entry in the phone's history, so the back button closes
-   the card instead of walking out of the system; one card opened from inside
-   another takes its place and does not stack a second entry. */
-function openDrawer(ref){
-  const d = drawerHTML(ref);
-  if(!d) return;
-  $("dr-title").textContent = d.title;
-  $("dr-body").innerHTML = d.html;
-  $("dr-body").scrollTop = 0;
-  if(!drawerOn){
-    drawerOn = true;
-    try{ history.pushState({ ncmCard:true }, ""); }catch(e){}
-  }
-  $("drawer").classList.add("on"); $("veil").classList.add("on");
-  $("drawer").setAttribute("aria-hidden", "false");
-}
-function hideDrawer(){
-  drawerOn = false;
-  $("drawer").classList.remove("on"); $("veil").classList.remove("on");
-  $("drawer").setAttribute("aria-hidden", "true");
-}
-function closeDrawer(){
-  if(!drawerOn) return;
-  if(history.state && history.state.ncmCard) history.back();      // popstate does the hiding, and the entry is spent
-  else hideDrawer();
-}
-window.addEventListener("popstate", () => { if(drawerOn) hideDrawer(); });
 // a photograph that is not there (the second one often is not) takes no room
-$("dr-body").addEventListener("error", e => { if(e.target && e.target.tagName === "IMG") e.target.remove(); }, true);
+$("mres").addEventListener("error", e => { if(e.target && e.target.tagName === "IMG") e.target.remove(); }, true);
 
 /* ============================================================
    SEARCH HISTORY
@@ -1216,7 +1099,6 @@ function setMode(mode){
   st.mode = mode === "veh" ? "veh" : "ind";
   [].forEach.call(document.querySelectorAll("#seg button"), b => b.classList.toggle("on", b.dataset.mmode === st.mode));
   const veh = st.mode === "veh";
-  $("mt").placeholder = t(veh ? "phPlates" : "phPeople");
   $("mt").setAttribute("aria-label", t(veh ? "ariaPlates" : "ariaNids"));
 }
 function applyLang(){
@@ -1228,7 +1110,6 @@ function applyLang(){
   $("go").textContent = t("search"); $("clear").textContent = t("clear");
   $("refresh").setAttribute("aria-label", t("refresh")); $("refresh").title = t("refresh");
   $("hist-btn").setAttribute("aria-label", t("histAria")); $("hist-btn").title = t("histAria");
-  $("dr-x").setAttribute("aria-label", t("close"));
   setMode(st.mode); multiLines(); paintSrc();
 }
 $("seg").addEventListener("click", e => {
@@ -1258,16 +1139,6 @@ $("refresh").addEventListener("click", () => {
   $("refresh").classList.add("spin");
   loadAll().finally(() => { refreshing = false; $("refresh").classList.remove("spin"); });
 });
-$("mres").addEventListener("click", e => {
-  const row = e.target.closest(".mrow[data-open]");
-  if(row) openDrawer(row.dataset.open);
-});
-$("dr-body").addEventListener("click", e => {
-  const link = e.target.closest("[data-open]");
-  if(link) openDrawer(link.dataset.open);
-});
-$("dr-x").addEventListener("click", closeDrawer);
-$("veil").addEventListener("click", closeDrawer);
 
 /* ============================================================
    BOOT
