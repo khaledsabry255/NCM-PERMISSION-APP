@@ -1190,6 +1190,7 @@ function goMulti(){
     return;
   }
   runMulti(); paintMulti(); multiLines();
+  if(st.res && st.res.terms) enterSearch();      // one step back out of the answers
   histAdd();
 }
 
@@ -2039,16 +2040,34 @@ function histPick(i){
   goMulti();
 }
 
-/* Nothing of a search outlives the visit to this page: going back ends it, and
-   coming in again finds the box empty (asked for so, 5 October 2026 - the page
-   used to put the last list back). A list that is wanted again is one tap away
-   in the history above. */
-function startEmpty(){
+/* THE PHONE'S BACK BUTTON EMPTIES THE SEARCH — it does not leave the page
+   (asked for so, 5 October 2026: «لما ابحث وارجع يرجع البحث فاضى مش يطلع منه
+   خالص»). A search gives the page a history entry of its own, exactly as the
+   employees system does for its own search, so the first press walks back out
+   of the search and only the second leaves for the home screen.
+
+   Nothing of a search outlives the visit either: coming in again finds the box
+   empty. A list that is wanted again is one tap away in the history above. */
+const inSearch = () => !!(history.state && history.state.ncm === "multi");
+function enterSearch(){ if(!inSearch()) history.pushState({ ncm:"multi" }, ""); }
+function clearSearch(){
   $("mt").value = ""; st.text = ""; st.res = null;
-  setMode("ind"); multiLines(); paintMulti(); histToggle(false);
+  multiLines(); paintMulti(); histToggle(false);
 }
-// a page the phone kept whole and shows again is cleared the same way
-window.addEventListener("pageshow", e => { if(e.persisted) startEmpty(); });
+/* Emptying it by hand (the مسح button) walks back through history instead of
+   just redrawing — otherwise the entry stays behind, the next back press is
+   spent undoing nothing, and the one after it leaves the page. */
+function leaveSearch(){
+  if(inSearch()) return history.back();
+  clearSearch();
+}
+window.addEventListener("popstate", clearSearch);
+// a page the phone kept whole and shows again comes back empty too
+window.addEventListener("pageshow", e => {
+  if(!e.persisted) return;
+  if(inSearch()) return history.back();          // and its entry is spent, not left hanging
+  clearSearch();
+});
 
 /* ============================================================
    WIRING
@@ -2079,11 +2098,7 @@ $("seg").addEventListener("click", e => {
 });
 $("mt").addEventListener("input", multiLines);
 $("go").addEventListener("click", () => { $("mt").blur(); histToggle(false); goMulti(); });
-$("clear").addEventListener("click", () => {
-  $("mt").value = ""; st.text = ""; st.res = null;
-  multiLines(); paintMulti(); histToggle(false);
-  $("mt").focus();
-});
+$("clear").addEventListener("click", () => { leaveSearch(); $("mt").focus(); });
 $("hist-btn").addEventListener("click", () => histToggle());
 $("hist").addEventListener("click", e => {
   if(e.target.closest("#hist-clear")){ HIST = []; histSave(); return histToggle(true); }
