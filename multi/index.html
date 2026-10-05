@@ -150,7 +150,6 @@ button{font-family:inherit;cursor:pointer;}
 }
 .btn:active{transform:scale(.96);}
 .btn.primary{flex:1;min-width:150px;padding-block:13px;font-size:15.5px;background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(21,101,192,.24);}
-.btn.sm{padding:7px 12px;font-size:13px;border-radius:var(--r-sm);}
 .btn[disabled]{opacity:.55;cursor:default;}
 .fab{
   flex:none;width:44px;height:44px;border-radius:50%;
@@ -181,7 +180,6 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ---------- what the search is reading from ---------- */
 .src{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:12px;}
-.src .pill{font-size:12px;}
 .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none;}
 .pill.wait .dot{animation:blink 1.1s infinite;}
 @keyframes blink{50%{opacity:.3;}}
@@ -190,7 +188,8 @@ button{font-family:inherit;cursor:pointer;}
    The base .pill is the employee card's, below; these are the kinds it does not have. */
 .pill.ban{background:var(--ban);color:#fff;border-color:var(--ban);}
 .pill.link{background:var(--tint);color:var(--blue);border-color:var(--line-2);}
-.sum .pill,.src .pill{font-size:13px;padding:3px 11px;gap:6px;white-space:nowrap;}
+.sum .pill,.src .pill,.hist .pill,.mrow .pill{font-size:13px;line-height:1.5;padding:3px 11px;gap:6px;white-space:nowrap;}
+.src .pill{font-size:12px;}
 
 /* ---------- answers ---------- */
 #mres{margin-top:14px;}
@@ -217,6 +216,10 @@ button{font-family:inherit;cursor:pointer;}
 }
 .term{font-family:'IBM Plex Mono','Tajawal','Segoe UI',Tahoma,sans-serif;font-size:14px;font-weight:700;color:var(--text-2);unicode-bidi:plaintext;word-break:break-word;}
 .hit + .hit{margin-top:18px;padding-top:6px;border-top:1px dashed var(--line-2);}
+/* In English the employees system turns its whole page left-to-right and its
+   card answers with `html[dir="ltr"] .row dd.ltr` (below). This page stays
+   right-to-left in both languages, so the same answer is given by language. */
+html[lang="en"] .row dd.ltr{text-align:right;}
 .mrow{
   display:flex;align-items:center;gap:11px;width:100%;margin-top:10px;
   padding:12px 13px;border-radius:var(--r);
@@ -691,66 +694,38 @@ function esc(s){
 
 /* ============================================================
    LANGUAGE — read from the home screen's choice, never changed here.
-   The page stays right-to-left in both, as the permits system does: the
-   table's columns keep their order whichever language names them.
+   These are only the words the page says itself; each card brings its own
+   system's wording with it. The page stays right-to-left in both languages,
+   as the permits system does.
    ============================================================ */
 const I18N = {
   ar:{
     page:"بحث متكرر", segPeople:"أفراد", segVehicles:"مركبات", search:"بحث", clear:"مسح", lines:n => "سطور: " + n,
     ariaNids:"الأرقام القومية، رقم في كل سطر", ariaPlates:"أرقام السيارات، رقم في كل سطر",
-    refresh:"تحديث البيانات", histAria:"سجل البحث", histEmpty:"السجل فاضي", histClear:"مسح السجل", close:"إغلاق",
-    srcEmp:"الموظفين", srcInd:"تصاريح الأفراد", srcVeh:"تصاريح المركبات", loading:"جاري تحميل البيانات", stillLoading:"البيانات لسه بتحمّل، استنى ثانية وجرّب تاني.",
+    refresh:"تحديث البيانات", histAria:"سجل البحث", histEmpty:"السجل فاضي", histClear:"مسح السجل",
+    srcEmp:"الموظفين", srcInd:"تصاريح الأفراد", srcVeh:"تصاريح المركبات", stillLoading:"البيانات لسه بتحمّل، استنى ثانية وجرّب تاني.",
     sumAsked:"مطلوب", sumFound:"موجود", sumMiss:"مش موجود", sumDup:"متكرر في القايمة",
     searchLacks:x => x + " مش متحمّل دلوقتي — النتايج دي من غيره، و«مش موجود» مش أكيدة", and:" و",
     missRow:"مش موجود في الشيت", moreNames:(term, n) => "«" + term + "» — " + n + " كمان",
     moreRow:(term, n) => "«" + term + "» — " + n + " نتيجة كمان",
-    colName:"الاسم", colJob:"الوظيفة", colNid:"الرقم القومي", address:"العنوان", colPermit:"التصريح",
-    colSent:"تاريخ الإرسال", colMail:"نوع الإرسال", letterNo:"رقم الخطاب", letterDate:"تاريخ الخطاب", colCompany:"الشركة",
-    sender:"المرسل", notes:"ملاحظات", aseNote:"ملاحظة", colCount:"تصاريح", colEmp:"موظف NCM",
-    colPlate:"رقم السيارة", colType:"النوع", colOwner:"تابعه",
     cOk:"ساري", cSoon:"قرب الانتهاء", cExpired:"منتهي", cBan:"منع", cRenew:"تجديد", cTemp:"مؤقت",
-    cPending:"في انتظار الرد", cUndet:"غير محدد", permitUndet:"غير محدد موقفه حتى الآن",
-    stBanned:"ممنوع", stValid:"ساري", stExpired:"تصريح منتهي", stExpiring:"قرب الانتهاء", stNoDate:"بدون تاريخ", stNoPermit:"بدون تصريح",
-    resigned:"استقالة", codeN:c => "كود " + c, codeLabel:"الكود", noName:"اسم غير مسجل", noNameShort:"بدون اسم",
-    drEmp:c => "موظف — كود " + c, drInd:"تصاريح فرد", drVeh:"تصاريح مركبة", hisPermits:"سجله في شيت التصاريح",
-    foreignNoLink:"أجنبي — مالوش رقم قومي يتربط بيه.", nidNotInSheet:"رقمه القومي مش موجود في «تصاريح أفراد».",
-    nidNotReg:"رقم قومي غير مسجل", nPermits:n => n + (n === 1 ? " تصريح" : " تصاريح"), empLink:c => "موظف NCM — كود " + c,
-    nameForms:"الاسم مكتوب بأكتر من شكل", permitsNewest:"التصاريح — الأحدث فوق", permitNofM:(a, b) => "تصريح " + a + " من " + b,
-    permitStatus:"حالة التصريح", permit:"تصريح", daysLeft:n => "متبقي " + n + " يوم", daysAgo:n => "منتهي منذ " + n + " يوم", today:"ينتهي اليوم",
-    grpPersonal:"البيانات الشخصية", grpWork:"بيانات التوظيف", grpSecurity:"بيانات أمنية",
-    passport:"رقم الجواز", phone:"رقم الهاتف", department:"القسم", hireDate:"تاريخ التعيين", companyName:"اسم الشركة",
-    letterNote:"ملاحظات", banReason:"سبب المنع", resignEnd:"انتهاء الاستقالة", foreignPill:"أجنبي", photoAlt:"صورة البطاقة"
+    cPending:"في انتظار الرد", cUndet:"غير محدد"
   },
   en:{
     page:"List search", segPeople:"People", segVehicles:"Vehicles", search:"Search", clear:"Clear", lines:n => "Lines: " + n,
     ariaNids:"National IDs, one per line", ariaPlates:"Plate numbers, one per line",
-    refresh:"Refresh data", histAria:"Search history", histEmpty:"No history yet", histClear:"Clear history", close:"Close",
-    srcEmp:"Employees", srcInd:"Individual permits", srcVeh:"Vehicle permits", loading:"Loading data", stillLoading:"Data is still loading — wait a moment and try again.",
+    refresh:"Refresh data", histAria:"Search history", histEmpty:"No history yet", histClear:"Clear history",
+    srcEmp:"Employees", srcInd:"Individual permits", srcVeh:"Vehicle permits", stillLoading:"Data is still loading — wait a moment and try again.",
     sumAsked:"Asked", sumFound:"Found", sumMiss:"Not found", sumDup:"Repeated in the list",
     searchLacks:x => x + " is not loaded right now — these answers are without it, and a “Not found” is not certain", and:" and ",
     missRow:"Not in the sheet", moreNames:(term, n) => "“" + term + "” — " + n + " more",
     moreRow:(term, n) => "“" + term + "” — " + n + " more results",
-    colName:"Name", colJob:"Job", colNid:"National ID", address:"Address", colPermit:"Permit",
-    colSent:"Date sent", colMail:"Mail type", letterNo:"Letter number", letterDate:"Letter date", colCompany:"Company",
-    sender:"Sender", notes:"Notes", aseNote:"Note", colCount:"Permits", colEmp:"NCM employee",
-    colPlate:"Plate", colType:"Type", colOwner:"Belongs to",
     cOk:"Valid", cSoon:"Expiring soon", cExpired:"Expired", cBan:"Banned", cRenew:"Renewal", cTemp:"Temporary",
-    cPending:"Awaiting response", cUndet:"Undetermined", permitUndet:"Status not yet determined",
-    stBanned:"Banned", stValid:"Valid", stExpired:"Expired", stExpiring:"Expiring soon", stNoDate:"No date", stNoPermit:"No permit",
-    resigned:"Resigned", codeN:c => "Code " + c, codeLabel:"CODE", noName:"Name not recorded", noNameShort:"No name",
-    drEmp:c => "Employee — code " + c, drInd:"A person's permits", drVeh:"A vehicle's permits", hisPermits:"In the permits sheet",
-    foreignNoLink:"Foreign — no national ID to link by.", nidNotInSheet:"This national ID is not in the individuals sheet.",
-    nidNotReg:"National ID not registered", nPermits:n => n + (n === 1 ? " permit" : " permits"), empLink:c => "NCM employee — code " + c,
-    nameForms:"Name written more than one way", permitsNewest:"Permits — newest first", permitNofM:(a, b) => "Permit " + a + " of " + b,
-    permitStatus:"Permit status", permit:"Permit", daysLeft:n => n + " days left", daysAgo:n => "Expired " + n + " days ago", today:"Expires today",
-    grpPersonal:"PERSONAL DETAILS", grpWork:"EMPLOYMENT DETAILS", grpSecurity:"SECURITY DETAILS",
-    passport:"Passport", phone:"Phone", department:"Department", hireDate:"Hire date", companyName:"Company name",
-    letterNote:"Notes", banReason:"Ban reason", resignEnd:"Resignation ends", foreignPill:"Foreign", photoAlt:"ID card"
+    cPending:"Awaiting response", cUndet:"Undetermined"
   }
 };
 let LANG = "ar";
 try{ const saved = localStorage.getItem("ncm_lang"); if(saved === "en" || saved === "ar") LANG = saved; }catch(e){}
-const isEN = () => LANG === "en";
 function t(key){
   let v = I18N[LANG][key];
   if(v === undefined) v = I18N.ar[key];
@@ -794,14 +769,6 @@ function mkDate(y, m, d){
   return dt;
 }
 function fmt(dt){ return pad2(dt.getDate()) + "/" + pad2(dt.getMonth() + 1) + "/" + dt.getFullYear(); }
-// The employees table: dd/mm/yyyy text (or ISO). Never the browser's own parser.
-function parseStrict(v){
-  const s = clean(v); if(!s) return null;
-  let h;
-  if((h = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))) return mkDate(+h[3], +h[2], +h[1]);
-  if((h = s.match(/^(\d{4})[\-\/.](\d{1,2})[\-\/.](\d{1,2})/)))  return mkDate(+h[1], +h[2], +h[3]);
-  return null;
-}
 // The permits sheet: a leading date, day first unless that is impossible,
 // with whatever was typed after it kept as a note ("18-11-2025(ABNA SINA)").
 const LEADING_DATE = /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/;
@@ -823,30 +790,12 @@ function daysTo(dt){
 }
 
 /* ============================================================
-   EMPLOYEES — the rules are the employees system's, word for word.
+   EMPLOYEES — who they are and how they are found. What a man's permit
+   stands at is not worked out here: his card does that, with the employees
+   system's own statusOf (inside EMP_CARD, below).
    ============================================================ */
-const EMP_FIELDS = ["emp_code","full_name","full_name_en","national_id","job_title","department","category","phone","hire_date",
-  "address","permit_date","permit_status","ban_reason","resignation_end_date","notes",
-  "letter_number","letter_date","letter_company","letter_note"];
-function empStatus(e){
-  const raw = e.permit_status, dl = e.dl;
-  if(raw === "ممنوع") return { k:"ban", label:"ممنوع", code:"BANNED" };
-  // someone who left: the permit is either still running or over
-  if(e.resigned){
-    if(raw === "ساري" && dl !== null && dl >= 0) return { k:"ok", label:"ساري", code:"VERIFIED" };
-    return { k:"bad", label:"تصريح منتهي", code:"EXPIRED" };
-  }
-  if(raw === "ساري"){
-    if(e.permit_date === "ساري حتى الاستقالة") return { k:"ok", label:"ساري", code:"VERIFIED" };
-    if(dl === null) return { k:"mute", label:"بدون تاريخ", code:"NO DATE" };
-    if(dl < 0) return { k:"bad", label:"تصريح منتهي", code:"EXPIRED" };
-    if(dl <= EXPIRY_WINDOW) return { k:"warn", label:"قرب الانتهاء", code:"EXPIRING" };
-    return { k:"ok", label:"ساري", code:"VERIFIED" };
-  }
-  if(raw === "منتهي الصلاحية") return { k:"bad", label:"تصريح منتهي", code:"EXPIRED" };
-  if(raw === "بدون تصريح" || raw === "") return { k:"mute", label:"بدون تصريح", code:"NO PERMIT" };
-  return { k:"mute", label:raw, code:"UNKNOWN" };
-}
+// only what a line of the list is matched against; the card reads the whole row
+const EMP_FIELDS = ["emp_code","full_name","full_name_en","national_id"];
 function byCode(a, b){
   const x = parseInt(digitsOnly(a.emp_code), 10), y = parseInt(digitsOnly(b.emp_code), 10);
   if(isNaN(x) && isNaN(y)) return 0;
@@ -863,11 +812,7 @@ function buildEmployees(rows){
     e.raw = r;                                                   // the row as the table has it: what the employee card is drawn from
     if(!e.emp_code || seen.has(e.emp_code)) return;
     seen.add(e.emp_code);
-    e.resigned = !!e.resignation_end_date;                       // any value counts, even «غير محدد»
-    e.foreign  = !(e.national_id.length === 14 && /^[0-9]+$/.test(e.national_id));
-    e.pdate    = parseStrict(e.permit_date);
-    e.dl       = e.pdate ? daysTo(e.pdate) : null;
-    e.st       = empStatus(e);
+    e.foreign  = !(e.national_id.length === 14 && /^[0-9]+$/.test(e.national_id));   // a passport, not a national id: nothing to link by
     e.nid      = digitsOnly(e.national_id);
     list.push(e);
   });
@@ -883,7 +828,7 @@ function buildEmployees(rows){
 /* ============================================================
    PERMITS — columns are read by position, exactly as the permits system does.
    ============================================================ */
-const IND_COL = { NAME:2, JOB:3, ID:4, ADDR:5, NOTE:6, SENDER:7, PERMIT:8, DAY:9, MAIL:10, LETTER:11, COMPANY:12, LDATE:13, ANOTE:14 };
+const IND_COL = { NAME:2, JOB:3, ID:4, ADDR:5, NOTE:6, SENDER:7, PERMIT:8, DAY:9, MAIL:10, LETTER:11 };   // from LETTER on is ASE DATA, read by its headers
 const VEH_COL = { PLATE:2, TYPE:3, OWNER:4, PERMIT:5, DAY:6, MAIL:7 };
 const RENEW_WORDS = ["عايز تجديد","الرخصه منتهيه","غيرت لوحات","تجديد"];
 /* Where a permit stands, from what is written in its cell. `auto` marks the
@@ -906,12 +851,14 @@ function classify(rawValue){
   if(s.includes("انتظار")) return { cat:"pending", cls:"warn", main:s, note:"", date:null, dl:null };
   return { cat:"undet", cls:"mute", main:s, note:"", date:null, dl:null };
 }
-// dated first in order, undated after them; the LAST one is the one that counts
+/* Dated first in order, undated after them; the LAST one is the one that
+   counts. The day is read by the permits system's own reader (PER_CARD.dayOf),
+   so the permit counted here is always the one its card opens on. */
 function sortByDay(records){
   return records.slice().sort((a, b) => {
-    if(a.dayDate && b.dayDate) return a.dayDate - b.dayDate;
-    if(a.dayDate) return -1;
-    if(b.dayDate) return 1;
+    if(a.dayParsed && b.dayParsed) return a.dayParsed - b.dayParsed;
+    if(a.dayParsed) return -1;
+    if(b.dayParsed) return 1;
     return 0;
   });
 }
@@ -926,15 +873,12 @@ function buildIndividuals(rows){
     const g = groups.get(key);
     const f = foldArabic(nameVal);
     if(f && !g.names.has(f)) g.names.set(f, nameVal);
-    const day = parseLoose(c[C.DAY]);
+    // one permit: the fields the permits card reads, under the names it reads them by
     g.records.push({
-      name: nameVal, job: normalize(c[C.JOB]), address: normalize(c[C.ADDR]), note: normalize(c[C.NOTE]),
-      sender: normalize(c[C.SENDER]), mail: normalize(c[C.MAIL]), letter: normalize(c[C.LETTER]),
-      company: normalize(c[C.COMPANY]), ldate: normalize(c[C.LDATE]), anote: normalize(c[C.ANOTE]),
-      day: normalize(c[C.DAY]), dayDate: day ? day.date : null, dayText: day ? day.text : "",
-      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT]),
-      // what the permits card reads, under the names it reads them by
-      mailType: normalize(c[C.MAIL]), permit: c[C.PERMIT], dayParsed: day ? day.date : null, ase: PER_CARD.aseValues(c)
+      job: normalize(c[C.JOB]), address: normalize(c[C.ADDR]), note: normalize(c[C.NOTE]),
+      sender: normalize(c[C.SENDER]), mailType: normalize(c[C.MAIL]), ase: PER_CARD.aseValues(c),
+      permit: c[C.PERMIT], day: c[C.DAY], dayParsed: PER_CARD.dayOf(c[C.DAY]),
+      p: classify(c[C.PERMIT])                                   // where it stands, for the count above the answers
     });
   });
   const list = [], byNid = new Map();
@@ -956,12 +900,10 @@ function buildVehicles(rows){
     const key = foldArabic(plate);
     if(!groups.has(key)) groups.set(key, { key, plate, records: [] });
     const g = groups.get(key);
-    const day = parseLoose(c[C.DAY]);
     g.records.push({
-      plate, type: normalize(c[C.TYPE]), owner: normalize(c[C.OWNER]), mail: normalize(c[C.MAIL]),
-      day: normalize(c[C.DAY]), dayDate: day ? day.date : null, dayText: day ? day.text : "",
-      dayNote: day ? day.rest : normalize(c[C.DAY]), p: classify(c[C.PERMIT]),
-      mailType: normalize(c[C.MAIL]), permit: c[C.PERMIT], dayParsed: day ? day.date : null
+      type: normalize(c[C.TYPE]), owner: normalize(c[C.OWNER]), mailType: normalize(c[C.MAIL]),
+      permit: c[C.PERMIT], day: c[C.DAY], dayParsed: PER_CARD.dayOf(c[C.DAY]),
+      p: classify(c[C.PERMIT])
     });
   });
   const list = [];
@@ -1867,6 +1809,7 @@ function setAseColumns(headerRow){
   }
 }
 const aseValues = cols => indAseColumns.map(col => normalize(cols[col.index]));
+const dayOf = raw => parseDateLoose(raw);
 const PERMIT_ICONS = {
   "pb-ok": '<path d="M20 6L9 17l-5-5"/>',
   "pb-soon": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
@@ -2014,7 +1957,7 @@ function renderVehicleCard(g, resultsEl){
 }
 
 
-return { personCard, renderVehicleCard, setAseColumns, aseValues };
+return { personCard, renderVehicleCard, setAseColumns, aseValues, dayOf };
 })();
 
 // a photograph that is not there (the second one often is not): the employee card's own placeholder
