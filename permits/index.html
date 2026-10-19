@@ -1180,7 +1180,9 @@ function photosFor(sets, sorted, idx){
     }
     return at === idx;
   });
-  if(mine.length || !sets.length) return mine;
+  // one set under a request, never two stacked (19 October 2026): the photos sent that day, else the newest that fell under it
+  if(mine.length) return [mine.find(x => x.day === days[idx]) || mine.slice().sort((a, z) => z.day.localeCompare(a.day))[0]];
+  if(!sets.length) return mine;
   // a request with no photos of its own: the man's nearest before its day, or his first ones (19 October 2026)
   const byDay = sets.slice().sort((a, z) => a.day.localeCompare(z.day)), d = days[idx];
   const near = d ? byDay.filter(x => x.day <= d).pop() || byDay[0] : byDay[byDay.length - 1];
