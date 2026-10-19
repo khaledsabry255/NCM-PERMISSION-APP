@@ -1172,7 +1172,7 @@ function cardPhotos(photo){
 const isoDay = d => d instanceof Date && !isNaN(d) ? d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") : "";
 function photosFor(sets, sorted, idx){
   const days = sorted.map(r => isoDay(r.dayParsed));
-  return sets.filter(x => {
+  const mine = sets.filter(x => {
     let at = days.indexOf(x.day);
     if(at < 0){
       days.forEach((d, n) => { if(d && d <= x.day && (at < 0 || d > days[at])) at = n; });
@@ -1180,6 +1180,11 @@ function photosFor(sets, sorted, idx){
     }
     return at === idx;
   });
+  if(mine.length || !sets.length) return mine;
+  // a request with no photos of its own: the man's nearest before its day, or his first ones (19 October 2026)
+  const byDay = sets.slice().sort((a, z) => a.day.localeCompare(z.day)), d = days[idx];
+  const near = d ? byDay.filter(x => x.day <= d).pop() || byDay[0] : byDay[byDay.length - 1];
+  return near ? [near] : [];
 }
 document.addEventListener("click", e => {
   const img = e.target.closest(".idph img");
