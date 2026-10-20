@@ -596,6 +596,16 @@ body.unlocked #app-root{ display:block; }
 
 /* «صور البطاقة» / «صور الرخصة» — under each request, the photos that went with it (NCM SYSTEM's photos, 19 October 2026) */
 .idph{ display:flex; flex-direction:column; gap:10px; }
+/* What the card itself says it is good for, read off its back. A card whose day
+   has passed says so in red — that is the whole point of the line. */
+.idph-exp{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:9px 13px; border-radius:12px;
+  background:var(--row-bg); border:1px solid var(--row-line);
+  font-size:13.5px; font-weight:800; color:var(--ink-2);
+}
+.idph-exp .v{ font-family:var(--mono); font-weight:700; }
+.idph-exp.gone{ background:var(--bad-bg); border-color:var(--bad-br); color:var(--bad); }
 .idph:empty{ display:none; }
 .idph img{ display:block; width:100%; height:auto; border-radius:12px; border:1px solid var(--row-line); background:var(--row-bg); cursor:zoom-in; }
 .idph-zoom{ position:fixed; inset:0; z-index:999; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; padding:14px; }
@@ -705,6 +715,8 @@ const I18N = {
     sendDate:"تاريخ الإرسال",
     idphInd:"صور البطاقة",
     idphVeh:"صور الرخصة",
+    idUntilInd:"البطاقة سارية حتى", idUntilVeh:"الرخصة سارية حتى",
+    idGoneInd:"البطاقة منتهية", idGoneVeh:"الرخصة منتهية",
     notSpecified:"غير محدد",
     fieldJob:"الوظيفة",
     fieldAddress:"العنوان",
@@ -744,6 +756,8 @@ const I18N = {
     sendDate:"Date sent",
     idphInd:"ID card photos",
     idphVeh:"Licence photos",
+    idUntilInd:"Card valid until", idUntilVeh:"Licence valid until",
+    idGoneInd:"Card expired", idGoneVeh:"Licence expired",
     notSpecified:"Not specified",
     fieldJob:"Job title",
     fieldAddress:"Address",
@@ -1200,6 +1214,22 @@ document.addEventListener("click", e => {
   }
 });
 
+/* The day the card itself runs out, as its back has it (system_photos.exp,
+   read off the photographs). A card whose day has passed is called expired
+   rather than left for the reader to work out from a date. */
+function expiryLine(set, kind){
+  const iso = set && set.exp;
+  if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  const y = +iso.slice(0, 4), m = +iso.slice(5, 7), d = +iso.slice(8, 10);
+  const when = new Date(y, m - 1, d); when.setHours(0, 0, 0, 0);
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const gone = when < now;
+  const veh = kind === "veh";
+  return `<div class="idph-exp${gone ? " gone" : ""}">` +
+    `<span class="k">${disp(t(gone ? (veh ? "idGoneVeh" : "idGoneInd") : (veh ? "idUntilVeh" : "idUntilInd")))}</span>` +
+    `<span class="v">${disp(pad2(d) + "/" + pad2(m) + "/" + y)}</span></div>`;
+}
+
 function attachOccurrenceSwitcher(card, chipsContainer, sorted, fieldsHtmlFn, photo){
   const content = document.createElement("div");
   content.className = "occ-content";
@@ -1240,6 +1270,7 @@ function attachOccurrenceSwitcher(card, chipsContainer, sorted, fieldsHtmlFn, ph
       const mine = photosFor(sets, sorted, idx);
       if(!mine.length) return;
       box.innerHTML = `<div class="rows-group-title">${disp(t(photo.kind === "veh" ? "idphVeh" : "idphInd"))}</div>` +
+        expiryLine(mine[0], photo.kind) +
         mine.map(x => ["f", "b"].filter(side => x[side]).map(side => '<img alt="" loading="lazy">').join("")).join("");
       const urls = [].concat(...mine.map(x => ["f", "b"].filter(side => x[side]).map(side => x[side])));
       [].forEach.call(box.querySelectorAll("img"), (im, n) => { im.src = urls[n]; });
