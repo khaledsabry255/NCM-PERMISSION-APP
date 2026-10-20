@@ -261,6 +261,14 @@ html[lang="en"] .row dd.ltr{text-align:right;}
   color:#fff;font-weight:800;font-size:14.5px;
   transition:background .16s,color .16s,border-color .16s;
 }
+.idexp{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:0 14px 12px;padding:9px 13px;border-radius:var(--r);
+  background:rgba(255,255,255,.72);border:1px solid var(--card-line);
+  font-size:13.5px;font-weight:800;color:var(--text-2);
+}
+.idexp .num{font-size:14.5px;font-weight:700;}
+.idexp.gone{background:var(--danger-bg);border-color:var(--danger-br);color:var(--danger);}
 .dlbtn:hover{background:var(--gold-soft);}
 /* It gives under the finger and answers where it was touched, like every box
    in the app: a soft ring opens from under the fingertip and fades. */
@@ -1266,6 +1274,7 @@ const I18N = {
     jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
     letterNo:'رقم الخطاب', letterDate:'تاريخ الخطاب', letterCompany:'الشركة', letterNote:'ملاحظات',
     banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
+    idUntil:'البطاقة سارية حتى', idGone:'البطاقة منتهية',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
     byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
     listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
@@ -1297,6 +1306,7 @@ const I18N = {
     jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
     letterNo:'Letter Number', letterDate:'Letter Date', letterCompany:'Company', letterNote:'Notes',
     banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
+    idUntil:'Card valid until', idGone:'Card expired',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
     byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
     listActive:'Active employees', listResigned:'Resignations',
@@ -1481,6 +1491,20 @@ function statusIcon(k){
   return '<svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2.4"/></svg>';
 }
 
+/* The day the man's own ID card runs out, as the back of it has it. A card
+   whose day has passed says so in red rather than leaving the guard to work it
+   out from a date; a man whose photograph is a passport has no line at all.
+   Same words and same colours as the permits card carries. */
+function cardExpiry(emp){
+  const raw = (emp.id_card_expiry === null || emp.id_card_expiry === undefined) ? '' : String(emp.id_card_expiry).trim();
+  if(!raw) return '';
+  const dl = daysLeft(raw), shown = fmtDate(raw) || raw;
+  const gone = dl !== null && dl < 0;
+  return '<div class="idexp' + (gone ? ' gone' : '') + '">' +
+    '<span>' + esc(t(gone ? 'idGone' : 'idUntil')) + '</span>' +
+    '<span class="num">' + esc(shown) + '</span></div>';
+}
+
 function recordHTML(emp){
   const s        = statusOf(emp);
   const code     = (emp.emp_code === null || emp.emp_code === undefined) ? '' : String(emp.emp_code).trim();
@@ -1551,6 +1575,8 @@ function recordHTML(emp){
       rowHTML(t('banReason'), emp.ban_reason, 'bad') +
       rowHTML(t('resignEnd'), rEnd && rEnd.text, rEnd && rEnd.cls)
     ) +
+
+    cardExpiry(emp) +
 
     '<div class="shots">' + shotHTML(code, false) + shotHTML(code, true) +
       downloadHTML(code) +
