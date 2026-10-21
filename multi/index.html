@@ -261,13 +261,15 @@ html[lang="en"] .row dd.ltr{text-align:right;}
   color:#fff;font-weight:800;font-size:14.5px;
   transition:background .16s,color .16s,border-color .16s;
 }
+/* Cut to the same cloth as a row of the card: same inset, same panel, same
+   corner, same type. Only the colour changes when the day has passed. */
 .idexp{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin:0 14px 12px;padding:9px 13px;border-radius:var(--r);
-  background:rgba(255,255,255,.72);border:1px solid var(--card-line);
-  font-size:13.5px;font-weight:800;color:var(--text-2);
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  margin:0 14px 12px;padding:11px 14px;border-radius:var(--r-sm);
+  background:rgba(255,255,255,.82);border:1px solid #c7d3e0;
+  font-size:14px;font-weight:800;color:var(--text);
 }
-.idexp .num{font-size:14.5px;font-weight:700;}
+.idexp .num{font-size:15.5px;font-weight:700;}
 .idexp.gone{background:var(--danger-bg);border-color:var(--danger-br);color:var(--danger);}
 .dlbtn:hover{background:var(--gold-soft);}
 /* It gives under the finger and answers where it was touched, like every box
@@ -375,8 +377,8 @@ html[dir="ltr"] .row dd.ltr{text-align:right;}
 /* photos — separate panels, only slightly inset */
 .shots{padding:0 14px 16px;margin-top:15px;display:flex;flex-direction:column;gap:9px;}
 .shot{
-  position:relative;margin:0;overflow:hidden;border-radius:var(--r);
-  background:#f7fafd;border:1px solid #cdd7e2;
+  position:relative;margin:0;overflow:hidden;border-radius:var(--r-sm);
+  background:#f7fafd;border:1px solid #c7d3e0;       /* the corner and the line a row has */
 }
 .shot img{display:block;width:100%;height:auto;cursor:zoom-in;}
 .noshot{

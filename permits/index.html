@@ -598,16 +598,19 @@ body.unlocked #app-root{ display:block; }
 .idph{ display:flex; flex-direction:column; gap:10px; }
 /* What the card itself says it is good for, read off its back. A card whose day
    has passed says so in red — that is the whole point of the line. */
+/* Cut to the same cloth as a row of the card: same panel, same corner, same
+   type. Only the colour changes when the day has passed. */
 .idph-exp{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:9px 13px; border-radius:12px;
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:11px 14px; border-radius:10px;
   background:var(--row-bg); border:1px solid var(--row-line);
-  font-size:13.5px; font-weight:800; color:var(--ink-2);
+  font-size:16px; font-weight:800; color:var(--ink);
 }
-.idph-exp .v{ font-family:var(--mono); font-weight:700; }
+.idph-exp .k{ color:var(--ink-2); font-size:14.5px; }
+.idph-exp .v{ font-family:var(--mono); font-weight:800; }
 .idph-exp.gone{ background:var(--bad-bg); border-color:var(--bad-br); color:var(--bad); }
 .idph:empty{ display:none; }
-.idph img{ display:block; width:100%; height:auto; border-radius:12px; border:1px solid var(--row-line); background:var(--row-bg); cursor:zoom-in; }
+.idph img{ display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--row-line); background:var(--row-bg); cursor:zoom-in; }
 .idph-zoom{ position:fixed; inset:0; z-index:999; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; padding:14px; }
 .idph-zoom img{ max-width:100%; max-height:100%; border-radius:8px; }
 </style>
