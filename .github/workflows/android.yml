@@ -26,8 +26,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # packages: '' on purpose. Left to itself this action runs
+      # `sdkmanager tools`, and Google has withdrawn that package from its
+      # repository - the build then dies on "Failed to find package 'tools'"
+      # before it has compiled a line (23 October 2026). Gradle fetches the
+      # platform and build-tools it needs by itself.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: ''
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
