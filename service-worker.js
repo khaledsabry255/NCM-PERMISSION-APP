@@ -5,7 +5,7 @@
 // Bump CACHE with every upload, otherwise devices keep serving the copy they
 // already have and never see the new files — including a raised
 // ACCESS_VERSION, which is the only way to lock a device that is already in.
-const CACHE = 'ncm-unified-v52';
+const CACHE = 'ncm-unified-v53';
 const SHELL = [
   './',
   './index.html',
@@ -26,22 +26,28 @@ const SHELL = [
   './icons/logo-tag.png'
 ];
 
+// Storing files ahead of time is a convenience, never a condition. A promise
+// handed to waitUntil that rejects fails the whole step — and a failed install
+// makes the worker redundant, so the app is left with no worker at all and
+// stops working offline entirely, silently. Beside a missing file, the store
+// itself can refuse to open: a full phone, a private window, cleared site
+// data. So every one of these settles, whatever happened.
 self.addEventListener('install', (e) => {
-  // One missing file must not fail the whole install, or the app never caches
-  // anything and stops working offline entirely.
   e.waitUntil(
-    caches.open(CACHE).then((c) =>
-      Promise.all(SHELL.map((u) => c.add(u).catch(() => {})))
-    )
+    caches.open(CACHE)
+      .then((c) => Promise.all(SHELL.map((u) => c.add(u).catch(() => {}))))
+      .catch(() => {})            // no store: carry on without one
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k).catch(() => {})))
+      )
+      .catch(() => {})
   );
   self.clients.claim();
 });
@@ -74,10 +80,13 @@ self.addEventListener('fetch', (e) => {
       .then((response) => {
         if (response && response.ok && response.type === 'basic') {
           const copy = response.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          // Failing to file a copy away must never spoil the answer itself.
+          caches.open(CACHE)
+            .then((c) => c.put(e.request, copy))
+            .catch(() => {});
         }
         return response;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() => caches.match(e.request).catch(() => undefined))
   );
 });
