@@ -777,22 +777,36 @@ document.addEventListener('pointerdown', e => {
 });
 
 /* ---------- the opening ----------
-   It plays once for each opening of the app, so coming back from the
-   employees or the permits does not replay it. Nothing below waits for it:
-   the gate and the doors are built underneath while it runs.
+   It plays every time the app is opened from its icon, and never when the
+   guard is only coming back here from the employees or the permits. Nothing
+   below waits for it: the gate and the doors are built underneath while it
+   runs.
+
+   What tells the two apart is where the page came from, not a flag kept
+   somewhere — a flag survives the app being closed inside the Android
+   wrapper, and then the opening would play only the very first time and
+   never again. Coming back from a system is either a step back in the
+   history or a move from one of our own pages, and both of those say so.
 
    A page nobody is looking at holds its animations at the first frame, and
    the first frame here is "nothing has arrived yet" — so when the window is
    not being looked at the opening is skipped altogether rather than left
    frozen as a blank sheet over the app. */
 (function opening(){
-  const OPEN_KEY = 'ncm_opened';
   const el = $('splash');
   if(!el) return;
-  let played = false;
-  try{ played = sessionStorage.getItem(OPEN_KEY) === '1'; }catch(e){}
-  if(played || document.hidden){ el.remove(); return; }
-  try{ sessionStorage.setItem(OPEN_KEY, '1'); }catch(e){}
+
+  let fromInside = false;
+  try{
+    // a system handing the guard back: ../ from one of our own pages
+    const ref = document.referrer || '';
+    fromInside = !!ref && ref.indexOf(location.origin) === 0 && ref !== location.href;
+    // or the phone's back button out of a system
+    const nav = (performance.getEntriesByType('navigation') || [])[0];
+    if(nav && nav.type === 'back_forward') fromInside = true;
+  }catch(e){}
+
+  if(fromInside || document.hidden){ el.remove(); return; }
 
   const art = [].slice.call(el.querySelectorAll('img'));
   const ready = Promise.all(art.map(im => im.complete ? Promise.resolve()
