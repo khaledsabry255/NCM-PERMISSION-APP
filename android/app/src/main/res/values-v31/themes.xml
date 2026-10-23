@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Same theme as values-v27/themes.xml, plus the starting-window attributes
+      that only exist from API 31. A qualified file replaces the whole style
+      rather than adding to it, so everything from the other files is repeated
+      here — leaving a line out would quietly drop it on Android 12 and newer.
+
+      The icon is empty and no icon background colour is set, so the system
+      has no circle to draw: the starting window is the page's own background
+      and nothing else.
+    -->
+    <style name="Theme.NCMPermission" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#EDF2F8</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#EDF2F8</item>
+        <item name="android:windowBackground">#EDF2F8</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowSplashScreenBackground">#EDF2F8</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+    </style>
+</resources>

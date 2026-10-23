@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.view.View
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -47,6 +49,10 @@ private const val PHOTO_PATH = "/storage/v1/object/public/employee-photos/"
 class MainActivity : ComponentActivity() {
 
     private lateinit var web: WebView
+
+    /** True once the page has something on the screen. The system's starting
+     *  window is held up until then — see the listener in [onCreate]. */
+    private var pageShowing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +93,28 @@ class MainActivity : ComponentActivity() {
             )
         }
         setContentView(root)
+
+        // From Android 12 the system always draws a starting window over the
+        // app, and by default it is the launcher icon in a circle. That circle
+        // is gone (an empty icon, in values-v31), so what is left is the page's
+        // own background colour — and holding it there until the page is
+        // actually drawing means the app's opening animation begins on its very
+        // first frame rather than after a blank moment.
+        //
+        // Nothing is allowed to strand the app behind it: a slow connection, a
+        // dead one, a page that never reports in — after three seconds it lets
+        // go regardless.
+        val content = findViewById<View>(android.R.id.content)
+        content.viewTreeObserver.addOnPreDrawListener(
+            object : ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    if (!pageShowing) return false
+                    content.viewTreeObserver.removeOnPreDrawListener(this)
+                    return true
+                }
+            }
+        )
+        content.postDelayed({ pageShowing = true }, SPLASH_LIMIT_MS)
 
         // Keeps the page clear of the notch, the status bar and the gesture bar,
         // and lifts it above the keyboard while the search box has focus.
@@ -226,6 +254,11 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        /** The first paint of the page: the starting window can go now. */
+        override fun onPageCommitVisible(view: WebView, url: String) {
+            pageShowing = true
+        }
+
         override fun onReceivedError(
             view: WebView,
             request: WebResourceRequest,
@@ -233,12 +266,17 @@ class MainActivity : ComponentActivity() {
         ) {
             // Only a failed page counts; a failed row of data must not blank the app.
             if (!request.isForMainFrame) return
+            pageShowing = true
             view.loadDataWithBaseURL(SITE, OFFLINE_PAGE, "text/html", "UTF-8", null)
         }
     }
 
     private companion object {
         val PAGE_BG = Color.parseColor("#EDF2F8")
+
+        /** However the load goes, the app is never held behind the starting
+         *  window for longer than this. */
+        const val SPLASH_LIMIT_MS = 3000L
 
         /** Shown only when the very first load has no connection to fall back on. */
         val OFFLINE_PAGE = """

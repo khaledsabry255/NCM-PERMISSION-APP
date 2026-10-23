@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nothing at all, on purpose.
+
+  From Android 12 the system always draws a starting window over the app, and
+  by default it fills it with the launcher icon inside a circle. Khaled asked
+  for that circle to go and for the app's own opening to be what you see
+  instead (23 October 2026), so the starting window is handed this — an icon
+  with nothing in it — and keeps only the page's background colour. The
+  activity then holds that window up until the page is actually drawing, so
+  the opening animation begins on its very first frame and the join does not
+  show.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <size android:width="240dp" android:height="240dp" />
+</shape>
