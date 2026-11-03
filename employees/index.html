@@ -665,7 +665,6 @@ const I18N = {
     statForeign:'الأجانب', noForeign:'لا يوجد موظفون أجانب',
     statExpiring:'تصاريح قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
     statIdExpiring:'بطايق قرب الانتهاء', statIdExpired:'بطايق منتهية',
-    idGoneTag:'بطاقة منتهية',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
     dlUpdateApp:'حدّث التطبيق عشان التحميل يشتغل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
@@ -702,7 +701,6 @@ const I18N = {
     statForeign:'Foreign staff', noForeign:'No foreign staff',
     statExpiring:'Expiring permits', statExpired:'Expired permits', statBanned:'Banned',
     statIdExpiring:'ID cards expiring', statIdExpired:'Expired ID cards',
-    idGoneTag:'ID EXPIRED',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
     dlUpdateApp:'Update the app to download',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
@@ -845,14 +843,14 @@ window.addEventListener('popstate', () => {
 /* `empty` lets a group say what is missing rather than just "none" - a
    guard reading "no permit runs out in the next 30 days" knows the app
    looked, where a bare "none" could as easily mean it did not. */
-async function openGroup(pick, title, tone, empty, order){
+async function openGroup(pick, title, tone, empty){
   const myToken = ++token;
   renderSkeleton(2);
   try{
     const { data, error } = await fetchAll(FIELDS);
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
-    const rows = dedupe(data).filter(pick).sort(order || byCode);
+    const rows = dedupe(data).filter(pick).sort(byCode);
     if(!rows.length){
       if(onBoard) history.pushState({ncm:'list'}, '');
       onBoard = false;
@@ -860,18 +858,6 @@ async function openGroup(pick, title, tone, empty, order){
     }
     renderGroupList(rows, title, tone);
   }catch(err){ friendlyFail(err, myToken); }
-}
-
-/* Oldest date first: the card that ran out longest ago is the one that has
-   been wrong longest, and the one running out soonest is the next to see to.
-   A row with no readable date sinks to the bottom rather than jumping the
-   queue on a date the app does not actually have. */
-function byCardDate(a, b){
-  const da = parseDate(a.id_card_expiry), db = parseDate(b.id_card_expiry);
-  if(!da && !db) return byCode(a, b);
-  if(!da) return 1;
-  if(!db) return -1;
-  return da - db || byCode(a, b);
 }
 
 const GROUPS = {
@@ -885,13 +871,10 @@ const GROUPS = {
   expired:  () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRED',
                                                                'expiredList',  'alert',
                                                                t('noExpired')],
-  /* These two are a queue for the government office, not a roll call, so
-     they are ordered by the date on the card — longest expired first, and
-     soonest to run out first — instead of by staff number. */
   idExpired:  () => [r => cardStands(r) === 'gone', 'idExpiredList',  'alert',
-                                                    t('noIdExpired'),  byCardDate],
+                                                    t('noIdExpired')],
   idExpiring: () => [r => cardStands(r) === 'soon', 'idExpiringList', 'warn',
-                                                    t('noIdExpiring'), byCardDate],
+                                                    t('noIdExpiring')],
   foreign:  () => [r => worksHere(r) && isForeign(r),          'statForeign',  '',
                                                                t('noForeign')]
 };
@@ -899,8 +882,8 @@ const GROUPS = {
 function openBoardGroup(key){
   const g = GROUPS[key];
   if(!g) return;
-  const [pick, titleKey, tone, empty, order] = g();
-  openGroup(pick, t(titleKey), tone, empty, order);
+  const [pick, titleKey, tone, empty] = g();
+  openGroup(pick, t(titleKey), tone, empty);
 }
 /* The one rule for who belongs to a job: on the payroll and not barred.
    loadStats counts with it and openJob lists with it, so the number on a tile
@@ -1206,11 +1189,6 @@ function recordHTML(emp){
       '<div class="pills">' +
         '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
         (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>' : '') +
-        /* An expired ID card is said at the top as well as beside the photos.
-           Opening the "expired cards" board and seeing a card that is green
-           from top to bottom reads as a mistake until you scroll all the way
-           down — and a permit being in order says nothing about the card. */
-        (cardStands(emp) === 'gone' ? '<span class="pill bad">' + esc(t('idGoneTag')) + '</span>' : '') +
         (cat ? '<span class="pill ' + emp.category + '">' + cat + '</span>' : '') +
       '</div>' +
     '</div>' +
