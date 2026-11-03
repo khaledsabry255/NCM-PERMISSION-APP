@@ -1309,7 +1309,7 @@ const I18N = {
     jobTitle:'الوظيفة', department:'القسم', hireDate:'تاريخ التعيين',
     letterNo:'رقم الخطاب', letterDate:'تاريخ الخطاب', letterCompany:'الشركة', letterNote:'ملاحظات',
     banReason:'سبب المنع', resignEnd:'انتهاء الاستقالة', notSpecified:'غير محدد',
-    idUntil:'البطاقة سارية حتى', idGone:'البطاقة منتهية',
+    idUntil:'البطاقة سارية حتى', idGone:'البطاقة منتهية', idGoneTag:'بطاقة منتهية',
     searchResults:'نتائج البحث', bannedList:'قائمة الممنوعين', expiringList:'تصاريح قرب الانتهاء',
     byJob:'الأقسام', jobList:'وظيفة', noJob:'بدون وظيفة مسجلة', noDept:'بدون قسم', noCollar:'بدون تصنيف', none:'لا يوجد',
     listActive:'الموظفون الموجودون', listResigned:'الاستقالات',
@@ -1341,7 +1341,7 @@ const I18N = {
     jobTitle:'Job Title', department:'Department', hireDate:'Hire Date',
     letterNo:'Letter Number', letterDate:'Letter Date', letterCompany:'Company', letterNote:'Notes',
     banReason:'Ban Reason', resignEnd:'Resignation Ends', notSpecified:'Not specified',
-    idUntil:'Card valid until', idGone:'Card expired',
+    idUntil:'Card valid until', idGone:'Card expired', idGoneTag:'ID EXPIRED',
     searchResults:'Search Results', bannedList:'Banned List', expiringList:'Permits Expiring Soon',
     byJob:'Departments', jobList:'Job', noJob:'No job recorded', noDept:'No department', noCollar:'Unclassified', none:'None',
     listActive:'Active employees', listResigned:'Resignations',
@@ -1530,6 +1530,15 @@ function statusIcon(k){
    whose day has passed says so in red rather than leaving the guard to work it
    out from a date; a man whose photograph is a passport has no line at all.
    Same words and same colours as the permits card carries. */
+/* Kept word for word with employees/index.html — see the card rules there. */
+function cardStands(r){
+  const raw = (r.id_card_expiry === null || r.id_card_expiry === undefined)
+                ? '' : String(r.id_card_expiry).trim();
+  if(!raw) return '';
+  const dl = daysLeft(raw);
+  if(dl === null) return '';
+  return dl < 0 ? 'gone' : '';
+}
 function cardExpiry(emp){
   const raw = (emp.id_card_expiry === null || emp.id_card_expiry === undefined) ? '' : String(emp.id_card_expiry).trim();
   if(!raw) return '';
@@ -1570,6 +1579,11 @@ function recordHTML(emp){
       '<div class="pills">' +
         '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
         (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>' : '') +
+        /* An expired ID card is said at the top as well as beside the photos.
+           Opening the "expired cards" board and seeing a card that is green
+           from top to bottom reads as a mistake until you scroll all the way
+           down — and a permit being in order says nothing about the card. */
+        (cardStands(emp) === 'gone' ? '<span class="pill bad">' + esc(t('idGoneTag')) + '</span>' : '') +
         (cat ? '<span class="pill ' + emp.category + '">' + cat + '</span>' : '') +
       '</div>' +
     '</div>' +

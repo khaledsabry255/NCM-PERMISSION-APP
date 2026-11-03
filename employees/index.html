@@ -637,6 +637,9 @@ const AUTH_KEY   = "ncm_key";               // holds the decrypted API key
 const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
 const BUCKET = "employee-photos";
 const EXPIRY_WINDOW = 30;      // days that count as "expiring soon"
+/* An ID card is renewed at a government office, not at the gate, so it needs
+   far more notice than a permit does — three months rather than one. */
+const CARD_WINDOW   = 90;
 const MAX_RESULTS   = 30;
 
 /* The key is not in this file and never was: the shell at the app root unseals
@@ -661,11 +664,16 @@ const I18N = {
     noExpiring:'لا يوجد تصريح ينتهي خلال ' + EXPIRY_WINDOW + ' يوم',
     statForeign:'الأجانب', noForeign:'لا يوجد موظفون أجانب',
     statExpiring:'تصاريح قرب الانتهاء', statExpired:'تصاريح منتهية', statBanned:'الممنوعون',
+    statIdExpiring:'بطايق قرب الانتهاء', statIdExpired:'بطايق منتهية',
+    idGoneTag:'بطاقة منتهية',
     download:'تحميل', downloading:'جارٍ التحميل', downloaded:'تم الحفظ', downloadFail:'تعذر التحميل',
     dlUpdateApp:'حدّث التطبيق عشان التحميل يشتغل',
     navAria:'أقسام النظام', tabSearch:'بحث', tabBanned:'الممنوعين',
     tabExpiring:'قرب الانتهاء', tabExpired:'منتهية',
     expiredList:'تصاريح منتهية', noExpired:'لا توجد تصاريح منتهية',
+    idExpiredList:'بطايق منتهية', noIdExpired:'مفيش بطاقة منتهية',
+    idExpiringList:'بطايق قرب الانتهاء',
+    noIdExpiring:'مفيش بطاقة تنتهي خلال ' + CARD_WINDOW + ' يوم',
     refresh:'تحديث البيانات', resultsAria:'نتائج',
     searchPh:'ابحث بالكود أو الرقم القومي أو الاسم', searchAria:'بحث عن موظف', clearAria:'مسح البحث',
     zoomAria:'عرض الصورة', closeAria:'إغلاق',
@@ -693,11 +701,16 @@ const I18N = {
     noExpiring:'No permit expires within ' + EXPIRY_WINDOW + ' days',
     statForeign:'Foreign staff', noForeign:'No foreign staff',
     statExpiring:'Expiring permits', statExpired:'Expired permits', statBanned:'Banned',
+    statIdExpiring:'ID cards expiring', statIdExpired:'Expired ID cards',
+    idGoneTag:'ID EXPIRED',
     download:'Download', downloading:'Downloading', downloaded:'Saved', downloadFail:'Download failed',
     dlUpdateApp:'Update the app to download',
     navAria:'System sections', tabSearch:'Search', tabBanned:'Banned',
     tabExpiring:'Expiring', tabExpired:'Expired',
     expiredList:'Expired Permits', noExpired:'No expired permits',
+    idExpiredList:'Expired ID Cards', noIdExpired:'No expired ID card',
+    idExpiringList:'ID Cards Expiring Soon',
+    noIdExpiring:'No ID card expires within ' + CARD_WINDOW + ' days',
     refresh:'Refresh data', resultsAria:'Results',
     searchPh:'Search by code, national ID or name', searchAria:'Search for an employee', clearAria:'Clear search',
     zoomAria:'Photo viewer', closeAria:'Close',
@@ -832,14 +845,14 @@ window.addEventListener('popstate', () => {
 /* `empty` lets a group say what is missing rather than just "none" - a
    guard reading "no permit runs out in the next 30 days" knows the app
    looked, where a bare "none" could as easily mean it did not. */
-async function openGroup(pick, title, tone, empty){
+async function openGroup(pick, title, tone, empty, order){
   const myToken = ++token;
   renderSkeleton(2);
   try{
     const { data, error } = await fetchAll(FIELDS);
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
-    const rows = dedupe(data).filter(pick).sort(byCode);
+    const rows = dedupe(data).filter(pick).sort(order || byCode);
     if(!rows.length){
       if(onBoard) history.pushState({ncm:'list'}, '');
       onBoard = false;
@@ -847,6 +860,18 @@ async function openGroup(pick, title, tone, empty){
     }
     renderGroupList(rows, title, tone);
   }catch(err){ friendlyFail(err, myToken); }
+}
+
+/* Oldest date first: the card that ran out longest ago is the one that has
+   been wrong longest, and the one running out soonest is the next to see to.
+   A row with no readable date sinks to the bottom rather than jumping the
+   queue on a date the app does not actually have. */
+function byCardDate(a, b){
+  const da = parseDate(a.id_card_expiry), db = parseDate(b.id_card_expiry);
+  if(!da && !db) return byCode(a, b);
+  if(!da) return 1;
+  if(!db) return -1;
+  return da - db || byCode(a, b);
 }
 
 const GROUPS = {
@@ -860,6 +885,13 @@ const GROUPS = {
   expired:  () => [r => !isResigned(r) && statusOf(r).code === 'EXPIRED',
                                                                'expiredList',  'alert',
                                                                t('noExpired')],
+  /* These two are a queue for the government office, not a roll call, so
+     they are ordered by the date on the card — longest expired first, and
+     soonest to run out first — instead of by staff number. */
+  idExpired:  () => [r => cardStands(r) === 'gone', 'idExpiredList',  'alert',
+                                                    t('noIdExpired'),  byCardDate],
+  idExpiring: () => [r => cardStands(r) === 'soon', 'idExpiringList', 'warn',
+                                                    t('noIdExpiring'), byCardDate],
   foreign:  () => [r => worksHere(r) && isForeign(r),          'statForeign',  '',
                                                                t('noForeign')]
 };
@@ -867,8 +899,8 @@ const GROUPS = {
 function openBoardGroup(key){
   const g = GROUPS[key];
   if(!g) return;
-  const [pick, titleKey, tone, empty] = g();
-  openGroup(pick, t(titleKey), tone, empty);
+  const [pick, titleKey, tone, empty, order] = g();
+  openGroup(pick, t(titleKey), tone, empty, order);
 }
 /* The one rule for who belongs to a job: on the payroll and not barred.
    loadStats counts with it and openJob lists with it, so the number on a tile
@@ -883,6 +915,20 @@ function isForeign(r){
 }
 function worksHere(r){
   return !isResigned(r) && (r.permit_status || '').trim() !== 'ممنوع';
+}
+/* How a person's ID card stands: 'gone', 'soon', or '' for fine or unknown.
+   The tile counts with this and the list picks with it, so the figure on the
+   box and the people behind it cannot say different things. Someone who has
+   left is not counted — his card is not the gate's problem any more. */
+function cardStands(r){
+  if(isResigned(r)) return '';
+  const raw = (r.id_card_expiry === null || r.id_card_expiry === undefined)
+                ? '' : String(r.id_card_expiry).trim();
+  if(!raw) return '';                       // no date read off the card yet
+  const dl = daysLeft(raw);
+  if(dl === null) return '';                // written as something else
+  if(dl < 0) return 'gone';
+  return dl < CARD_WINDOW ? 'soon' : '';
 }
 /* A tile now means "this job, in this department", because that is how the
    board groups them — and two job titles genuinely span two departments. The
@@ -1160,6 +1206,11 @@ function recordHTML(emp){
       '<div class="pills">' +
         '<span class="pill ' + s.k + '">' + statusIcon(s.k) + esc(s.label) + '</span>' +
         (resigned ? '<span class="pill bad">' + esc(t('resigned')) + '</span>' : '') +
+        /* An expired ID card is said at the top as well as beside the photos.
+           Opening the "expired cards" board and seeing a card that is green
+           from top to bottom reads as a mistake until you scroll all the way
+           down — and a permit being in order says nothing about the card. */
+        (cardStands(emp) === 'gone' ? '<span class="pill bad">' + esc(t('idGoneTag')) + '</span>' : '') +
         (cat ? '<span class="pill ' + emp.category + '">' + cat + '</span>' : '') +
       '</div>' +
     '</div>' +
@@ -1343,6 +1394,12 @@ function paintStats(s){
       tileHTML(t('statResigned'), s.resigned, 'mute', 'resigned') +
       tileHTML(t('statExpiring'), s.expiring, 'warn', 'expiring', false, s.expiring > 0) +
       tileHTML(t('statExpired'),  s.expired,  'bad',  'expired',  false, s.expired  > 0) +
+      // The cards sit under the permits and read the same way: yellow is
+      // running out, red has run out. Khaled asked for them on 3 Nov 2026 —
+      // until then the only way to find an expired card was to open people
+      // one at a time.
+      tileHTML(t('statIdExpiring'), s.idExpiring || 0, 'warn', 'idExpiring', false, (s.idExpiring || 0) > 0) +
+      tileHTML(t('statIdExpired'),  s.idExpired  || 0, 'bad',  'idExpired',  false, (s.idExpired  || 0) > 0) +
       tileHTML(t('statBanned'),   s.banned,   'ban',  'banned', true) +
     '</div>';
   if(s.depts && s.depts.length){
@@ -1535,11 +1592,12 @@ async function loadStats(){
     // one out and it arrives undefined on every row, which does not fail —
     // it quietly files all 370 people under the wrong heading.
     const { data, error } = await fetchAll(
-      'id,emp_code,national_id,job_title,department,category,permit_status,permit_date,resignation_end_date');
+      'id,emp_code,national_id,job_title,department,category,permit_status,permit_date,resignation_end_date,id_card_expiry');
     if(myToken !== token) return;
     if(error) return friendlyFail(error, myToken);
 
     let active = 0, resigned = 0, expiring = 0, expired = 0, banned = 0;
+    let idExpired = 0, idExpiring = 0;
     // Jobs are counted for present staff only: a tile saying "12 drivers" that
     // opens a list half full of people who left would be worse than no tile.
     // department -> collar -> Map(job title -> how many), filled from the very
@@ -1549,6 +1607,12 @@ async function loadStats(){
     const deptJobs = new Map();
     let foreign = 0;
     dedupe(data).forEach(r => {
+      // The card is read before anyone drops out below: a man who is barred
+      // still works here and still carries a card that has to be in date.
+      const card = cardStands(r);
+      if(card === 'gone') idExpired++;
+      if(card === 'soon') idExpiring++;
+
       if(isResigned(r)){ resigned++; return; }
       active++;
       const raw = (r.permit_status || '').trim();
@@ -1594,7 +1658,7 @@ async function loadStats(){
       })
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar'));
 
-    statsCache = {active, resigned, expiring, expired, banned, foreign, depts};
+    statsCache = {active, resigned, expiring, expired, banned, idExpired, idExpiring, foreign, depts};
     paintStats(statsCache);
   }catch(err){ friendlyFail(err, myToken); }
 }
