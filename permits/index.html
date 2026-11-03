@@ -907,10 +907,42 @@ const VEHICLES_TAB    = "تصاريح مركبات";
    changes each time. The sheet's htmlview page lists name -> gid; it is read
    fresh on every load. If that ever fails, gviz by name is still better than
    nothing. */
+/* ---------- nothing waits forever ----------
+   A phone that loses its signal does not refuse the request — it simply stops
+   answering, and a request with no time limit then hangs for as long as the
+   page is open. The guard is left looking at an empty screen with no way to
+   tell "this man is not on the list" from "the signal went". So every request
+   carries a stopwatch: when it runs out the request is dropped and the page
+   says so. */
+const REQUEST_LIMIT = 20000;
+function cutOff(ms){
+  if(typeof AbortSignal !== "undefined" && AbortSignal.timeout){
+    try{ return AbortSignal.timeout(ms); }catch(e){}
+  }
+  if(typeof AbortController === "undefined") return undefined;
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+function timedFetch(url, opts){
+  const o = Object.assign({}, opts);
+  if(!o.signal) o.signal = cutOff(REQUEST_LIMIT);
+  return fetch(url, o);
+}
+/* The sheet reader fetches on its own, with no way to pass a stopwatch in, so
+   the promise around it carries one instead. */
+function withLimit(promise, ms){
+  return new Promise((resolve, reject) => {
+    const clock = setTimeout(() => reject(new Error("the request took too long")), ms || REQUEST_LIMIT);
+    promise.then(v => { clearTimeout(clock); resolve(v); },
+                 e => { clearTimeout(clock); reject(e); });
+  });
+}
+
 let tabGidsPromise = null;
 function loadTabGids(){
   if(!tabGidsPromise){
-    tabGidsPromise = fetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
+    tabGidsPromise = timedFetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
       .then(r => r.ok ? r.text() : Promise.reject(new Error("htmlview " + r.status)))
       .then(html => {
         const map = new Map();
@@ -1070,13 +1102,13 @@ function permitDisplay(p){
 function loadCSVRaw(url){
   // Cache-buster so a manual refresh (and every load) sees the newest sheet.
   const busted = url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
-  return new Promise((resolve, reject)=>{
+  return withLimit(new Promise((resolve, reject)=>{
     Papa.parse(busted, {
       download:true, header:false, skipEmptyLines:false,
       complete: (res)=> resolve(res.data),
       error: (err)=> reject(err)
     });
-  });
+  }));
 }
 
 function escapeHtml(str){
@@ -1182,7 +1214,7 @@ function cardPhotos(photo){
   if(had && Date.now() - had.at < 8 * 60 * 1000) return had.sets;
   let apikey = "";
   try{ apikey = localStorage.getItem("ncm_key") || ""; }catch(e){}
-  const sets = fetch(PHOTO_FN, { method:"POST", headers: Object.assign({ "Content-Type":"application/json" }, apikey ? { apikey } : {}),
+  const sets = timedFetch(PHOTO_FN, { method:"POST", headers: Object.assign({ "Content-Type":"application/json" }, apikey ? { apikey } : {}),
       body: JSON.stringify({ action:"sign_app", kind: photo.kind, key: photo.key }) })
     .then(r => r.json()).then(o => (o && o.ok && Array.isArray(o.sets)) ? o.sets : []).catch(() => []);
   photoAsked.set(k, { at: Date.now(), sets });

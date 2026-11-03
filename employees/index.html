@@ -728,7 +728,33 @@ function t(k){
 }
 function isEN(){ return lang === 'en'; }
 
-function connect(apiKey){ sb = supabase.createClient(SUPABASE_URL, apiKey); }
+/* ---------- nothing waits forever ----------
+   A phone that loses its signal does not refuse the request — it simply stops
+   answering, and a request with no time limit then hangs for as long as the
+   page is open. The guard is left looking at an empty screen with no way to
+   tell "this man is not on the list" from "the signal went". So every request
+   carries a stopwatch: when it runs out the request is dropped and the page
+   says so, with a button to try again. */
+const REQUEST_LIMIT = 20000;
+function cutOff(ms){
+  if(typeof AbortSignal !== 'undefined' && AbortSignal.timeout){
+    try{ return AbortSignal.timeout(ms); }catch(e){}
+  }
+  if(typeof AbortController === 'undefined') return undefined;   // nothing to cut with
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+// Used for the database client below and for the photo fetches further down.
+function timedFetch(url, opts){
+  const o = Object.assign({}, opts);
+  if(!o.signal) o.signal = cutOff(REQUEST_LIMIT);
+  return fetch(url, o);
+}
+
+function connect(apiKey){
+  sb = supabase.createClient(SUPABASE_URL, apiKey, { global: { fetch: timedFetch } });
+}
 
 /* ============================================================
    THE BOARD'S LISTS
@@ -1722,11 +1748,11 @@ function androidBridge(){
 async function grab(url, name){
   const bridge = androidBridge();
   if(bridge){
-    const head = await fetch(url, {method:'HEAD'});
+    const head = await timedFetch(url, {method:'HEAD'});
     if(!head.ok) return false;               // a missing second photo is normal
     return bridge.download(url, name) === true;
   }
-  const res = await fetch(url);
+  const res = await timedFetch(url);
   if(!res.ok) return false;                 // a missing second photo is normal
   const obj = URL.createObjectURL(await res.blob());
   const a = document.createElement('a');

@@ -1003,7 +1003,7 @@ async function fetchAllEmployees(){
 let tabGidsPromise = null;
 function loadTabGids(){
   if(!tabGidsPromise){
-    tabGidsPromise = fetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
+    tabGidsPromise = timedFetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
       .then(r => r.ok ? r.text() : Promise.reject(new Error("htmlview " + r.status)))
       .then(html => {
         const map = new Map();
@@ -1027,10 +1027,10 @@ async function tabCsvUrl(name){
 }
 function loadCSV(url){
   const busted = url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
-  return new Promise((resolve, reject) => {
+  return withLimit(new Promise((resolve, reject) => {
     Papa.parse(busted, { download:true, header:false, skipEmptyLines:false,
       complete: res => resolve(res.data), error: err => reject(err) });
-  });
+  }));
 }
 let loadRun = 0;
 function loadAll(){
@@ -1174,6 +1174,39 @@ function runMulti(){
     if(hits.more) rows.push({ n: i + 1, term, more: hits.more, names: !!hits.names });
   });
   st.res = { rows, mode: st.mode, terms: parsed.terms.length, dup: parsed.dup, found, miss: parsed.terms.length - found };
+}
+
+/* ---------- nothing waits forever ----------
+   A phone that loses its signal does not refuse the request — it simply stops
+   answering, and a request with no time limit then hangs for as long as the
+   page is open. The guard is left looking at an empty screen with no way to
+   tell "this man is not on the list" from "the signal went". So every request
+   carries a stopwatch: when it runs out the request is dropped and the page
+   says so, with a button to try again. */
+const REQUEST_LIMIT = 20000;
+function cutOff(ms){
+  if(typeof AbortSignal !== 'undefined' && AbortSignal.timeout){
+    try{ return AbortSignal.timeout(ms); }catch(e){}
+  }
+  if(typeof AbortController === 'undefined') return undefined;   // nothing to cut with
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+// Used for the database client below and for the photo fetches further down.
+function timedFetch(url, opts){
+  const o = Object.assign({}, opts);
+  if(!o.signal) o.signal = cutOff(REQUEST_LIMIT);
+  return fetch(url, o);
+}
+/* The sheet reader fetches on its own, with no way to pass a stopwatch in, so
+   the promise around it carries one instead. */
+function withLimit(promise, ms){
+  return new Promise((resolve, reject) => {
+    const clock = setTimeout(() => reject(new Error("the request took too long")), ms || REQUEST_LIMIT);
+    promise.then(v => { clearTimeout(clock); resolve(v); },
+                 e => { clearTimeout(clock); reject(e); });
+  });
 }
 
 /* ============================================================
@@ -1594,11 +1627,11 @@ function androidBridge(){
 async function grab(url, name){
   const bridge = androidBridge();
   if(bridge){
-    const head = await fetch(url, {method:'HEAD'});
+    const head = await timedFetch(url, {method:'HEAD'});
     if(!head.ok) return false;               // a missing second photo is normal
     return bridge.download(url, name) === true;
   }
-  const res = await fetch(url);
+  const res = await timedFetch(url);
   if(!res.ok) return false;                 // a missing second photo is normal
   const obj = URL.createObjectURL(await res.blob());
   const a = document.createElement('a');
@@ -2233,7 +2266,7 @@ const key = storedKey();
 if(!key){
   location.replace("../");
 }else{
-  sb = supabase.createClient(SUPABASE_URL, key);
+  sb = supabase.createClient(SUPABASE_URL, key, { global: { fetch: timedFetch } });
   histLoad();
   try{ sessionStorage.removeItem("ncm_multi_last"); }catch(e){}   // what an older version of the page left behind
   applyLang();
