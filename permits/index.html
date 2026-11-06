@@ -615,6 +615,9 @@ body.unlocked #app-root{ display:block; }
 .idph img{ display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--row-line); background:var(--row-bg); cursor:zoom-in; }
 .idph-zoom{ position:fixed; inset:0; z-index:999; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; padding:14px; }
 .idph-zoom img{ max-width:100%; max-height:100%; border-radius:8px; }
+.hc-slot:empty{display:none !important;}
+.hc-chip{display:inline-flex;align-items:center;margin-top:8px;padding:3px 12px;border-radius:999px;font-size:13px;font-weight:800;
+  color:#12874f;background:#dff3e7;border:1px solid #8fd3ae;}
 </style>
 </head>
 <body>
@@ -1421,6 +1424,7 @@ function searchIndividuals(query){
       <div class="record-identity">
         <div class="record-name">${disp(g.name || t("noName"))}</div>
         <div class="record-subid">${g.nationalId ? dispNum(g.nationalId) : disp(t("noId"))}</div>
+        ${g.nationalId ? `<div class="hc-slot hc-chip" data-hc="ind:${String(g.nationalId).replace(/"/g, "")}"></div>` : ""}
       </div>
     `;
     card.appendChild(head);
@@ -1502,6 +1506,7 @@ function renderVehicleCard(g, resultsEl){
     </div>
     <div class="record-identity">
       <div class="record-name" style="margin-bottom:0;">${disp(g.plate)}</div>
+      <div class="hc-slot hc-chip" data-hc="veh:${String(g.plate).replace(/"/g, "")}"></div>
     </div>
   `;
   card.appendChild(head);
@@ -1761,6 +1766,38 @@ if("serviceWorker" in navigator){
     navigator.serviceWorker.register("../service-worker.js").then(reg => reg.update()).catch(()=>{});
   });
 }
+
+/* «حاصل على كارت» (asked for, 6 November 2026: «ممكن تخلى حاصل على كارت تظهر فى التطبيق التانى برضو»): on the card of a man or a vehicle
+   with one of NCM SYSTEM's printed permit cards handed over to it and not taken back. Every slot drawn with data-hc ("ind:<id>" ·
+   "emp:<code>" · "veh:<plate>") is asked of NCM SYSTEM's function together, and the answer is yes or no — nothing else comes back. */
+(function(){
+  const FN = "https://ljcalgumlodehoulbwtp.supabase.co/functions/v1/system-photo";
+  const known = new Map();
+  let busy = 0;
+  const word = () => /^en/i.test(document.documentElement.lang || "") ? "Has a card" : "حاصل على كارت";
+  function ask(keys){
+    let apikey = "";
+    try{ apikey = localStorage.getItem("ncm_key") || ""; }catch(e){}
+    const p = fetch(FN, { method:"POST", headers: Object.assign({ "Content-Type":"application/json" }, apikey ? { apikey } : {}),
+        body: JSON.stringify({ action:"card_app", items: keys.map(k => ({ kind: k.slice(0, k.indexOf(":")), key: k.slice(k.indexOf(":") + 1) })) }) })
+      .then(r => r.json()).then(o => o && o.ok && Array.isArray(o.has) ? o.has : []).catch(() => []);
+    keys.forEach((k, i) => known.set(k, { at: Date.now(), v: p.then(h => h[i] === true) }));
+  }
+  function paint(){
+    busy = 0;
+    const els = [].slice.call(document.querySelectorAll("[data-hc]:not([data-hc-asked])"));
+    if(!els.length) return;
+    const fresh = [];
+    els.forEach(el => {
+      el.setAttribute("data-hc-asked", "");
+      const k = el.getAttribute("data-hc"), had = known.get(k);
+      if((!had || Date.now() - had.at > 5 * 60 * 1000) && fresh.indexOf(k) < 0) fresh.push(k);
+    });
+    for(let i = 0; i < fresh.length; i += 60) ask(fresh.slice(i, i + 60));
+    els.forEach(el => { const h = known.get(el.getAttribute("data-hc")); if(h) h.v.then(yes => { if(yes && el.isConnected) el.textContent = word(); }); });
+  }
+  new MutationObserver(() => { if(!busy) busy = requestAnimationFrame(paint); }).observe(document.documentElement, { childList: true, subtree: true });
+})();
 </script>
 </body>
 </html>
