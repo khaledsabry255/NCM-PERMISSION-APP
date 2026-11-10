@@ -618,6 +618,7 @@ body.unlocked #app-root{ display:block; }
 .hc-slot:empty{display:none !important;}
 .hc-chip{display:inline-flex;align-items:center;margin-top:8px;padding:3px 12px;border-radius:999px;font-size:13px;font-weight:800;
   color:#12874f;background:#dff3e7;border:1px solid #8fd3ae;}
+.hc-chip.hc-tmp{color:#b45309;background:#fff1dc;border-color:#f5b971;margin-inline-start:6px;}
 /* «تصريح مؤقت» (10 November 2026): a temporary permit, as NCM SYSTEM marks it — an orange band that catches the eye */
 .tmp-flag{display:flex;align-items:center;justify-content:center;gap:7px;width:max-content;max-width:100%;margin:10px auto 2px;padding:7px 20px;border-radius:12px;
   background:linear-gradient(90deg,#f59e0b,#f97316);color:#fff;font-size:15px;font-weight:900;border:2px solid #fff;
@@ -1492,7 +1493,8 @@ function searchIndividuals(query){
         <div class="record-name">${disp(g.name || t("noName"))}</div>
         <div class="record-subid">${g.nationalId ? dispNum(g.nationalId) : disp(t("noId"))}</div>
         ${g.tempOnly ? tmpFlagHtml() : ""}
-        ${g.nationalId ? `<div class="hc-slot hc-chip" data-hc="${g.tempOnly ? "tind" : "ind"}:${String(g.nationalId).replace(/"/g, "")}"></div>` : ""}
+        ${g.nationalId && !g.tempOnly ? `<div class="hc-slot hc-chip" data-hc="ind:${String(g.nationalId).replace(/"/g, "")}"></div>` : ""}
+        ${g.nationalId && (g.tempOnly || g.hasTemp) ? `<div class="hc-slot hc-chip hc-tmp" data-hc-word="tmp" data-hc="tind:${String(g.nationalId).replace(/"/g, "")}"></div>` : ""}
       </div>
     `;
     card.appendChild(head);
@@ -1577,7 +1579,8 @@ function renderVehicleCard(g, resultsEl){
     <div class="record-identity">
       <div class="record-name" style="margin-bottom:0;">${disp(g.plate)}</div>
       ${g.tempOnly ? tmpFlagHtml() : ""}
-      <div class="hc-slot hc-chip" data-hc="${g.tempOnly ? "tveh" : "veh"}:${String(g.plate).replace(/"/g, "")}"></div>
+      ${g.tempOnly ? "" : `<div class="hc-slot hc-chip" data-hc="veh:${String(g.plate).replace(/"/g, "")}"></div>`}
+      ${g.tempOnly || g.hasTemp ? `<div class="hc-slot hc-chip hc-tmp" data-hc-word="tmp" data-hc="tveh:${String(g.plate).replace(/"/g, "")}"></div>` : ""}
     </div>
   `;
   card.appendChild(head);
@@ -1846,6 +1849,8 @@ if("serviceWorker" in navigator){
   const known = new Map();
   let busy = 0;
   const word = () => /^en/i.test(document.documentElement.lang || "") ? "Has a card" : "حاصل على كارت";
+  // a temporary permit's card (10 November 2026: «لو حد حصل على كارت مؤقت يتكتبلى حاصل على كارت مؤقت»)
+  const wordTmp = () => /^en/i.test(document.documentElement.lang || "") ? "Has a temporary card" : "حاصل على كارت مؤقت";
   function ask(keys){
     let apikey = "";
     try{ apikey = localStorage.getItem("ncm_key") || ""; }catch(e){}
@@ -1865,7 +1870,7 @@ if("serviceWorker" in navigator){
       if((!had || Date.now() - had.at > 5 * 60 * 1000) && fresh.indexOf(k) < 0) fresh.push(k);
     });
     for(let i = 0; i < fresh.length; i += 60) ask(fresh.slice(i, i + 60));
-    els.forEach(el => { const h = known.get(el.getAttribute("data-hc")); if(h) h.v.then(yes => { if(yes && el.isConnected) el.textContent = word(); }); });
+    els.forEach(el => { const h = known.get(el.getAttribute("data-hc")); if(h) h.v.then(yes => { if(yes && el.isConnected) el.textContent = el.getAttribute("data-hc-word") === "tmp" ? wordTmp() : word(); }); });
   }
   new MutationObserver(() => { if(!busy) busy = requestAnimationFrame(paint); }).observe(document.documentElement, { childList: true, subtree: true });
 })();
