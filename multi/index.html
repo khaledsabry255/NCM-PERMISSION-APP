@@ -664,6 +664,13 @@ html[dir="ltr"] .row dd.ltr{text-align:right;}
 .hc-slot:empty{display:none !important;}
 .hc-chip{display:inline-flex;align-items:center;margin-top:8px;padding:3px 12px;border-radius:999px;font-size:13px;font-weight:800;
   color:#12874f;background:#dff3e7;border:1px solid #8fd3ae;}
+/* «تصريح مؤقت» (10 November 2026): a temporary permit, as NCM SYSTEM marks it — an orange band that catches the eye */
+.tmp-flag{display:flex;align-items:center;justify-content:center;gap:7px;width:max-content;max-width:100%;margin:10px auto 2px;padding:7px 20px;border-radius:12px;
+  background:linear-gradient(90deg,#f59e0b,#f97316);color:#fff;font-size:15px;font-weight:900;border:2px solid #fff;
+  box-shadow:0 0 0 2px #f97316,0 6px 18px rgba(249,115,22,.4);animation:tmpPulse 1.8s ease-in-out infinite;}
+.occ-content > .tmp-flag{margin:0 auto 10px;}
+@keyframes tmpPulse{0%,100%{box-shadow:0 0 0 2px #f97316,0 6px 18px rgba(249,115,22,.4);}50%{box-shadow:0 0 0 5px rgba(249,115,22,.45),0 6px 22px rgba(249,115,22,.55);}}
+@media (prefers-reduced-motion: reduce){ .tmp-flag{animation:none;} }
 </style>
 </head>
 <body>
@@ -1035,6 +1042,69 @@ function loadCSV(url){
       complete: res => resolve(res.data), error: err => reject(err) });
   }));
 }
+/* THE TEMPORARY PERMITS (10 November 2026): NCM SYSTEM's two temporary sheets, read by gid when Drive has them and by their headings.
+   A man / a vehicle who has a permit too: one answer, his card holding the temporary one among its numbers with «تصريح مؤقت» on it
+   (where he stands is still told by his own permits); one with a temporary permit alone: an answer of its own, the band under its id.
+   A sheet that is not there is no fault. */
+const TEMP_TABS = { ind: "تصاريح افراد مؤقتة", veh: "تصاريح مركبات مؤقتة" };
+const tmpFlagHtml = () => '<div class="tmp-flag"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>' +
+  (/^en/i.test(document.documentElement.lang || "") ? "Temporary permit" : "تصريح مؤقت") + "</div>";
+async function tempRows(kind){
+  try{
+    const gids = await loadTabGids(), name = TEMP_TABS[kind];
+    if(!gids.has(name)) return null;
+    return await loadCSV(SHEET_BASE + "/export?format=csv&gid=" + gids.get(name));
+  }catch(e){ console.warn("[NCM] temporary permits unavailable", e); return null; }
+}
+function tempCols(header, want){
+  const h = (header || []).map(x => foldArabic(x)), out = {};
+  Object.keys(want).forEach(k => { out[k] = h.findIndex(x => want[k].some(w => x === foldArabic(w))); });
+  return out;
+}
+const tempAt = (cols, i) => i >= 0 ? cols[i] : "";
+function tempDone(touched){
+  touched.forEach(g => { g.records = sortByDay(g.records); if(g.tempOnly){ g.cur = g.records[g.records.length - 1]; g.p = g.cur.p; } });
+}
+function mergeTempInd(m, rows){
+  if(!m || !rows || !rows.length) return;
+  const c = tempCols(rows[0], { name:["الاسم"], job:["الوظيفة"], id:["الرقم القومى", "الرقم القومي"], addr:["العنوان"], sender:["المرسل"], permit:["تصريح"], day:["Mail Day", "Mali Day"] });
+  const touched = new Set();
+  rows.slice(1).forEach(cols => {
+    if(!cols) return;
+    const idVal = normalize(tempAt(cols, c.id)), nameVal = normalize(tempAt(cols, c.name));
+    if(!idVal && !nameVal) return;
+    const key = idVal ? "ID:" + digitsOnly(idVal) : "NAME:" + nameVal;
+    let g = m.groups.get(key);
+    if(!g){ g = { key, name: nameVal, nationalId: idVal, nid: digitsOnly(idVal), records: [], names: new Map(), tempOnly: true }; m.groups.set(key, g); m.list.push(g); if(g.nid) m.byNid.set(g.nid, g); }
+    else if(!g.tempOnly) g.hasTemp = true;
+    const f = foldArabic(nameVal);
+    if(f && !g.names.has(f)) g.names.set(f, nameVal);
+    const permit = tempAt(cols, c.permit), day = tempAt(cols, c.day);
+    g.records.push({ job: normalize(tempAt(cols, c.job)), address: normalize(tempAt(cols, c.addr)), note: "", sender: normalize(tempAt(cols, c.sender)),
+      mailType: "", ase: [], permit, day, dayParsed: PER_CARD.dayOf(day), p: classify(permit), temp: true });
+    touched.add(g);
+  });
+  tempDone(touched);
+}
+function mergeTempVeh(m, rows){
+  if(!m || !rows || !rows.length) return;
+  const c = tempCols(rows[0], { plate:["رقم السيارة"], type:["النوع"], owner:["تابعه"], permit:["تصريح"], day:["Mail Day", "Mali Day"] });
+  const touched = new Set();
+  rows.slice(1).forEach(cols => {
+    if(!cols) return;
+    const plate = normalize(tempAt(cols, c.plate));
+    if(!plate) return;
+    const key = foldArabic(plate);
+    let g = m.groups.get(key);
+    if(!g){ g = { key, plate, records: [], tempOnly: true }; m.groups.set(key, g); m.list.push(g); }
+    else if(!g.tempOnly) g.hasTemp = true;
+    const permit = tempAt(cols, c.permit), day = tempAt(cols, c.day);
+    g.records.push({ type: normalize(tempAt(cols, c.type)), owner: normalize(tempAt(cols, c.owner)), mailType: "",
+      permit, day, dayParsed: PER_CARD.dayOf(day), p: classify(permit), temp: true });
+    touched.add(g);
+  });
+  tempDone(touched);
+}
 let loadRun = 0;
 function loadAll(){
   const run = ++loadRun;
@@ -1048,8 +1118,8 @@ function loadAll(){
     if(st.res) { runMulti(); paintMulti(); }           // an answer on screen is asked again with what has just come in
   };
   const emp = fetchAllEmployees().then(rows => done("emp", buildEmployees(rows)), err => { console.error("[NCM] employees", err); done("emp", null); });
-  const ind = tabCsvUrl(INDIVIDUALS_TAB).then(loadCSV).then(rows => { PER_CARD.setAseColumns(rows[0] || []); done("ind", buildIndividuals(rows.slice(1))); }, err => { console.error("[NCM] individuals", err); done("ind", null); });
-  const veh = tabCsvUrl(VEHICLES_TAB).then(loadCSV).then(rows => done("veh", buildVehicles(rows.slice(1))), err => { console.error("[NCM] vehicles", err); done("veh", null); });
+  const ind = Promise.all([tabCsvUrl(INDIVIDUALS_TAB).then(loadCSV), tempRows("ind")]).then(([rows, tmp]) => { PER_CARD.setAseColumns(rows[0] || []); const m = buildIndividuals(rows.slice(1)); mergeTempInd(m, tmp); done("ind", m); }, err => { console.error("[NCM] individuals", err); done("ind", null); });
+  const veh = Promise.all([tabCsvUrl(VEHICLES_TAB).then(loadCSV), tempRows("veh")]).then(([rows, tmp]) => { const m = buildVehicles(rows.slice(1)); mergeTempVeh(m, tmp); done("veh", m); }, err => { console.error("[NCM] vehicles", err); done("veh", null); });
   return Promise.all([emp, ind, veh]);
 }
 
@@ -1923,7 +1993,7 @@ const PERMIT_ICONS = {
   "pb-unclear": '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7v.3"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/>'
 };
 
-function attachOccurrenceSwitcher(card, chipsContainer, sorted, fieldsHtmlFn){
+function attachOccurrenceSwitcher(card, chipsContainer, sorted, fieldsHtmlFn, flagged){
   const content = document.createElement("div");
   content.className = "occ-content";
 
@@ -1938,7 +2008,7 @@ function attachOccurrenceSwitcher(card, chipsContainer, sorted, fieldsHtmlFn){
     const sentMain = sent.date ? dispNum(sent.date) : disp(sent.note || t("notSpecified"));
     const sentNote = sent.date ? sent.note : "";
 
-    content.innerHTML = `
+    content.innerHTML = (flagged && rec.temp ? tmpFlagHtml() : "") + `
       <div class="permit-banner ${p.cls}">
         <div class="pb-left">
           <div class="permit-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">${icon}</svg></div>
@@ -2012,7 +2082,8 @@ function personCard(g){
       <div class="record-identity">
         <div class="record-name">${disp(g.name || t("noName"))}</div>
         <div class="record-subid">${g.nationalId ? dispNum(g.nationalId) : disp(t("noId"))}</div>
-        ${g.nationalId ? `<div class="hc-slot hc-chip" data-hc="ind:${String(g.nationalId).replace(/"/g, "")}"></div>` : ""}
+        ${g.tempOnly ? tmpFlagHtml() : ""}
+        ${g.nationalId ? `<div class="hc-slot hc-chip" data-hc="${g.tempOnly ? "tind" : "ind"}:${String(g.nationalId).replace(/"/g, "")}"></div>` : ""}
       </div>
     `;
     card.appendChild(head);
@@ -2027,7 +2098,7 @@ function personCard(g){
         ${rec.mailType ? `<div class="record-row"><span class="k">${disp(t("fieldMailType"))}</span><span class="v">${disp(rec.mailType)}</span></div>` : ""}
       </div>
       ${aseBlockHtml(rec)}
-    `);
+    `, !!g.hasTemp);
 
     return card;
 }
@@ -2046,7 +2117,8 @@ function renderVehicleCard(g, resultsEl){
     </div>
     <div class="record-identity">
       <div class="record-name" style="margin-bottom:0;">${disp(g.plate)}</div>
-      <div class="hc-slot hc-chip" data-hc="veh:${String(g.plate).replace(/"/g, "")}"></div>
+      ${g.tempOnly ? tmpFlagHtml() : ""}
+      <div class="hc-slot hc-chip" data-hc="${g.tempOnly ? "tveh" : "veh"}:${String(g.plate).replace(/"/g, "")}"></div>
     </div>
   `;
   card.appendChild(head);
@@ -2058,7 +2130,7 @@ function renderVehicleCard(g, resultsEl){
       <div class="record-row"><span class="k">${disp(t("fieldOwner"))}</span><span class="v">${disp(rec.owner || "—")}</span></div>
       ${rec.mailType ? `<div class="record-row"><span class="k">${disp(t("fieldMailType"))}</span><span class="v">${disp(rec.mailType)}</span></div>` : ""}
     </div>
-  `);
+  `, !!g.hasTemp);
 
   resultsEl.appendChild(card);
 }
