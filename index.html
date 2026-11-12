@@ -463,7 +463,7 @@ button{font-family:inherit;cursor:pointer;}
    service-worker.js in the same commit, otherwise devices keep
    serving the cached page and never see it.
    ============================================================ */
-const ACCESS_VERSION = "3";
+const ACCESS_VERSION = "4";
 const UNLOCK_KEY = "ncm_device_unlocked";   // holds the access version, never the PIN
 const AUTH_KEY   = "ncm_key";               // holds the decrypted API key
 
@@ -478,9 +478,9 @@ const APP_ROOT = location.pathname.replace(/[^/]*$/, "");
    "reaches it and hides the rows". Changing the PIN means re-sealing this
    blob; it is not enough to change a number in the code. */
 const VAULT = {
-  salt: "1ZNV5xAf3NZ1xK1iZmAnSA==",
-  iv:   "8Fn1FfSAB6PgT89a",
-  data: "WnVezfySqOjP/as8v7Qy1gBat4ogZnEmLwVjm8EgGDw3t8z1caZC5iFs9pQCsU1aeLDQoYcwCPgINotqnOhlT1d1rvn7iZLC2LvidByLEBK0bt7Ol3Q6xpSxOc14s6YBGB85mstlpbzbUSub8ZE5V2UW5n+e+HQJfSzFxHyZO+Ku43kMV2mGc38T9eM39HN+m5jh3jIoHVFk86jnCrFYpwidRzLKaO47k1odbdxWj9xhCThjWIjPisB6bnNt+vgHmAG2NbvVT7xCrtVFgxrM/g8Opv/ltrR7p235EuJ3EQ4="
+  salt: "f2lGfv+gNC/jRrf4TS88Hg==",
+  iv:   "ZCAIs173cqHj8HFM",
+  data: "vJhxY6c6Mt0Lgw+xUnrtk7yz4K65L9UuO0u9i6nIwAtlg/+WdjJNnqpw23BFQrszIB6PnhaXaoU64ovOl4P2DNkPmcj+WWKZdR6VrcKn8f829V43PlsvHCzwke8sLEYFSXmflKfd2KDdJQ7jNfbRcRZfDA2iBAeSTnKliG4xqPUdidoOI2lu9fBLaXSJoLVnjdc4tbe7f+qddYzuDU3A6aqkrIkLtD+OQ7HUIcr5EPYl+kGXeGbqCVSLD+8P30tuJ0eFF9ZWLLR8U4ZPxXFa8/voYaOzoA5N0XxoLxHKswk="
 };
 const KDF_ITERATIONS = 300000;
 

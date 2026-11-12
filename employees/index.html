@@ -634,7 +634,7 @@ html[dir="ltr"] .row dd.ltr{text-align:right;}
    stored version stops matching, the cached key is wiped, and everyone is
    asked for the PIN again. Bump CACHE_NAME in service-worker.js in the same
    commit, otherwise devices keep serving the cached page and never see it. */
-const ACCESS_VERSION = "3";   // must match the shell at the app root
+const ACCESS_VERSION = "4";   // must match the shell at the app root
 const UNLOCK_KEY = "ncm_device_unlocked";   // holds the access version, never the PIN
 const AUTH_KEY   = "ncm_key";               // holds the decrypted API key
 const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
