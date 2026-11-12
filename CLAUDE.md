@@ -105,6 +105,9 @@ FOR WORK/سكربتات/ncm-employee-sync/   ← sync.py + backup.py + photos.py
   و«حاصل على كارت») بتاخد `token` في الـ body كمان. توكن مرفوض (401) = `gateShut()` ← `../?shut=1` ← الـ PIN تاني.
 - **قفل موبايل لوحده:** `update app_devices set off = true where id = …` (الـ label بيقول أنهي موبايل). **كل الأجهزة:** `ACCESS_VERSION` زي الأول.
 - `ACCESS_VERSION` بقى **5** (كل موبايل محتاج الـ PIN مرة) · CACHE v62.
+- **APK 4.3 (كود 20، commit `163455a`):** الجسر بيقبل كمان `/storage/v1/object/sign/employee-photos/`، والصفحة بتجرّب الرابط الموقّع الأول
+  وبعدين عنوان الـ bucket القديم (لـ APK أقدم، طول ما الـ bucket مفتوح). اتوقّعت بالمفتاح الدائم (`caa0f998…`) واتبعتت لخالد يجرّبها —
+  **لسه ماترفعتش على `latest-apk`** لحد ما تشتغل على موبايل.
 - **لسه (المرحلة الجاية، بعد ما الموبايلات تاخد توكن):** قفل `employees` عن المفتاح العام · `employee-photos` يبقى خاص (محتاج APK جديدة:
   الجسر `PHOTO_PATH` لازم يقبل `/storage/v1/object/sign/employee-photos/`) · `STRICT = true` في `system-photo` · الشيت نفسه يبقى خاص (محتاج
   Apps Script من خالد).
