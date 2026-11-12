@@ -489,7 +489,7 @@ const I18N = {
   ar:{
     dir:'rtl', htmlLang:'ar', other:'EN',
     gateAria:'شاشة الدخول', pinLabel:'الرقم السري', pinAria:'اضغط لإدخال الرقم',
-    checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح', lockedPin:'محاولات كتير غلط — جرّب بعد نص ساعة', netPin:'تعذر الاتصال — جرّب تاني',
+    checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح', lockedPin:'محاولات كتير غلط — جرّب بعد نص ساعة', netPin:'تعذر الاتصال — جرّب تاني', closedPin:'تسجيل الأجهزة الجديدة مقفول',
     empTitle:'موظفين',
     perTitle:'تصاريح',
     multiTitle:'بحث متكرر',
@@ -498,7 +498,7 @@ const I18N = {
   en:{
     dir:'ltr', htmlLang:'en', other:'AR',
     gateAria:'Login screen', pinLabel:'PIN Code', pinAria:'Tap to enter the PIN',
-    checking:'Checking', wrongPin:'Incorrect PIN', lockedPin:'Too many wrong tries — try again in half an hour', netPin:'Could not connect — try again',
+    checking:'Checking', wrongPin:'Incorrect PIN', lockedPin:'Too many wrong tries — try again in half an hour', netPin:'Could not connect — try again', closedPin:'Registering new phones is closed',
     empTitle:'Employees',
     perTitle:'Permits',
     multiTitle:'List search',
@@ -685,7 +685,7 @@ async function unlockVault(entered){
   const o = await r.json().catch(() => null);
   if(o && o.ok && o.token) return o.token;
   const e = new Error("refused");
-  e.code = o && o.error === "locked" ? "locked" : o && o.error === "wrong" ? "wrong" : "net";
+  e.code = o && o.error === "locked" ? "locked" : o && o.error === "closed" ? "closed" : o && o.error === "wrong" ? "wrong" : "net";
   throw e;
 }
 
@@ -705,7 +705,7 @@ async function submitPin(){
     openHome();
   }catch(err){
     gateErr.classList.remove('busy');
-    gateErr.textContent = t(err && err.code === 'locked' ? 'lockedPin' : err && err.code === 'net' ? 'netPin' : 'wrongPin');
+    gateErr.textContent = t(err && err.code === 'locked' ? 'lockedPin' : err && err.code === 'closed' ? 'closedPin' : err && err.code === 'net' ? 'netPin' : 'wrongPin');
     const card = gate.querySelector('.gate-card');
     card.classList.add('shake');
     if(navigator.vibrate) navigator.vibrate(120);
