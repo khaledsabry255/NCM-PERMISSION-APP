@@ -802,8 +802,12 @@ function phFill(){
   const now = Date.now(), want = [];
   imgs.forEach(im => { const n = im.getAttribute("data-ph"), had = PH_LINKS.get(n); if(!had || now - had.at > 50 * 60 * 1000) want.push(n); });
   const ask = [...new Set(want)];
-  const p = ask.length ? gatePost({ action:"photo", names: ask }).then(r => r.json()).then(o => (o && o.ok && o.urls) || {}).catch(() => null) : null;
-  ask.forEach(n => PH_LINKS.set(n, { at: now, url: p.then(u => u === null ? undefined : (u[n] || "")) }));
+  // a hundred names a call (the gate signs two hundred at the most — a list of 365 employees once showed 530 photos as missing)
+  for(let i = 0; i < ask.length; i += 100){
+    const part = ask.slice(i, i + 100);
+    const p = gatePost({ action:"photo", names: part }).then(r => r.json()).then(o => (o && o.ok && o.urls) || null).catch(() => null);
+    part.forEach(n => PH_LINKS.set(n, { at: now, url: p.then(u => u === null ? undefined : (u[n] || "")) }));
+  }
   imgs.forEach(im => {
     const n = im.getAttribute("data-ph");
     im.setAttribute("data-ph-asked", "");      // asked for: not asked again
@@ -1181,7 +1185,7 @@ const ICON_SAVE =
 function shotHTML(code, second){
   if(code === '') return '<figure class="shot">' + NOSHOT() + '</figure>';
   return '<figure class="shot"><img data-ph="' + esc(code + (second ? '_2' : '') + '.jpg') +
-         '" alt="' + esc(t('photoAlt')) + '" decoding="async" data-zoom></figure>';
+         '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom></figure>';
 }
 // One control under both photos; it saves the pair.
 function downloadHTML(code){
