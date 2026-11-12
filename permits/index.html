@@ -1293,6 +1293,8 @@ function cardPhotos(photo){
 }
 const isoDay = d => d instanceof Date && !isNaN(d) ? d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") : "";
 function photosFor(sets, sorted, idx){
+  // the newest send alone, under every request (12 November 2026: «لو فى اى حد مكرر نستبدل الجديد بالقديم»), as in NCM SYSTEM
+  if(sets.length > 1) sets = [sets.slice().sort((a, z) => String(z.day || "").localeCompare(String(a.day || "")))[0]];
   const days = sorted.map(r => isoDay(r.dayParsed));
   const mine = sets.filter(x => {
     let at = days.indexOf(x.day);
