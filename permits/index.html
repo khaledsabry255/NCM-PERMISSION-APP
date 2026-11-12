@@ -878,7 +878,7 @@ applyStaticI18n();
    cookie survives most of those sweeps. Either one alone is enough.
    ============================================================ */
 (function(){
-  const ACCESS_VERSION = "4";           // must match the shell at the app root
+  const ACCESS_VERSION = "5";           // must match the shell at the app root
   const UNLOCK_FLAG_KEY = "ncm_device_unlocked";
 
   let flag = null;
@@ -898,14 +898,39 @@ applyStaticI18n();
 
 <script>
 /* ======================= CONFIG ======================= */
-const SHEET_ID = "1ZceJtmQMpW7Ky3Ysgz0mDcmE6Uxr600OuO2KOMHJnWE";
 // Tabs are found by NAME and read by gid, and the gid is looked up fresh on
-// every load (see loadTabGids below). Importing or replacing a tab changes its
+// every load (app-gate does it now). Importing or replacing a tab changes its
 // gid, and a gid written down once then silently falls back to the first sheet
 // — which is exactly what broke vehicle search. Tab names survive a re-import.
 // (The trailing space in the individuals tab name is part of the real name.)
-const SHEET_BASE = "https://docs.google.com/spreadsheets/d/" + SHEET_ID;
-const GVIZ_BASE = SHEET_BASE + "/gviz/tq?tqx=out:csv&sheet=";
+/* ======================= THE GATE (12 November 2026) =======================
+   Asked for: «ازاى نحافظ على امان كل الداتا بتاعتنا منعا لاى اختراق… اقوى امان ممكن». The app no longer holds the database's key nor
+   the sheet's address: this phone was let in once by the PIN (checked on the server), and what it was handed — a device token, kept
+   where the key used to be — goes with every read to one function, app-gate, which reads for it: the employees, their photos (links
+   that last an hour), the sheet's tabs. A phone shut out there is sent back to the PIN. */
+const NCM_GATE = "https://ljcalgumlodehoulbwtp.supabase.co/functions/v1/app-gate";
+function gateToken(){ try{ return localStorage.getItem("ncm_key") || ""; }catch(e){ return ""; } }
+function gateShut(){
+  try{ localStorage.removeItem("ncm_device_unlocked"); localStorage.removeItem("ncm_key"); }catch(e){}
+  location.replace("../?shut=1");
+}
+function gatePost(body, signal){
+  return fetch(NCM_GATE, { method:"POST", headers:{ "Content-Type":"application/json" }, signal: signal || gateClock(),
+    body: JSON.stringify(Object.assign({ token: gateToken() }, body)) }).then(r => { if(r.status === 401) gateShut(); return r; });
+}
+function gateClock(){
+  if(typeof AbortSignal !== "undefined" && AbortSignal.timeout){ try{ return AbortSignal.timeout(20000); }catch(e){} }
+  return undefined;
+}
+
+/* the sheet's tabs, through the gate: its CSV as the sheet exports it, or null when the tab is not there */
+async function gateSheet(name){
+  const r = await gatePost({ action:"sheet", tab: name });
+  const o = await r.json().catch(() => null);
+  if(!o || !o.ok) throw new Error("sheet " + r.status);
+  return o.csv;
+}
+const csvRows = text => Papa.parse(text, { header:false, skipEmptyLines:false }).data;
 const INDIVIDUALS_TAB = "تصاريح أفراد ";
 const VEHICLES_TAB    = "تصاريح مركبات";
 
@@ -950,34 +975,7 @@ function withLimit(promise, ms){
   });
 }
 
-let tabGidsPromise = null;
-function loadTabGids(){
-  if(!tabGidsPromise){
-    tabGidsPromise = timedFetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
-      .then(r => r.ok ? r.text() : Promise.reject(new Error("htmlview " + r.status)))
-      .then(html => {
-        const map = new Map();
-        const re = /items\.push\(\{name: "((?:[^"\\]|\\.)*)"[\s\S]*?gid: "(\d+)"/g;
-        let m;
-        while((m = re.exec(html))){
-          try{
-            map.set(JSON.parse('"' + m[1].replace(/\\x([0-9a-fA-F]{2})/g, "\\u00$1") + '"'), m[2]);
-          }catch(e){}
-        }
-        return map;
-      });
-    tabGidsPromise.catch(() => { tabGidsPromise = null; });
-  }
-  return tabGidsPromise;
-}
-
-async function tabCsvUrl(name){
-  try{
-    const gids = await loadTabGids();
-    if(gids.has(name)) return SHEET_BASE + "/export?format=csv&gid=" + gids.get(name);
-  }catch(e){ console.warn("tab gids unavailable, falling back to gviz", e); }
-  return GVIZ_BASE + encodeURIComponent(name);
-}
+async function tabCsvUrl(name){ return "gate:" + name; }
 
 /* ======================= Helpers ======================= */
 
@@ -1111,15 +1109,8 @@ function permitDisplay(p){
 }
 
 function loadCSVRaw(url){
-  // Cache-buster so a manual refresh (and every load) sees the newest sheet.
-  const busted = url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
-  return withLimit(new Promise((resolve, reject)=>{
-    Papa.parse(busted, {
-      download:true, header:false, skipEmptyLines:false,
-      complete: (res)=> resolve(res.data),
-      error: (err)=> reject(err)
-    });
-  }));
+  // the tab through the gate — fetched fresh every time
+  return withLimit(gateSheet(String(url).replace(/^gate:/, "")).then(csv => csv === null ? [] : csvRows(csv)));
 }
 
 /* ======================= The temporary permits (10 November 2026) =======================
@@ -1132,9 +1123,8 @@ const tmpWord = () => /^en/i.test(document.documentElement.lang || "") ? "Tempor
 const tmpFlagHtml = () => '<div class="tmp-flag"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>' + escapeHtml(tmpWord()) + "</div>";
 async function tempRows(kind){
   try{
-    const gids = await loadTabGids(), name = TEMP_TABS[kind];
-    if(!gids.has(name)) return null;
-    return await loadCSVRaw(SHEET_BASE + "/export?format=csv&gid=" + gids.get(name));
+    const csv = await withLimit(gateSheet(TEMP_TABS[kind]));
+    return csv === null ? null : csvRows(csv);
   }catch(e){ console.warn("temporary permits unavailable", e); return null; }
 }
 function tempCols(header, want){
@@ -1283,10 +1273,8 @@ function cardPhotos(photo){
   }
   const k = photo.kind + ":" + photo.key, had = photoAsked.get(k);
   if(had && Date.now() - had.at < 8 * 60 * 1000) return had.sets;
-  let apikey = "";
-  try{ apikey = localStorage.getItem("ncm_key") || ""; }catch(e){}
-  const sets = timedFetch(PHOTO_FN, { method:"POST", headers: Object.assign({ "Content-Type":"application/json" }, apikey ? { apikey } : {}),
-      body: JSON.stringify({ action:"sign_app", kind: photo.kind, key: photo.key }) })
+  const sets = timedFetch(PHOTO_FN, { method:"POST", headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ action:"sign_app", token: gateToken(), kind: photo.kind, key: photo.key }) })
     .then(r => r.json()).then(o => (o && o.ok && Array.isArray(o.sets)) ? o.sets : []).catch(() => []);
   photoAsked.set(k, { at: Date.now(), sets });
   return sets;
@@ -1790,7 +1778,6 @@ async function reloadData(){
   individualsGroups = null;
   vehiclesGroups = null;
   window.__individualsByName = new Map();
-  tabGidsPromise = null;   // an upload since the last load gave the tabs new gids
   setSystemStatus("updating");
   try{
     const results = await Promise.all([initIndividuals(), initVehicles()]);
@@ -1854,10 +1841,8 @@ if("serviceWorker" in navigator){
   // a temporary permit's card (10 November 2026: «لو حد حصل على كارت مؤقت يتكتبلى حاصل على كارت مؤقت»)
   const wordTmp = () => /^en/i.test(document.documentElement.lang || "") ? "Has a temporary card" : "حاصل على كارت مؤقت";
   function ask(keys){
-    let apikey = "";
-    try{ apikey = localStorage.getItem("ncm_key") || ""; }catch(e){}
-    const p = fetch(FN, { method:"POST", headers: Object.assign({ "Content-Type":"application/json" }, apikey ? { apikey } : {}),
-        body: JSON.stringify({ action:"card_app", items: keys.map(k => ({ kind: k.slice(0, k.indexOf(":")), key: k.slice(k.indexOf(":") + 1) })) }) })
+    const p = fetch(FN, { method:"POST", headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ action:"card_app", token: gateToken(), items: keys.map(k => ({ kind: k.slice(0, k.indexOf(":")), key: k.slice(k.indexOf(":") + 1) })) }) })
       .then(r => r.json()).then(o => o && o.ok && Array.isArray(o.has) ? o.has : []).catch(() => []);
     keys.forEach((k, i) => known.set(k, { at: Date.now(), v: p.then(h => h[i] === true) }));
   }

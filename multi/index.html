@@ -735,15 +735,81 @@ html[dir="ltr"] .row dd.ltr{text-align:right;}
 /* Bump ACCESS_VERSION to lock every device that is already unlocked. It has to
    be the same number in all four files: the shell at the app root, the
    employees system, the permits system, and this one. */
-const ACCESS_VERSION = "4";   // must match the shell at the app root
+const ACCESS_VERSION = "5";   // must match the shell at the app root
 const UNLOCK_KEY = "ncm_device_unlocked";
 const AUTH_KEY   = "ncm_key";
 const SUPABASE_URL = "https://ljcalgumlodehoulbwtp.supabase.co";
 const BUCKET = "employee-photos";
 const EXPIRY_WINDOW = 30;                 // days that count as "expiring soon" — the app's number
-const SHEET_ID = "1ZceJtmQMpW7Ky3Ysgz0mDcmE6Uxr600OuO2KOMHJnWE";
-const SHEET_BASE = "https://docs.google.com/spreadsheets/d/" + SHEET_ID;
-const GVIZ_BASE = SHEET_BASE + "/gviz/tq?tqx=out:csv&sheet=";
+/* ======================= THE GATE (12 November 2026) =======================
+   Asked for: «ازاى نحافظ على امان كل الداتا بتاعتنا منعا لاى اختراق… اقوى امان ممكن». The app no longer holds the database's key nor
+   the sheet's address: this phone was let in once by the PIN (checked on the server), and what it was handed — a device token, kept
+   where the key used to be — goes with every read to one function, app-gate, which reads for it: the employees, their photos (links
+   that last an hour), the sheet's tabs. A phone shut out there is sent back to the PIN. */
+const NCM_GATE = "https://ljcalgumlodehoulbwtp.supabase.co/functions/v1/app-gate";
+function gateToken(){ try{ return localStorage.getItem("ncm_key") || ""; }catch(e){ return ""; } }
+function gateShut(){
+  try{ localStorage.removeItem("ncm_device_unlocked"); localStorage.removeItem("ncm_key"); }catch(e){}
+  location.replace("../?shut=1");
+}
+function gatePost(body, signal){
+  return fetch(NCM_GATE, { method:"POST", headers:{ "Content-Type":"application/json" }, signal: signal || gateClock(),
+    body: JSON.stringify(Object.assign({ token: gateToken() }, body)) }).then(r => { if(r.status === 401) gateShut(); return r; });
+}
+function gateClock(){
+  if(typeof AbortSignal !== "undefined" && AbortSignal.timeout){ try{ return AbortSignal.timeout(20000); }catch(e){} }
+  return undefined;
+}
+
+/* the sheet's tabs, through the gate: its CSV as the sheet exports it, or null when the tab is not there */
+async function gateSheet(name){
+  const r = await gatePost({ action:"sheet", tab: name });
+  const o = await r.json().catch(() => null);
+  if(!o || !o.ok) throw new Error("sheet " + r.status);
+  return o.csv;
+}
+const csvRows = text => Papa.parse(text, { header:false, skipEmptyLines:false }).data;
+
+/* the employees' photos, through the gate: an <img data-ph="1005.jpg"> is given its link (an hour's) when it is drawn; one that is not
+   there becomes the card's own «no photo» */
+const PH_LINKS = new Map();
+let phBusy = 0;
+function phFill(){
+  phBusy = 0;
+  const imgs = [].slice.call(document.querySelectorAll("img[data-ph]:not([data-ph-asked])"));
+  if(!imgs.length) return;
+  const now = Date.now(), want = [];
+  imgs.forEach(im => { const n = im.getAttribute("data-ph"), had = PH_LINKS.get(n); if(!had || now - had.at > 50 * 60 * 1000) want.push(n); });
+  const ask = [...new Set(want)];
+  const p = ask.length ? gatePost({ action:"photo", names: ask }).then(r => r.json()).then(o => (o && o.ok && o.urls) || {}).catch(() => null) : null;
+  ask.forEach(n => PH_LINKS.set(n, { at: now, url: p.then(u => u === null ? undefined : (u[n] || "")) }));
+  imgs.forEach(im => {
+    const n = im.getAttribute("data-ph");
+    im.setAttribute("data-ph-asked", "");      // asked for: not asked again
+    PH_LINKS.get(n).url.then(u => {
+      if(u){ im.src = u; return; }
+      if(u === undefined){ PH_LINKS.delete(n); im.removeAttribute("data-ph-asked"); return; }   // the call failed: tried again next time
+      const fig = im.closest(".shot");
+      if(fig) fig.innerHTML = EMP_CARD.NOSHOT();
+    });
+  });
+}
+new MutationObserver(() => { if(!phBusy) phBusy = setTimeout(phFill, 30); }).observe(document.documentElement, { childList: true, subtree: true });
+async function photoLink(code, second){
+  const n = code + (second ? "_2" : "") + ".jpg";
+  const r = await gatePost({ action:"photo", names:[n] });
+  const o = await r.json().catch(() => null);
+  return (o && o.ok && o.urls && o.urls[n]) || "";
+}
+/* the employees table, through the gate: the database client asks as it always did, and this hands its reads of «employees» on */
+function gateFetch(url, opts){
+  const u = new URL(String(url));
+  if(u.pathname.indexOf("/rest/v1/employees") !== 0) return Promise.reject(new Error("not through the gate"));
+  const h = {};
+  try{ new Headers((opts && opts.headers) || {}).forEach((v, k) => { h[k] = v; }); }catch(e){}
+  delete h.apikey; delete h.authorization;
+  return gatePost({ action:"rest", path: u.pathname + u.search, headers: h }, opts && opts.signal);
+}
 const INDIVIDUALS_TAB = "تصاريح أفراد ";   // the trailing space is part of the tab's real name
 const VEHICLES_TAB    = "تصاريح مركبات";
 
@@ -1011,37 +1077,9 @@ async function fetchAllEmployees(){
     if(page.length < PAGE) return rows;
   }
 }
-let tabGidsPromise = null;
-function loadTabGids(){
-  if(!tabGidsPromise){
-    tabGidsPromise = timedFetch(SHEET_BASE + "/htmlview?_=" + Date.now(), { cache:"no-store" })
-      .then(r => r.ok ? r.text() : Promise.reject(new Error("htmlview " + r.status)))
-      .then(html => {
-        const map = new Map();
-        const re = /items\.push\(\{name: "((?:[^"\\]|\\.)*)"[\s\S]*?gid: "(\d+)"/g;
-        let m;
-        while((m = re.exec(html))){
-          try{ map.set(JSON.parse('"' + m[1].replace(/\\x([0-9a-fA-F]{2})/g, "\\u00$1") + '"'), m[2]); }catch(e){}
-        }
-        return map;
-      });
-    tabGidsPromise.catch(() => { tabGidsPromise = null; });
-  }
-  return tabGidsPromise;
-}
-async function tabCsvUrl(name){
-  try{
-    const gids = await loadTabGids();
-    if(gids.has(name)) return SHEET_BASE + "/export?format=csv&gid=" + gids.get(name);
-  }catch(e){ console.warn("tab gids unavailable, falling back to gviz", e); }
-  return GVIZ_BASE + encodeURIComponent(name);
-}
+async function tabCsvUrl(name){ return "gate:" + name; }
 function loadCSV(url){
-  const busted = url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
-  return withLimit(new Promise((resolve, reject) => {
-    Papa.parse(busted, { download:true, header:false, skipEmptyLines:false,
-      complete: res => resolve(res.data), error: err => reject(err) });
-  }));
+  return withLimit(gateSheet(String(url).replace(/^gate:/, "")).then(csv => csv === null ? [] : csvRows(csv)));
 }
 /* THE TEMPORARY PERMITS (10 November 2026): NCM SYSTEM's two temporary sheets, read by gid when Drive has them and by their headings.
    A man / a vehicle who has a permit too: one answer, his card holding the temporary one among its numbers with «تصريح مؤقت» on it
@@ -1052,9 +1090,8 @@ const tmpFlagHtml = () => '<div class="tmp-flag"><svg viewBox="0 0 24 24" width=
   (/^en/i.test(document.documentElement.lang || "") ? "Temporary permit" : "تصريح مؤقت") + "</div>";
 async function tempRows(kind){
   try{
-    const gids = await loadTabGids(), name = TEMP_TABS[kind];
-    if(!gids.has(name)) return null;
-    return await loadCSV(SHEET_BASE + "/export?format=csv&gid=" + gids.get(name));
+    const csv = await withLimit(gateSheet(TEMP_TABS[kind]));
+    return csv === null ? null : csvRows(csv);
   }catch(e){ console.warn("[NCM] temporary permits unavailable", e); return null; }
 }
 function tempCols(header, want){
@@ -1110,7 +1147,6 @@ let loadRun = 0;
 function loadAll(){
   const run = ++loadRun;
   SRC.emp = SRC.ind = SRC.veh = "wait";
-  tabGidsPromise = null;                    // an upload since the last load gave the tabs new gids
   paintSrc();
   const done = (k, model) => {
     if(run !== loadRun) return;
@@ -1570,8 +1606,8 @@ const ICON_SAVE =
 
 function shotHTML(code, second){
   if(code === '') return '<figure class="shot">' + NOSHOT() + '</figure>';
-  return '<figure class="shot"><img src="' + photoURL(code, second) +
-         '" alt="' + esc(t('photoAlt')) + '" loading="lazy" decoding="async" data-zoom></figure>';
+  return '<figure class="shot"><img data-ph="' + esc(code + (second ? '_2' : '') + '.jpg') +
+         '" alt="' + esc(t('photoAlt')) + '" decoding="async" data-zoom></figure>';
 }
 // One control under both photos; it saves the pair.
 function downloadHTML(code){
@@ -2347,7 +2383,7 @@ const key = storedKey();
 if(!key){
   location.replace("../");
 }else{
-  sb = supabase.createClient(SUPABASE_URL, key, { global: { fetch: timedFetch } });
+  sb = supabase.createClient(SUPABASE_URL, "ncm-app-gate", { global: { fetch: gateFetch } });     // (the key is this phone's token: reads go through the gate)
   histLoad();
   try{ sessionStorage.removeItem("ncm_multi_last"); }catch(e){}   // what an older version of the page left behind
   applyLang();
@@ -2371,10 +2407,8 @@ if("serviceWorker" in navigator){
   // a temporary permit's card (10 November 2026: «لو حد حصل على كارت مؤقت يتكتبلى حاصل على كارت مؤقت»)
   const wordTmp = () => /^en/i.test(document.documentElement.lang || "") ? "Has a temporary card" : "حاصل على كارت مؤقت";
   function ask(keys){
-    let apikey = "";
-    try{ apikey = localStorage.getItem("ncm_key") || ""; }catch(e){}
-    const p = fetch(FN, { method:"POST", headers: Object.assign({ "Content-Type":"application/json" }, apikey ? { apikey } : {}),
-        body: JSON.stringify({ action:"card_app", items: keys.map(k => ({ kind: k.slice(0, k.indexOf(":")), key: k.slice(k.indexOf(":") + 1) })) }) })
+    const p = fetch(FN, { method:"POST", headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ action:"card_app", token: gateToken(), items: keys.map(k => ({ kind: k.slice(0, k.indexOf(":")), key: k.slice(k.indexOf(":") + 1) })) }) })
       .then(r => r.json()).then(o => o && o.ok && Array.isArray(o.has) ? o.has : []).catch(() => []);
     keys.forEach((k, i) => known.set(k, { at: Date.now(), v: p.then(h => h[i] === true) }));
   }

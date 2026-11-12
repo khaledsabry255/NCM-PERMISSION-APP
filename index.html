@@ -101,9 +101,9 @@ button{font-family:inherit;cursor:pointer;}
 .brand.sm .appname{font-size:18px;}
 
 /* ============================================================
-   GATE — one PIN for both systems. The database key is sealed
-   inside VAULT with that PIN, so a wrong code does not merely
-   hide rows: neither system can reach its data at all.
+   GATE — one PIN for both systems. The PIN is checked on the
+   server (app-gate), which hands this phone its own token; a wrong
+   code gets nothing at all.
    ============================================================ */
 #gate{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
@@ -463,7 +463,7 @@ button{font-family:inherit;cursor:pointer;}
    service-worker.js in the same commit, otherwise devices keep
    serving the cached page and never see it.
    ============================================================ */
-const ACCESS_VERSION = "4";
+const ACCESS_VERSION = "5";
 const UNLOCK_KEY = "ncm_device_unlocked";   // holds the access version, never the PIN
 const AUTH_KEY   = "ncm_key";               // holds the decrypted API key
 
@@ -472,17 +472,11 @@ const AUTH_KEY   = "ncm_key";               // holds the decrypted API key
    to whichever one happened to write it. */
 const APP_ROOT = location.pathname.replace(/[^/]*$/, "");
 
-/* The database key is NOT stored in this file. It is sealed with the PIN
-   (PBKDF2-SHA256, 300k iterations -> AES-256-GCM). A wrong PIN fails to
-   decrypt, so the employees system cannot reach the database at all — not
-   "reaches it and hides the rows". Changing the PIN means re-sealing this
-   blob; it is not enough to change a number in the code. */
-const VAULT = {
-  salt: "f2lGfv+gNC/jRrf4TS88Hg==",
-  iv:   "ZCAIs173cqHj8HFM",
-  data: "vJhxY6c6Mt0Lgw+xUnrtk7yz4K65L9UuO0u9i6nIwAtlg/+WdjJNnqpw23BFQrszIB6PnhaXaoU64ovOl4P2DNkPmcj+WWKZdR6VrcKn8f829V43PlsvHCzwke8sLEYFSXmflKfd2KDdJQ7jNfbRcRZfDA2iBAeSTnKliG4xqPUdidoOI2lu9fBLaXSJoLVnjdc4tbe7f+qddYzuDU3A6aqkrIkLtD+OQ7HUIcr5EPYl+kGXeGbqCVSLD+8P30tuJ0eFF9ZWLLR8U4ZPxXFa8/voYaOzoA5N0XxoLxHKswk="
-};
-const KDF_ITERATIONS = 300000;
+/* THE PIN IS CHECKED ON THE SERVER (12 November 2026): the page used to carry the database's key sealed under the PIN — four digits,
+   so ten thousand tries opened it on any computer. Now the PIN goes to app-gate, which checks it (and shuts its door for half an hour
+   after ten wrong ones, from anywhere), and hands this phone a long random token of its own. The token is what is kept here, where
+   the key was; it opens nothing but app-gate's reads, and a phone can be shut out there on its own. */
+const NCM_GATE = "https://ljcalgumlodehoulbwtp.supabase.co/functions/v1/app-gate";
 
 const $ = (id) => document.getElementById(id);
 
@@ -495,7 +489,7 @@ const I18N = {
   ar:{
     dir:'rtl', htmlLang:'ar', other:'EN',
     gateAria:'شاشة الدخول', pinLabel:'الرقم السري', pinAria:'اضغط لإدخال الرقم',
-    checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح',
+    checking:'جارٍ التحقق', wrongPin:'رمز غير صحيح', lockedPin:'محاولات كتير غلط — جرّب بعد نص ساعة', netPin:'تعذر الاتصال — جرّب تاني',
     empTitle:'موظفين',
     perTitle:'تصاريح',
     multiTitle:'بحث متكرر',
@@ -504,7 +498,7 @@ const I18N = {
   en:{
     dir:'ltr', htmlLang:'en', other:'AR',
     gateAria:'Login screen', pinLabel:'PIN Code', pinAria:'Tap to enter the PIN',
-    checking:'Checking', wrongPin:'Incorrect PIN',
+    checking:'Checking', wrongPin:'Incorrect PIN', lockedPin:'Too many wrong tries — try again in half an hour', netPin:'Could not connect — try again',
     empTitle:'Employees',
     perTitle:'Permits',
     multiTitle:'List search',
@@ -683,18 +677,16 @@ function openHome(){
   pin.blur();          // the PIN is done; let the keyboard go
   arrive(home, '.door', 0);                   // their turns are in the styles
 }
-const b64d = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
-
-// Throws when the PIN is wrong: AES-GCM refuses to authenticate the blob.
+// Throws when the PIN is wrong (err.code "wrong"), when the door is shut for a while ("locked"), or when the server cannot be reached
 async function unlockVault(entered){
-  const material = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(entered), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey(
-    {name:'PBKDF2', salt:b64d(VAULT.salt), iterations:KDF_ITERATIONS, hash:'SHA-256'},
-    material, {name:'AES-GCM', length:256}, false, ['decrypt']);
-  const plain = await crypto.subtle.decrypt(
-    {name:'AES-GCM', iv:b64d(VAULT.iv)}, key, b64d(VAULT.data));
-  return new TextDecoder().decode(plain);
+  const label = (navigator.userAgent.match(/\(([^)]*)\)/) || ["", ""])[1].slice(0, 110);
+  const r = await fetch(NCM_GATE, { method:"POST", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ action:"enroll", pin: entered, label }) });
+  const o = await r.json().catch(() => null);
+  if(o && o.ok && o.token) return o.token;
+  const e = new Error("refused");
+  e.code = o && o.error === "locked" ? "locked" : o && o.error === "wrong" ? "wrong" : "net";
+  throw e;
 }
 
 let unlocking = false;
@@ -713,7 +705,7 @@ async function submitPin(){
     openHome();
   }catch(err){
     gateErr.classList.remove('busy');
-    gateErr.textContent = t('wrongPin');
+    gateErr.textContent = t(err && err.code === 'locked' ? 'lockedPin' : err && err.code === 'net' ? 'netPin' : 'wrongPin');
     const card = gate.querySelector('.gate-card');
     card.classList.add('shake');
     if(navigator.vibrate) navigator.vibrate(120);
@@ -857,7 +849,9 @@ function askForPin(){
   setTimeout(() => pin.focus(), 120);
 }
 
-if(readFlag() === ACCESS_VERSION){
+/* a phone the gate shut out (app-gate answered «not allowed»): its token goes, and the PIN is asked for */
+if(/[?&]shut=1/.test(location.search)){ clearFlag(); try{ history.replaceState(null, '', location.pathname); }catch(e){} askForPin(); }
+else if(readFlag() === ACCESS_VERSION){
   let storedKey = null;
   try { storedKey = localStorage.getItem(AUTH_KEY); } catch(e){}
   if(storedKey){
