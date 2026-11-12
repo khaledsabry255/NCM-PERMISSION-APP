@@ -1737,13 +1737,17 @@ function androidBridge(){
 }
 async function grab(url, name){
   const bridge = androidBridge();
+  // the photo's link signed by app-gate (an hour's); the bucket's own address only for an APK older than 4.3, while the bucket is open
+  const file = url.split('/').pop(), signed = await photoLink(file.replace(/(_2)?\.jpg$/, ''), /_2\.jpg$/.test(file)).catch(() => "");
   if(bridge){
+    if(signed && bridge.download(signed, name) === true) return true;     // APK 4.3 and later
     const head = await timedFetch(url, {method:'HEAD'});
     if(!head.ok) return false;               // a missing second photo is normal
     return bridge.download(url, name) === true;
   }
-  const res = await timedFetch(url);
-  if(!res.ok) return false;                 // a missing second photo is normal
+  if(!signed) return false;                  // a missing second photo is normal
+  const res = await timedFetch(signed);
+  if(!res.ok) return false;
   const obj = URL.createObjectURL(await res.blob());
   const a = document.createElement('a');
   a.href = obj;

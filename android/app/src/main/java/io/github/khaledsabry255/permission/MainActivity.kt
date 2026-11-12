@@ -39,6 +39,8 @@ private const val HOST = "khaledsabry255.github.io"
 /** The only place the download bridge will fetch from: the employee photos. */
 private const val PHOTO_HOST = "ljcalgumlodehoulbwtp.supabase.co"
 private const val PHOTO_PATH = "/storage/v1/object/public/employee-photos/"
+// the same bucket through a link signed by app-gate (12 November 2026: the bucket is to be closed to the world)
+private const val PHOTO_SIGNED = "/storage/v1/object/sign/employee-photos/"
 
 /**
  * The app is a full-screen window onto the web app rather than a second
@@ -202,7 +204,8 @@ class MainActivity : ComponentActivity() {
             val uri = Uri.parse(url ?: return false)
             if (uri.scheme != "https") return false
             if (!uri.host.equals(PHOTO_HOST, ignoreCase = true)) return false
-            if (!(uri.path ?: "").startsWith(PHOTO_PATH)) return false
+            val path = uri.path ?: ""
+            if (!path.startsWith(PHOTO_PATH) && !path.startsWith(PHOTO_SIGNED)) return false
 
             val clean = (fileName ?: return false).replace(Regex("[^A-Za-z0-9._-]"), "_")
             if (!clean.endsWith(".jpg") || clean.length > 64) return false
