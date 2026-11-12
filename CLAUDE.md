@@ -103,6 +103,8 @@ FOR WORK/سكربتات/ncm-employee-sync/   ← sync.py + backup.py + photos.py
   كل قراية بعد كده من الفنكشن بالتوكن: `rest` (GET على `employees` بس — عميل supabase نفسه بـ `gateFetch`)، `photo` (روابط ساعة لصور
   الموظفين — `<img data-ph>` + `phFill`)، `sheet` (التاب CSV — `gateSheet`؛ **رقم الشيت مابقاش في التطبيق**). `system-photo` (صور البطايق
   و«حاصل على كارت») بتاخد `token` في الـ body كمان. توكن مرفوض (401) = `gateShut()` ← `../?shut=1` ← الـ PIN تاني.
+- **تسجيل موبايل جديد مقفول دايماً** (الـ VAULT القديم في تاريخ الريبو → الـ PIN ممكن يتخمّن): بيتفتح من جهاز الشغل بـ
+  `python tools/app_enroll.py open 10` (في NCM SYSTEM) لموبايل واحد وبيتقفل وراه؛ مقفول = «تسجيل الأجهزة الجديدة مقفول».
 - **قفل موبايل لوحده:** `update app_devices set off = true where id = …` (الـ label بيقول أنهي موبايل). **كل الأجهزة:** `ACCESS_VERSION` زي الأول.
 - `ACCESS_VERSION` بقى **5** (كل موبايل محتاج الـ PIN مرة) · CACHE v62.
 - **APK 4.3 (كود 20، commit `163455a`):** الجسر بيقبل كمان `/storage/v1/object/sign/employee-photos/`، والصفحة بتجرّب الرابط الموقّع الأول
