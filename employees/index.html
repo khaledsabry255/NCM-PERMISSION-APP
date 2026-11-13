@@ -555,6 +555,8 @@ html[dir="ltr"] .row dd.ltr{text-align:right;}
   .appname{font-size:22px;}
 }
 .hc-slot:empty{display:none !important;}
+.hc-chip.hc-pulled,.hc-chip.hc-lost{color:#b42318;background:#fde8e8;border-color:#f3a5a5;}
+.hc-chip.hc-dead{color:#475467;background:#eef1f5;border-color:#cfd6df;}
 .hc-chip{display:inline-flex;align-items:center;margin-top:8px;padding:3px 12px;border-radius:999px;font-size:13px;font-weight:800;
   color:#12874f;background:#dff3e7;border:1px solid #8fd3ae;}
 </style>
@@ -2007,11 +2009,17 @@ if('serviceWorker' in navigator){
   const known = new Map();
   let busy = 0;
   const word = () => /^en/i.test(document.documentElement.lang || "") ? "Has a card" : "حاصل على كارت";
+  // what became of his card when he holds none (13 November 2026: «اى كارت مسحوب معدوم مفقود تظهر فى كروت الناس وعلى التطبيق برضو»)
+  const stWord = (st, tmp) => {
+    const en = /^en/i.test(document.documentElement.lang || "");
+    const w = { pulled: en ? "Card taken back" : "كارت مسحوب", dead: en ? "Card destroyed" : "كارت اتعدم", lost: en ? "Card lost" : "كارت مفقود" }[st] || "";
+    return w && tmp ? (en ? w.replace("Card", "Temporary card") : w.replace("كارت", "كارت مؤقت")) : w;
+  };
   function ask(keys){
     const p = fetch(FN, { method:"POST", headers: { "Content-Type":"application/json" },
         body: JSON.stringify({ action:"card_app", token: gateToken(), items: keys.map(k => ({ kind: k.slice(0, k.indexOf(":")), key: k.slice(k.indexOf(":") + 1) })) }) })
-      .then(r => r.json()).then(o => o && o.ok && Array.isArray(o.has) ? o.has : []).catch(() => []);
-    keys.forEach((k, i) => known.set(k, { at: Date.now(), v: p.then(h => h[i] === true) }));
+      .then(r => r.json()).then(o => o && o.ok && Array.isArray(o.has) ? o : { has: [], st: [] }).catch(() => []);
+    keys.forEach((k, i) => known.set(k, { at: Date.now(), v: p.then(o => ({ yes: o.has[i] === true, st: (o.st || [])[i] || "" })) }));
   }
   function paint(){
     busy = 0;
@@ -2024,7 +2032,7 @@ if('serviceWorker' in navigator){
       if((!had || Date.now() - had.at > 5 * 60 * 1000) && fresh.indexOf(k) < 0) fresh.push(k);
     });
     for(let i = 0; i < fresh.length; i += 60) ask(fresh.slice(i, i + 60));
-    els.forEach(el => { const h = known.get(el.getAttribute("data-hc")); if(h) h.v.then(yes => { if(yes && el.isConnected) el.textContent = word(); }); });
+    els.forEach(el => { const h = known.get(el.getAttribute("data-hc")); if(h) h.v.then(x => { if(!el.isConnected) return; if(x.yes) el.textContent = word(); else if(x.st){ el.textContent = stWord(x.st, false); el.classList.add("hc-" + x.st); } }); });
   }
   new MutationObserver(() => { if(!busy) busy = requestAnimationFrame(paint); }).observe(document.documentElement, { childList: true, subtree: true });
 })();
