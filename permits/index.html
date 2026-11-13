@@ -912,6 +912,8 @@ const NCM_GATE = "https://ljcalgumlodehoulbwtp.supabase.co/functions/v1/app-gate
 function gateToken(){ try{ return localStorage.getItem("ncm_key") || ""; }catch(e){ return ""; } }
 function gateShut(){
   try{ localStorage.removeItem("ncm_device_unlocked"); localStorage.removeItem("ncm_key"); }catch(e){}
+  // what this phone kept to be quick goes with its key: the sheet's copies, the photos' links
+  try{ Object.keys(localStorage).forEach(k => { if(/^ncm_(sheet:|ph$|idph$)/.test(k)) localStorage.removeItem(k); }); }catch(e){}
   location.replace("../?shut=1");
 }
 function gatePost(body, signal){
@@ -924,11 +926,25 @@ function gateClock(){
 }
 
 /* the sheet's tabs, through the gate: its CSV as the sheet exports it, or null when the tab is not there */
+/* THE LAST COPY, KEPT ON THIS PHONE (13 November 2026: «استدعاء الداتا والصور تقيل جدا… عايزة اسرع حاجه»): each tab's last copy and its
+   fingerprint stay here; the gate is asked with the fingerprint and answers «the same» — a hundred bytes — when the sheet has not
+   changed, and the copy here is then the sheet itself. A changed sheet comes whole, as before, and takes the old copy's place. */
+const SHEET_KEEP = "ncm_sheet:";
+function sheetKept(name){
+  try{ const o = JSON.parse(localStorage.getItem(SHEET_KEEP + name) || "null"); return o && typeof o.sum === "string" ? o : null; }catch(e){ return null; }
+}
 async function gateSheet(name){
-  const r = await gatePost({ action:"sheet", tab: name });
+  const kept = sheetKept(name);
+  const r = await gatePost(kept ? { action:"sheet", tab: name, have: kept.sum } : { action:"sheet", tab: name });
   const o = await r.json().catch(() => null);
   if(!o || !o.ok) throw new Error("sheet " + r.status);
-  return o.csv;
+  if(o.same && kept) return kept.csv;
+  const csv = o.csv === undefined ? null : o.csv;
+  if(o.sum){
+    try{ localStorage.setItem(SHEET_KEEP + name, JSON.stringify({ sum: o.sum, csv })); }
+    catch(e){ try{ localStorage.removeItem(SHEET_KEEP + name); }catch(x){} }     // no room: asked whole next time, as before
+  }
+  return csv;
 }
 const csvRows = text => Papa.parse(text, { header:false, skipEmptyLines:false }).data;
 const INDIVIDUALS_TAB = "تصاريح أفراد ";
@@ -1265,18 +1281,35 @@ const PERMIT_ICONS = {
    the request sent that day; a day no request has, under the latest request sent before it (or the first one). */
 const PHOTO_FN = "https://ljcalgumlodehoulbwtp.supabase.co/functions/v1/system-photo";
 const photoAsked = new Map();
+const IDPH_KEEP = "ncm_idph";
+function idphKeptGet(k){
+  try{ const x = JSON.parse(localStorage.getItem(IDPH_KEEP) || "{}")[k]; return x ? { at: x[0], sets: Promise.resolve(x[1]) } : null; }catch(e){ return null; }
+}
+function idphKeptPut(k, at, sets){
+  try{
+    const o = JSON.parse(localStorage.getItem(IDPH_KEEP) || "{}"), now = Date.now();
+    Object.keys(o).forEach(n => { if(!o[n] || now - o[n][0] >= 8 * 60 * 1000) delete o[n]; });
+    o[k] = [at, sets];
+    localStorage.setItem(IDPH_KEEP, JSON.stringify(o));
+  }catch(e){}
+}
 function cardPhotos(photo){
   // a temporary permit (10 November 2026): its own photos (tind / tveh) with his others — or, alone, its own, else his others
   if(photo.temp){
     const base = cardPhotos({ kind: photo.kind, key: photo.key }), own = cardPhotos({ kind: "t" + photo.kind, key: photo.key });
     return Promise.all([base, own]).then(([a, b]) => photo.temp === "only" ? (b.length ? b : a) : a.concat(b.filter(x => !a.some(y => y.day === x.day))));
   }
-  const k = photo.kind + ":" + photo.key, had = photoAsked.get(k);
+  const k = photo.kind + ":" + photo.key, had = photoAsked.get(k) || idphKeptGet(k);
   if(had && Date.now() - had.at < 8 * 60 * 1000) return had.sets;
+  const at = Date.now();
+  // a failed call is not kept (it showed as «no photo» for eight minutes); an answer is kept here and on the phone (13 November 2026)
   const sets = timedFetch(PHOTO_FN, { method:"POST", headers: { "Content-Type":"application/json" },
       body: JSON.stringify({ action:"sign_app", token: gateToken(), kind: photo.kind, key: photo.key }) })
-    .then(r => r.json()).then(o => (o && o.ok && Array.isArray(o.sets)) ? o.sets : []).catch(() => []);
-  photoAsked.set(k, { at: Date.now(), sets });
+    .then(r => r.json()).then(o => {
+      if(o && o.ok && Array.isArray(o.sets)){ idphKeptPut(k, at, o.sets); return o.sets; }
+      photoAsked.delete(k); return [];
+    }).catch(() => { photoAsked.delete(k); return []; });
+  photoAsked.set(k, { at, sets });
   return sets;
 }
 const isoDay = d => d instanceof Date && !isNaN(d) ? d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") : "";
